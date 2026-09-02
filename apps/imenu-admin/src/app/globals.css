@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --green-950: #09271d;
+    --green-900: #0d3628;
+    --green-800: #124a36;
+    --green-700: #176044;
+    --green-600: #1f7a55;
+    --green-100: #ddf4e8;
+    --cream: #f7f5ef;
+    --amber: #eab867;
+  }
+
+  body {
+    background-color: #f4f6f4;
+    color: #1e2924;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #thermal-print-area, #thermal-print-area * {
+    visibility: visible;
+  }
+  #thermal-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm !important;
+    max-width: 80mm !important;
+    padding: 2mm !important;
+    background: #fff;
+    color: #000;
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "@imenu/monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "dev:admin": "turbo run dev --filter=@imenu/admin",
+    "dev:client": "turbo run dev --filter=@imenu/client-web",
+    "dev:menu": "turbo run dev --filter=@imenu/customer-menu",
+    "build": "turbo run build",
+    "build:admin": "turbo run build --filter=@imenu/admin",
+    "build:client": "turbo run build --filter=@imenu/client-web",
+    "build:menu": "turbo run build --filter=@imenu/customer-menu",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "packageManager": "npm@11.5.1"
+}
