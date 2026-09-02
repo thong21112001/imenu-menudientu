@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { TableStatus, OrderStatus } from '@imenu/types';
 

@@ -1,3 +1,5 @@
+'use client';
+
 export * from './theme/colors';
 export * from './components/Logo';
 export * from './components/Button';
