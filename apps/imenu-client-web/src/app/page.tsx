@@ -228,8 +228,9 @@ export default function LandingPage() {
             
             <div className="lg:col-span-5 space-y-6">
               <span className="text-xs font-bold text-emerald-700 tracking-widest uppercase">Trải nghiệm tại bàn</span>
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900">
-                Khách chủ động. <br />Nhân viên thảnh thơi.
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-snug sm:leading-[1.28]">
+                Khách chủ động. <br className="hidden sm:inline" />
+                <span className="mt-1 inline-block">Nhân viên thảnh thơi.</span>
               </h2>
               <p className="text-sm text-slate-600 leading-relaxed">
                 Một quy trình tự nhiên và khép kín mang lại sự tiện nghi cao nhất cho khách hàng và giảm áp lực giờ cao điểm cho quán.
@@ -279,13 +280,17 @@ export default function LandingPage() {
             </div>
 
             <div className="lg:col-span-7 flex justify-center">
-              <div className="w-full max-w-md bg-slate-50 p-6 rounded-3xl border border-slate-200 shadow-xl text-center space-y-5">
-                <Badge variant="amber">Thử nghiệm thực tế</Badge>
-                <h3 className="text-xl font-bold text-slate-900">Trải nghiệm gọi món bàn 08 ngay bây giờ</h3>
-                <p className="text-xs text-slate-600">
+              <div className="w-full max-w-lg bg-slate-50/90 p-8 sm:p-10 rounded-3xl border border-slate-200/90 shadow-xl text-center space-y-6">
+                <div>
+                  <Badge variant="amber" className="px-3.5 py-1 text-xs">Thử nghiệm thực tế</Badge>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 leading-snug">
+                  Trải nghiệm gọi món bàn 08 ngay bây giờ
+                </h3>
+                <p className="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
                   Mở trực tiếp giao diện Web App gọi món dành cho khách hàng trên điện thoại hoặc trình duyệt của bạn:
                 </p>
-                <div className="p-6 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
+                <div className="p-7 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center max-w-xs mx-auto">
                   <img
                     src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=http://localhost:3005/menu/bep-nha/ban-08"
                     alt="Demo QR"
@@ -296,9 +301,9 @@ export default function LandingPage() {
                 <a
                   href="http://localhost:3005/menu/bep-nha/ban-08"
                   target="_blank"
-                  className="block"
+                  className="block pt-2"
                 >
-                  <Button variant="primary" className="w-full">
+                  <Button variant="primary" size="lg" className="w-full shadow-md shadow-emerald-700/20">
                     Mở Demo QR Menu Khách Hàng ↗
                   </Button>
                 </a>
