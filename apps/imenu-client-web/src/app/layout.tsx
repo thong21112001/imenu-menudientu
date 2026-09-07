@@ -1,5 +1,13 @@
 import type { Metadata } from 'next';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ['latin', 'vietnamese'],
+  display: 'swap',
+  variable: '--font-sans',
+  weight: ['400', '500', '600', '700', '800'],
+});
 
 export const metadata: Metadata = {
   title: 'iMenu — Nền tảng quản lý nhà hàng & Menu điện tử thế hệ mới',
@@ -12,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="vi" className="scroll-smooth">
-      <body className="min-h-screen antialiased selection:bg-[#ddf4e8] selection:text-[#09271d]">
+    <html lang="vi" className={`scroll-smooth ${plusJakartaSans.variable}`}>
+      <body className={`${plusJakartaSans.className} min-h-screen antialiased selection:bg-emerald-100 selection:text-emerald-950`}>
         {children}
       </body>
     </html>

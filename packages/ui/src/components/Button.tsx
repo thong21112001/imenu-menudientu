@@ -28,12 +28,12 @@ export const Button: React.FC<ButtonProps> = ({
   }[size];
 
   const variantStyles = {
-    primary: 'bg-[#124a36] hover:bg-[#176044] text-white shadow-md hover:shadow-lg focus:ring-[#176044]',
-    secondary: 'bg-[#edf6f1] text-[#176044] hover:bg-[#ddf4e8] border border-[#d9ece3] focus:ring-[#176044]',
-    outline: 'border border-[#b8cbc2] text-[#124a36] bg-white hover:bg-[#f0f7f3] focus:ring-[#124a36]',
-    ghost: 'text-[#4a5852] hover:bg-[#eef5f1] hover:text-[#124a36]',
-    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500',
-    amber: 'bg-[#eab867] hover:bg-[#f0c574] text-[#17211d] font-bold shadow-md focus:ring-[#eab867]',
+    primary: 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-700/20 hover:shadow-lg hover:shadow-emerald-600/30 focus:ring-emerald-500',
+    secondary: 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/80 focus:ring-emerald-500',
+    outline: 'border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-emerald-700 hover:border-emerald-300 focus:ring-emerald-500 shadow-sm',
+    ghost: 'text-slate-600 hover:bg-slate-100 hover:text-emerald-700',
+    danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm shadow-rose-600/20 focus:ring-rose-500',
+    amber: 'bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold shadow-md shadow-amber-500/20 focus:ring-amber-500',
   }[variant];
 
   return (

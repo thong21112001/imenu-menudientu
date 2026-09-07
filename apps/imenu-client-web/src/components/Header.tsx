@@ -9,7 +9,7 @@ export const Header: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-[#e4e8e5]">
+    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         <Link href="/" className="hover:opacity-90 transition-opacity">
           <Logo size="lg" />
@@ -17,23 +17,23 @@ export const Header: React.FC = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-sm font-medium text-[#4a5852] hover:text-[#176044] transition-colors">
+          <a href="#features" className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors">
             Tính năng
           </a>
-          <a href="#workflow" className="text-sm font-medium text-[#4a5852] hover:text-[#176044] transition-colors">
+          <a href="#workflow" className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors">
             Cách hoạt động
           </a>
-          <a href="#roles" className="text-sm font-medium text-[#4a5852] hover:text-[#176044] transition-colors">
+          <a href="#roles" className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors">
             Phân quyền
           </a>
-          <a href="#pricing" className="text-sm font-medium text-[#4a5852] hover:text-[#176044] transition-colors">
+          <a href="#pricing" className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors">
             Bảng giá
           </a>
         </nav>
 
         {/* Desktop Action Buttons */}
         <div className="hidden md:flex items-center gap-4">
-          <Link href="/dang-nhap" className="text-sm font-semibold text-[#124a36] hover:text-[#176044] px-3 py-2">
+          <Link href="/dang-nhap" className="text-sm font-bold text-slate-700 hover:text-emerald-600 px-3 py-2 transition-colors">
             Đăng nhập
           </Link>
           <Link href="/dang-ky">
@@ -46,7 +46,7 @@ export const Header: React.FC = () => {
         {/* Mobile Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="md:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-xl"
+          className="md:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
         >
           {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
         </button>
@@ -54,7 +54,7 @@ export const Header: React.FC = () => {
 
       {/* Mobile Drawer Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden bg-white border-b border-[#e4e8e5] px-6 py-5 space-y-4 animate-fadeIn">
+        <div className="md:hidden bg-white border-b border-slate-200 px-6 py-5 space-y-4 animate-fadeIn">
           <a
             href="#features"
             onClick={() => setIsMobileMenuOpen(false)}

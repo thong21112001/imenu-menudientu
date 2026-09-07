@@ -2,23 +2,23 @@
 
 @layer base {
   :root {
-    --green-950: #09271d;
-    --green-900: #0d3628;
-    --green-800: #124a36;
-    --green-700: #176044;
-    --green-600: #1f7a55;
-    --green-100: #ddf4e8;
-    --cream: #f7f5ef;
-    --amber: #eab867;
-    --ink: #17211d;
-    --muted: #66736d;
-    --line: #e4e8e5;
+    --green-950: #022c22;
+    --green-900: #064e3b;
+    --green-800: #065f46;
+    --green-700: #047857;
+    --green-600: #059669;
+    --green-100: #d1fae5;
+    --cream: #f8fafc;
+    --amber: #f59e0b;
+    --ink: #0f172a;
+    --muted: #64748b;
+    --line: #e2e8f0;
   }
 
   body {
     background-color: #ffffff;
-    color: #17211d;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #0f172a;
+    font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
 }
 
