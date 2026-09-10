@@ -57,11 +57,11 @@ export default function LandingPage() {
                     Sử dụng miễn phí 0đ <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </Link>
-                <a href="#workflow">
-                  <Button variant="outline" size="lg">
-                    Xem cách hoạt động
+                <Link href="/huong-dan">
+                  <Button variant="outline" size="lg" className="border-emerald-600/30 text-emerald-800 hover:bg-emerald-50">
+                    📖 Hướng dẫn vận hành (7 bước)
                   </Button>
-                </a>
+                </Link>
               </div>
 
               <div className="flex flex-wrap items-center gap-6 pt-4 text-xs font-semibold text-slate-500">
@@ -275,6 +275,14 @@ export default function LandingPage() {
                     <h3 className="text-base font-bold text-slate-900">Tạm tính & Thanh toán VietQR</h3>
                     <p className="text-xs text-slate-600 mt-1">Khách xem lại phiếu tạm tính ngay trên điện thoại, bấm gọi thanh toán hoặc quét mã QR chuyển khoản.</p>
                   </div>
+                </div>
+
+                <div className="pt-3">
+                  <Link href="/huong-dan">
+                    <Button variant="secondary" size="md" className="font-bold flex items-center gap-2">
+                      Xem chi tiết từng bước trên ảnh demo thực tế <ArrowRight className="w-4 h-4" />
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>

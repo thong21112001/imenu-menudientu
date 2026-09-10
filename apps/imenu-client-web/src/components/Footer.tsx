@@ -23,16 +23,17 @@ export const Footer: React.FC = () => {
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">Sản phẩm</h4>
             <ul className="space-y-2.5 text-sm">
-              <li><a href="#features" className="text-slate-400 hover:text-emerald-400 transition-colors">Menu điện tử QR</a></li>
-              <li><a href="#features" className="text-slate-400 hover:text-emerald-400 transition-colors">POS tại quầy & bàn</a></li>
-              <li><a href="#features" className="text-slate-400 hover:text-emerald-400 transition-colors">Màn hình Bếp KDS</a></li>
-              <li><a href="#pricing" className="text-slate-400 hover:text-emerald-400 transition-colors">Bảng giá dịch vụ</a></li>
+              <li><Link href="/#features" className="text-slate-400 hover:text-emerald-400 transition-colors">Menu điện tử QR</Link></li>
+              <li><Link href="/#features" className="text-slate-400 hover:text-emerald-400 transition-colors">POS tại quầy & bàn</Link></li>
+              <li><Link href="/#features" className="text-slate-400 hover:text-emerald-400 transition-colors">Màn hình Bếp KDS</Link></li>
+              <li><Link href="/#pricing" className="text-slate-400 hover:text-emerald-400 transition-colors">Bảng giá dịch vụ</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-xs font-bold uppercase tracking-wider text-white mb-4">Trải nghiệm</h4>
             <ul className="space-y-2.5 text-sm">
+              <li><Link href="/huong-dan" className="text-emerald-400 font-semibold hover:text-emerald-300 transition-colors">📖 Hướng dẫn vận hành (7 bước)</Link></li>
               <li><a href="http://localhost:3005/menu/bep-nha/ban-08" target="_blank" className="text-slate-400 hover:text-emerald-400 transition-colors">Demo Menu Khách QR ↗</a></li>
               <li><a href="http://localhost:3003" target="_blank" className="text-slate-400 hover:text-emerald-400 transition-colors">Demo Admin & POS ↗</a></li>
               <li><Link href="/dang-ky" className="text-slate-400 hover:text-emerald-400 transition-colors">Tạo quán mới</Link></li>

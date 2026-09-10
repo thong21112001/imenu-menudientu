@@ -17,18 +17,24 @@ export const Header: React.FC = () => {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors">
+          <Link href="/#features" className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors">
             Tính năng
-          </a>
-          <a href="#workflow" className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors">
+          </Link>
+          <Link href="/#workflow" className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors">
             Cách hoạt động
-          </a>
-          <a href="#roles" className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors">
+          </Link>
+          <Link href="/#roles" className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors">
             Phân quyền
-          </a>
-          <a href="#pricing" className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors">
+          </Link>
+          <Link href="/#pricing" className="text-sm font-semibold text-slate-600 hover:text-emerald-700 transition-colors">
             Bảng giá
-          </a>
+          </Link>
+          <Link href="/huong-dan" className="text-sm font-bold text-emerald-800 hover:text-emerald-600 transition-colors flex items-center gap-1.5">
+            Hướng dẫn
+            <span className="text-[10px] font-extrabold bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded-full border border-emerald-200">
+              Mới
+            </span>
+          </Link>
         </nav>
 
         {/* Desktop Action Buttons */}
@@ -55,34 +61,42 @@ export const Header: React.FC = () => {
       {/* Mobile Drawer Menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden bg-white border-b border-slate-200 px-6 py-5 space-y-4 animate-fadeIn">
-          <a
-            href="#features"
+          <Link
+            href="/#features"
             onClick={() => setIsMobileMenuOpen(false)}
             className="block text-base font-medium text-slate-700 py-1"
           >
             Tính năng
-          </a>
-          <a
-            href="#workflow"
+          </Link>
+          <Link
+            href="/#workflow"
             onClick={() => setIsMobileMenuOpen(false)}
             className="block text-base font-medium text-slate-700 py-1"
           >
             Cách hoạt động
-          </a>
-          <a
-            href="#roles"
+          </Link>
+          <Link
+            href="/#roles"
             onClick={() => setIsMobileMenuOpen(false)}
             className="block text-base font-medium text-slate-700 py-1"
           >
             Phân quyền
-          </a>
-          <a
-            href="#pricing"
+          </Link>
+          <Link
+            href="/#pricing"
             onClick={() => setIsMobileMenuOpen(false)}
             className="block text-base font-medium text-slate-700 py-1"
           >
             Bảng giá
-          </a>
+          </Link>
+          <Link
+            href="/huong-dan"
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="block text-base font-bold text-emerald-800 py-1 flex items-center justify-between"
+          >
+            <span>Hướng dẫn vận hành</span>
+            <span className="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-bold">Mới</span>
+          </Link>
           <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
             <Link href="/dang-nhap" className="w-full">
               <Button variant="outline" className="w-full">
