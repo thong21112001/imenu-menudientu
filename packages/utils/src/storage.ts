@@ -1,4 +1,4 @@
-import { Restaurant, Table, MenuCategory, MenuItem, Order, User } from '@imenu/types';
+import { Restaurant, Table, MenuCategory, MenuItem, Order, User, RoleDefinition, PermissionGroup } from '@imenu/types';
 
 const STORAGE_KEYS = {
   RESTAURANT: 'imenu_restaurant_v1',
@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   MENU_ITEMS: 'imenu_menu_items_v1',
   ORDERS: 'imenu_orders_v1',
   USERS: 'imenu_users_v1',
+  ROLES: 'imenu_roles_v1',
   CURRENT_USER: 'imenu_current_user_v1',
 };
 
@@ -375,6 +376,9 @@ export const SEED_USERS: User[] = [
     phone: '0901234567',
     role: 'RESTAURANT_ADMIN',
     restaurantId: 'rest-bep-nha',
+    branchName: 'Chi nhánh Quận 1 (Chính)',
+    status: 'ACTIVE',
+    createdAt: '2026-01-10T08:00:00.000Z',
   },
   {
     id: 'usr-manager',
@@ -383,15 +387,154 @@ export const SEED_USERS: User[] = [
     phone: '0902345678',
     role: 'RESTAURANT_MANAGER',
     restaurantId: 'rest-bep-nha',
+    branchName: 'Chi nhánh Quận 1 (Chính)',
+    status: 'ACTIVE',
+    createdAt: '2026-01-15T09:30:00.000Z',
   },
   {
-    id: 'usr-staff',
-    email: 'staff@sample.vn',
+    id: 'usr-cashier',
+    email: 'cashier@sample.vn',
     fullName: 'Lê Thị Cúc',
     phone: '0903456789',
-    role: 'STAFF',
+    role: 'CASHIER',
     restaurantId: 'rest-bep-nha',
-  }
+    branchName: 'Chi nhánh Quận 1 (Chính)',
+    status: 'ACTIVE',
+    createdAt: '2026-02-01T14:15:00.000Z',
+  },
+  {
+    id: 'usr-kitchen',
+    email: 'kitchen@sample.vn',
+    fullName: 'Phạm Hoàng Dũng',
+    phone: '0904567890',
+    role: 'KITCHEN',
+    restaurantId: 'rest-bep-nha',
+    branchName: 'Chi nhánh Quận 1 (Chính)',
+    status: 'ACTIVE',
+    createdAt: '2026-02-10T10:00:00.000Z',
+  },
+];
+
+export const SEED_PERMISSION_GROUPS: PermissionGroup[] = [
+  {
+    id: 'group-menu',
+    groupName: 'Quản Lý Thực Đơn',
+    icon: '🍲',
+    permissions: [
+      { id: 'perm-menu-view', name: 'Xem thực đơn', description: 'Xem danh sách món ăn, giá và danh mục' },
+      { id: 'perm-menu-create', name: 'Thêm món ăn mới', description: 'Tạo món mới, tải ảnh và cấu hình topping' },
+      { id: 'perm-menu-status', name: 'Bật/Tắt trạng thái Còn/Hết', description: 'Bật tắt nhanh trạng thái Còn món / Hết món' },
+      { id: 'perm-menu-category', name: 'Quản lý danh mục', description: 'Tạo, sửa, sắp xếp và xóa danh mục thực đơn' },
+    ],
+  },
+  {
+    id: 'group-pos',
+    groupName: 'Sơ Đồ Bàn & POS Bán Hàng',
+    icon: '🍽️',
+    permissions: [
+      { id: 'perm-pos-view', name: 'Xem sơ đồ bàn', description: 'Xem trạng thái bàn ăn thời gian thực' },
+      { id: 'perm-pos-order', name: 'Tạo đơn gọi món', description: 'Chọn món và gửi đơn vào bếp cho khách' },
+      { id: 'perm-pos-pay', name: 'Thanh toán & In hóa đơn', description: 'Xác nhận VietQR, thu tiền mặt, in bill 80mm' },
+      { id: 'perm-pos-table', name: 'Quản lý bàn', description: 'Thêm bàn mới, sửa khu vực, gộp/chuyển bàn' },
+    ],
+  },
+  {
+    id: 'group-kds',
+    groupName: 'Màn Hình Bếp KDS',
+    icon: '👨‍🍳',
+    permissions: [
+      { id: 'perm-kds-view', name: 'Xem vé bếp', description: 'Nhận vé order thời gian thực từ khách và thu ngân' },
+      { id: 'perm-kds-cook', name: 'Xác nhận chế biến', description: 'Chuyển trạng thái Đang nấu / Hoàn tất món' },
+      { id: 'perm-kds-out', name: 'Báo hết nguyên liệu', description: 'Báo hết món trực tiếp từ khu vực bếp' },
+    ],
+  },
+  {
+    id: 'group-reports',
+    groupName: 'Báo Cáo & Doanh Thu',
+    icon: '📈',
+    permissions: [
+      { id: 'perm-rep-view', name: 'Xem doanh thu ngày', description: 'Xem biểu đồ doanh thu, số đơn và món bán chạy' },
+      { id: 'perm-rep-export', name: 'Xuất báo cáo', description: 'Xuất file excel doanh thu và lịch sử hóa đơn' },
+    ],
+  },
+  {
+    id: 'group-admin',
+    groupName: 'Nhân Sự & Cài Đặt',
+    icon: '⚙️',
+    permissions: [
+      { id: 'perm-staff-manage', name: 'Quản lý nhân viên', description: 'Thêm nhân viên, khóa tài khoản, đổi thông tin' },
+      { id: 'perm-role-manage', name: 'Quản lý phân quyền', description: 'Tạo vai trò mới và cấu hình ma trận quyền hạn' },
+      { id: 'perm-qr-print', name: 'Tạo & In mã QR bàn', description: 'Xuất file in Standee mica và mã QR để bàn' },
+      { id: 'perm-settings', name: 'Cài đặt nhà hàng', description: 'Cấu hình thông tin nhà hàng, tài khoản ngân hàng' },
+    ],
+  },
+];
+
+export const SEED_ROLES: RoleDefinition[] = [
+  {
+    id: 'role-owner',
+    code: 'RESTAURANT_ADMIN',
+    name: 'Chủ Nhà Hàng / Chi Nhánh',
+    description: 'Toàn quyền quản trị chi nhánh, phân quyền nhân viên và cài đặt',
+    isSystem: true,
+    color: '#09271d',
+    permissions: [
+      'perm-menu-view', 'perm-menu-create', 'perm-menu-status', 'perm-menu-category',
+      'perm-pos-view', 'perm-pos-order', 'perm-pos-pay', 'perm-pos-table',
+      'perm-kds-view', 'perm-kds-cook', 'perm-kds-out',
+      'perm-rep-view', 'perm-rep-export',
+      'perm-staff-manage', 'perm-role-manage', 'perm-qr-print', 'perm-settings',
+    ],
+  },
+  {
+    id: 'role-manager',
+    code: 'RESTAURANT_MANAGER',
+    name: 'Quản Lý Ca',
+    description: 'Điều hành ca làm việc, xử lý bàn ăn, xem báo cáo ca và quản lý thực đơn',
+    isSystem: true,
+    color: '#124a36',
+    permissions: [
+      'perm-menu-view', 'perm-menu-create', 'perm-menu-status', 'perm-menu-category',
+      'perm-pos-view', 'perm-pos-order', 'perm-pos-pay', 'perm-pos-table',
+      'perm-kds-view', 'perm-kds-cook', 'perm-kds-out',
+      'perm-rep-view', 'perm-qr-print',
+    ],
+  },
+  {
+    id: 'role-cashier',
+    code: 'CASHIER',
+    name: 'Thu Ngân POS',
+    description: 'Mở bàn, tạo đơn tại quầy, thu tiền VietQR/tiền mặt và in hóa đơn',
+    isSystem: true,
+    color: '#d97706',
+    permissions: [
+      'perm-menu-view', 'perm-menu-status',
+      'perm-pos-view', 'perm-pos-order', 'perm-pos-pay',
+      'perm-rep-view',
+    ],
+  },
+  {
+    id: 'role-kitchen',
+    code: 'KITCHEN',
+    name: 'Nhân Viên Bếp KDS',
+    description: 'Theo dõi màn hình bếp, cập nhật tiến độ chế biến và hoàn tất món',
+    isSystem: true,
+    color: '#dc2626',
+    permissions: [
+      'perm-kds-view', 'perm-kds-cook', 'perm-kds-out',
+    ],
+  },
+  {
+    id: 'role-waiter',
+    code: 'WAITER',
+    name: 'Nhân Viên Phục Vụ',
+    description: 'Hỗ trợ khách tại bàn, mở bàn và tiếp nhận yêu cầu gọi nhân viên',
+    isSystem: true,
+    color: '#2563eb',
+    permissions: [
+      'perm-menu-view', 'perm-pos-view', 'perm-pos-order',
+    ],
+  },
 ];
 
 // ================= STORAGE API =================
@@ -419,6 +562,11 @@ export const storageService = {
       return SEED_CATEGORIES;
     }
     return JSON.parse(data);
+  },
+
+  saveCategories(categories: MenuCategory[]) {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(categories));
   },
 
   getMenuItems(): MenuItem[] {
@@ -474,5 +622,29 @@ export const storageService = {
       return SEED_USERS;
     }
     return JSON.parse(data);
-  }
+  },
+
+  saveUsers(users: User[]) {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+  },
+
+  getRoles(): RoleDefinition[] {
+    if (typeof window === 'undefined') return SEED_ROLES;
+    const data = localStorage.getItem(STORAGE_KEYS.ROLES);
+    if (!data) {
+      localStorage.setItem(STORAGE_KEYS.ROLES, JSON.stringify(SEED_ROLES));
+      return SEED_ROLES;
+    }
+    return JSON.parse(data);
+  },
+
+  saveRoles(roles: RoleDefinition[]) {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.ROLES, JSON.stringify(roles));
+  },
+
+  getPermissionGroups(): PermissionGroup[] {
+    return SEED_PERMISSION_GROUPS;
+  },
 };

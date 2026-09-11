@@ -58,9 +58,12 @@
 }
 
 @media print {
+  /* Default hide all elements */
   body * {
     visibility: hidden;
   }
+
+  /* 1. Thermal bill print (80mm) */
   #thermal-print-area, #thermal-print-area * {
     visibility: visible;
   }
@@ -73,5 +76,36 @@
     padding: 2mm !important;
     background: #fff;
     color: #000;
+  }
+
+  /* 2. QR Code Standee Batch Print (A4 / A6 grid) */
+  #qr-print-area, #qr-print-area * {
+    visibility: visible;
+  }
+  #qr-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 6mm !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .print-qr-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+
+  .print-qr-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    border: 2px solid #09271d !important;
+    border-radius: 16px !important;
+    padding: 16px !important;
+    background: #fff !important;
+    box-shadow: none !important;
   }
 }

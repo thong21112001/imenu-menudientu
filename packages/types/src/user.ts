@@ -3,7 +3,13 @@ export type UserRole =
   | 'CHAIN_ADMIN'         // Quản trị chuỗi nhà hàng
   | 'RESTAURANT_ADMIN'    // Chủ nhà hàng / Chi nhánh
   | 'RESTAURANT_MANAGER'  // Quản lý ca
-  | 'STAFF';              // Nhân viên phục vụ / Thu ngân / Bếp
+  | 'CASHIER'             // Thu ngân POS
+  | 'KITCHEN'             // Nhân viên Bếp KDS
+  | 'WAITER'              // Nhân viên phục vụ bàn
+  | 'STAFF'               // Nhân viên chung
+  | string;               // Cho phép vai trò tùy chỉnh
+
+export type UserStatus = 'ACTIVE' | 'INACTIVE';
 
 export interface User {
   id: string;
@@ -13,5 +19,32 @@ export interface User {
   role: UserRole;
   restaurantId?: string;
   branchId?: string;
+  branchName?: string;
   avatarUrl?: string;
+  status?: UserStatus;
+  createdAt?: string;
+}
+
+export interface PermissionItem {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface PermissionGroup {
+  id: string;
+  groupName: string;
+  icon?: string;
+  permissions: PermissionItem[];
+}
+
+export interface RoleDefinition {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  isSystem?: boolean;
+  color?: string;
+  permissions: string[]; // List of permission IDs
+  createdAt?: string;
 }
