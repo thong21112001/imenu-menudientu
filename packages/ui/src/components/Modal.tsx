@@ -41,14 +41,28 @@ export const Modal: React.FC<ModalProps> = ({
   }[maxWidth];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fadeIn">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 50,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.65)',
+        backdropFilter: 'blur(4px)',
+      }}
+    >
       <div
         className="fixed inset-0"
+        style={{ position: 'absolute', inset: 0 }}
         onClick={onClose}
         aria-hidden="true"
       />
       <div
         className={`relative w-full ${widthClass} bg-white rounded-3xl shadow-2xl overflow-hidden border border-[#e4e8e5] z-10 animate-scaleUp`}
+        style={{ position: 'relative', zIndex: 10 }}
         onClick={(e) => e.stopPropagation()}
       >
         {(title || subtitle) && (

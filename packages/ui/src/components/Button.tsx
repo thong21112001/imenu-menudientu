@@ -28,17 +28,27 @@ export const Button: React.FC<ButtonProps> = ({
   }[size];
 
   const variantStyles = {
-    primary: 'bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white shadow-md shadow-emerald-700/20 hover:shadow-lg hover:shadow-emerald-600/30 focus:ring-emerald-500',
-    secondary: 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/80 focus:ring-emerald-500',
-    outline: 'border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 hover:text-emerald-700 hover:border-emerald-300 focus:ring-emerald-500 shadow-sm',
-    ghost: 'text-slate-600 hover:bg-slate-100 hover:text-emerald-700',
-    danger: 'bg-rose-600 hover:bg-rose-700 text-white shadow-sm shadow-rose-600/20 focus:ring-rose-500',
-    amber: 'bg-gradient-to-r from-amber-500 to-amber-400 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-bold shadow-md shadow-amber-500/20 focus:ring-amber-500',
+    primary: 'bg-[#124a36] hover:bg-[#09271d] text-white font-bold border border-[#124a36] hover:border-[#09271d] shadow-md shadow-[#124a36]/25 focus:ring-[#176044] active:bg-[#071f17]',
+    secondary: 'bg-[#e8f5ee] text-[#124a36] hover:bg-[#124a36] hover:text-white border-2 border-[#176044]/35 hover:border-[#124a36] font-bold shadow-sm focus:ring-[#176044]',
+    outline: 'border-2 border-slate-300 text-slate-800 bg-white hover:bg-[#f0f7f4] hover:text-[#124a36] hover:border-[#124a36] font-bold shadow-sm focus:ring-[#176044]',
+    ghost: 'text-slate-700 hover:bg-slate-100 hover:text-[#124a36] font-semibold',
+    danger: 'bg-rose-600 hover:bg-rose-700 text-white font-bold border border-rose-700 shadow-sm shadow-rose-600/20 focus:ring-rose-500',
+    amber: 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-[#09271d] font-extrabold border border-amber-600 shadow-md shadow-amber-500/25 focus:ring-amber-500',
   }[variant];
+
+  // Inline fallback style ensures button NEVER renders with invisible white background or white text on white
+  const fallbackStyles: React.CSSProperties = {
+    ...(variant === 'primary' && { backgroundColor: '#124a36', color: '#ffffff' }),
+    ...(variant === 'secondary' && { backgroundColor: '#e8f5ee', color: '#124a36' }),
+    ...(variant === 'outline' && { backgroundColor: '#ffffff', color: '#1e2924' }),
+    ...(variant === 'amber' && { backgroundColor: '#f59e0b', color: '#09271d' }),
+    ...(variant === 'danger' && { backgroundColor: '#e11d48', color: '#ffffff' }),
+  };
 
   return (
     <button
       className={`${baseStyles} ${sizeStyles} ${variantStyles} ${className}`}
+      style={fallbackStyles}
       disabled={disabled || isLoading}
       {...props}
     >
