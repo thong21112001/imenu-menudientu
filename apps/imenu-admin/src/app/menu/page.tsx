@@ -188,14 +188,14 @@ export default function MenuManagementPage() {
         </div>
 
         <div className="flex items-center gap-2.5 flex-wrap">
-          <Button
+          {/* <Button
             variant="outline"
             icon={<FolderPlus className="w-4 h-4 text-[#176044]" />}
             onClick={() => handleOpenCategoryModal()}
             className="cursor-pointer"
           >
             + Tạo mới danh mục
-          </Button>
+          </Button> */}
 
           <Button
             variant="primary"

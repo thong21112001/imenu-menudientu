@@ -501,14 +501,14 @@ export default function StaffPage() {
               </p>
             </div>
 
-            <Button
+            {/* <Button
               variant="outline"
               icon={<Plus className="w-4 h-4 text-[#176044]" />}
               onClick={() => handleOpenRoleModal()}
               className="cursor-pointer text-xs"
             >
               + Tạo mới phân quyền
-            </Button>
+            </Button> */}
           </div>
 
           {/* Roles Grid */}
