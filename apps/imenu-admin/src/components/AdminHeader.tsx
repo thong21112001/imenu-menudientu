@@ -38,7 +38,7 @@ export const AdminHeader: React.FC = () => {
   }, []);
 
   return (
-    <header className="h-16 bg-white border-b border-[#e4e8e5] sticky top-0 z-30 flex items-center justify-between px-4 sm:px-6 shadow-2xs">
+    <header className="h-16 bg-white border-b border-[#e4e8e5] sticky top-0 z-30 flex items-center justify-between px-3 sm:px-6 shadow-2xs w-full min-w-0 max-w-full">
       <div className="flex items-center gap-2 sm:gap-4">
         {/* Sidebar Toggle Button */}
         <button

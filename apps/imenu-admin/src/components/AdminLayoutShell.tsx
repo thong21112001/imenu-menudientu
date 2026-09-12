@@ -80,7 +80,7 @@ export const AdminLayoutShell: React.FC<{ children: React.ReactNode }> = ({ chil
         closeSidebar,
       }}
     >
-      <div className="min-h-screen bg-[#f4f6f4] antialiased text-[#1e2924] flex">
+      <div className="min-h-screen bg-[#f4f6f4] antialiased text-[#1e2924] flex w-full max-w-full overflow-x-hidden">
         {/* Mobile Backdrop Overlay */}
         {isMobile && isSidebarOpen && (
           <div
@@ -95,12 +95,12 @@ export const AdminLayoutShell: React.FC<{ children: React.ReactNode }> = ({ chil
 
         {/* Main Content Area */}
         <div
-          className={`flex-1 flex flex-col min-h-screen transition-[margin] duration-300 ease-in-out ${
+          className={`flex-1 min-w-0 w-full max-w-full flex flex-col min-h-screen transition-[margin] duration-300 ease-in-out ${
             isMobile ? 'ml-0' : isCollapsed ? 'ml-20' : 'ml-64'
           }`}
         >
           <AdminHeader />
-          <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-x-hidden">{children}</main>
+          <main className="p-3 sm:p-6 lg:p-8 flex-1 min-w-0 w-full max-w-full overflow-x-hidden">{children}</main>
         </div>
       </div>
     </SidebarContext.Provider>

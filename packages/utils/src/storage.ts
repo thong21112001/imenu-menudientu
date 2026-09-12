@@ -1,8 +1,9 @@
-import { Restaurant, Table, MenuCategory, MenuItem, Order, User, RoleDefinition, PermissionGroup } from '@imenu/types';
+import { Restaurant, Table, TableZone, MenuCategory, MenuItem, Order, User, RoleDefinition, PermissionGroup } from '@imenu/types';
 
 const STORAGE_KEYS = {
   RESTAURANT: 'imenu_restaurant_v1',
   TABLES: 'imenu_tables_v1',
+  ZONES: 'imenu_zones_v1',
   CATEGORIES: 'imenu_categories_v1',
   MENU_ITEMS: 'imenu_menu_items_v1',
   ORDERS: 'imenu_orders_v1',
@@ -273,6 +274,13 @@ export const SEED_MENU_ITEMS: MenuItem[] = [
     imageUrl: 'https://images.unsplash.com/photo-1528975604071-b4dc52a2d18c?auto=format&fit=crop&w=600&q=80',
     isAvailable: true,
   },
+];
+
+export const SEED_ZONES: TableZone[] = [
+  { id: 'zone-1', name: 'Tầng 1', description: 'Khu vực tầng trệt thoáng mát' },
+  { id: 'zone-2', name: 'Tầng 2 (Máy Lạnh)', description: 'Không gian máy lạnh yên tĩnh' },
+  { id: 'zone-3', name: 'Sân Vườn Ngoài Trời', description: 'Không gian mở ngoài trời' },
+  { id: 'zone-vip', name: 'Phòng VIP', description: 'Phòng riêng sang trọng riêng tư' },
 ];
 
 export const SEED_TABLES: Table[] = [
@@ -597,6 +605,21 @@ export const storageService = {
   saveTables(tables: Table[]) {
     if (typeof window === 'undefined') return;
     localStorage.setItem(STORAGE_KEYS.TABLES, JSON.stringify(tables));
+  },
+
+  getZones(): TableZone[] {
+    if (typeof window === 'undefined') return SEED_ZONES;
+    const data = localStorage.getItem(STORAGE_KEYS.ZONES);
+    if (!data) {
+      localStorage.setItem(STORAGE_KEYS.ZONES, JSON.stringify(SEED_ZONES));
+      return SEED_ZONES;
+    }
+    return JSON.parse(data);
+  },
+
+  saveZones(zones: TableZone[]) {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.ZONES, JSON.stringify(zones));
   },
 
   getOrders(): Order[] {
