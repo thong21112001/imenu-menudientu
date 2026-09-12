@@ -28,17 +28,27 @@ export const Button: React.FC<ButtonProps> = ({
   }[size];
 
   const variantStyles = {
-    primary: 'bg-[#124a36] hover:bg-[#176044] text-white shadow-md hover:shadow-lg focus:ring-[#176044]',
-    secondary: 'bg-[#edf6f1] text-[#176044] hover:bg-[#ddf4e8] border border-[#d9ece3] focus:ring-[#176044]',
-    outline: 'border border-[#b8cbc2] text-[#124a36] bg-white hover:bg-[#f0f7f3] focus:ring-[#124a36]',
-    ghost: 'text-[#4a5852] hover:bg-[#eef5f1] hover:text-[#124a36]',
-    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500',
-    amber: 'bg-[#eab867] hover:bg-[#f0c574] text-[#17211d] font-bold shadow-md focus:ring-[#eab867]',
+    primary: 'bg-[#124a36] hover:bg-[#09271d] text-white font-bold border border-[#124a36] hover:border-[#09271d] shadow-md shadow-[#124a36]/25 focus:ring-[#176044] active:bg-[#071f17]',
+    secondary: 'bg-[#e8f5ee] text-[#124a36] hover:bg-[#124a36] hover:text-white border-2 border-[#176044]/35 hover:border-[#124a36] font-bold shadow-sm focus:ring-[#176044]',
+    outline: 'border-2 border-slate-300 text-slate-800 bg-white hover:bg-[#f0f7f4] hover:text-[#124a36] hover:border-[#124a36] font-bold shadow-sm focus:ring-[#176044]',
+    ghost: 'text-slate-700 hover:bg-slate-100 hover:text-[#124a36] font-semibold',
+    danger: 'bg-rose-600 hover:bg-rose-700 text-white font-bold border border-rose-700 shadow-sm shadow-rose-600/20 focus:ring-rose-500',
+    amber: 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-[#09271d] font-extrabold border border-amber-600 shadow-md shadow-amber-500/25 focus:ring-amber-500',
   }[variant];
+
+  // Inline fallback style ensures button NEVER renders with invisible white background or white text on white
+  const fallbackStyles: React.CSSProperties = {
+    ...(variant === 'primary' && { backgroundColor: '#124a36', color: '#ffffff' }),
+    ...(variant === 'secondary' && { backgroundColor: '#e8f5ee', color: '#124a36' }),
+    ...(variant === 'outline' && { backgroundColor: '#ffffff', color: '#1e2924' }),
+    ...(variant === 'amber' && { backgroundColor: '#f59e0b', color: '#09271d' }),
+    ...(variant === 'danger' && { backgroundColor: '#e11d48', color: '#ffffff' }),
+  };
 
   return (
     <button
       className={`${baseStyles} ${sizeStyles} ${variantStyles} ${className}`}
+      style={fallbackStyles}
       disabled={disabled || isLoading}
       {...props}
     >

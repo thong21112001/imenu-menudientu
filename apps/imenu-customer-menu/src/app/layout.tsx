@@ -20,7 +20,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi">
-      <body className="min-h-screen bg-[#f7f5ef] antialiased pb-28">
+      <body className="min-h-screen bg-[#f7f5ef] antialiased">
         {children}
       </body>
     </html>

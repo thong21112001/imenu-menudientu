@@ -3,6 +3,8 @@ export type TableStatus = 'Available' | 'Occupied' | 'PaymentRequested' | 'Reser
 export interface TableZone {
   id: string;
   name: string;
+  description?: string;
+  tableCount?: number;
 }
 
 export interface Table {
@@ -17,4 +19,11 @@ export interface Table {
   totalGuests?: number;
   qrCodeUrl?: string;
   activeSince?: string;
+  qrStatus?: 'active' | 'revoked' | 'inactive';
+  qrToken?: string;
+  qrGeneratedAt?: string;
+  wifiSsid?: string;
+  wifiPassword?: string;
+  customUrl?: string;
 }
+

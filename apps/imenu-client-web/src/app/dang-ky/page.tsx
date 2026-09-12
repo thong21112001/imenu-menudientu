@@ -37,36 +37,37 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f7f5ef] py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-5xl px-4">
         
-        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-[#e4e8e5] grid grid-cols-1 md:grid-cols-12">
+        <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 grid grid-cols-1 md:grid-cols-12">
           
           {/* Aside Banner */}
-          <div className="md:col-span-4 bg-gradient-to-br from-[#0c3528] to-[#174e39] text-white p-8 sm:p-10 flex flex-col justify-between">
+          <div className="md:col-span-4 bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 text-white p-8 sm:p-10 flex flex-col justify-between">
             <div>
               <Link href="/">
                 <Logo light size="lg" />
               </Link>
-              <h2 className="text-2xl sm:text-3xl font-serif mt-10 mb-4 leading-tight">
-                Mở cửa quán <br />thật thông minh.
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-white mt-10 mb-4 leading-tight">
+                Mở cửa quán <br />
+                <span className="bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">thật thông minh.</span>
               </h2>
-              <p className="text-xs text-[#b9cbc4] leading-relaxed">
+              <p className="text-xs text-slate-300 leading-relaxed">
                 Thiết lập không gian vận hành số hóa riêng cho quán ăn của bạn chỉ trong 5 phút.
               </p>
             </div>
 
             <div className="space-y-4 pt-10">
-              <div className="flex items-center gap-3 text-xs text-[#ddf4e8]">
-                <CheckCircle2 className="w-4 h-4 text-[#f2c575]" />
+              <div className="flex items-center gap-3 text-xs text-emerald-100">
+                <CheckCircle2 className="w-4 h-4 text-amber-400" />
                 Tặng 1 tháng trải nghiệm gói Nâng cao
               </div>
-              <div className="flex items-center gap-3 text-xs text-[#ddf4e8]">
-                <CheckCircle2 className="w-4 h-4 text-[#f2c575]" />
+              <div className="flex items-center gap-3 text-xs text-emerald-100">
+                <CheckCircle2 className="w-4 h-4 text-amber-400" />
                 Tạo menu & mã QR bàn tự động
               </div>
-              <div className="flex items-center gap-3 text-xs text-[#ddf4e8]">
-                <CheckCircle2 className="w-4 h-4 text-[#f2c575]" />
+              <div className="flex items-center gap-3 text-xs text-emerald-100">
+                <CheckCircle2 className="w-4 h-4 text-amber-400" />
                 Không cần thẻ ngân hàng
               </div>
             </div>
@@ -74,8 +75,8 @@ export default function RegisterPage() {
 
           {/* Register Form */}
           <div className="md:col-span-8 p-8 sm:p-12">
-            <h1 className="text-2xl font-extrabold text-[#09271d]">Tạo nhà hàng của bạn</h1>
-            <p className="text-xs text-[#66736d] mt-1 mb-6">
+            <h1 className="text-2xl font-extrabold text-slate-900">Tạo nhà hàng của bạn</h1>
+            <p className="text-xs text-slate-500 mt-1 mb-6">
               Bạn có thể dễ dàng tùy chỉnh mọi thông tin và thực đơn sau khi đăng ký.
             </p>
 
@@ -83,7 +84,7 @@ export default function RegisterPage() {
               
               {/* Restaurant Info */}
               <div>
-                <h3 className="text-xs font-bold text-[#176044] uppercase tracking-wider mb-3">
+                <h3 className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-3">
                   1. Thông tin Nhà hàng / Quán ăn
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -95,7 +96,7 @@ export default function RegisterPage() {
                       value={restaurantName}
                       onChange={(e) => setRestaurantName(e.target.value)}
                       placeholder="Ví dụ: Bếp Nhà Quán"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#176044] focus:outline-none"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -106,7 +107,7 @@ export default function RegisterPage() {
                       value={restaurantPhone}
                       onChange={(e) => setRestaurantPhone(e.target.value)}
                       placeholder="0901 234 567"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#176044] focus:outline-none"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -117,7 +118,7 @@ export default function RegisterPage() {
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       placeholder="Số nhà, đường, phường/xã, quận/huyện, tỉnh/thành"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#176044] focus:outline-none"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -125,7 +126,7 @@ export default function RegisterPage() {
 
               {/* Owner Info */}
               <div>
-                <h3 className="text-xs font-bold text-[#176044] uppercase tracking-wider mb-3">
+                <h3 className="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-3">
                   2. Tài khoản Chủ quán
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -137,7 +138,7 @@ export default function RegisterPage() {
                       value={ownerName}
                       onChange={(e) => setOwnerName(e.target.value)}
                       placeholder="Nguyễn Minh An"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#176044] focus:outline-none"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -148,7 +149,7 @@ export default function RegisterPage() {
                       value={ownerPhone}
                       onChange={(e) => setOwnerPhone(e.target.value)}
                       placeholder="0901 234 567"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#176044] focus:outline-none"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                     />
                   </div>
                   <div className="sm:col-span-2">
@@ -159,7 +160,7 @@ export default function RegisterPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="owner@nhahang.vn"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#176044] focus:outline-none"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -170,7 +171,7 @@ export default function RegisterPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Tối thiểu 8 ký tự"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#176044] focus:outline-none"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -181,7 +182,7 @@ export default function RegisterPage() {
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="Nhập lại mật khẩu"
-                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-[#176044] focus:outline-none"
+                      className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-emerald-600 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -194,7 +195,7 @@ export default function RegisterPage() {
 
             <p className="text-center text-xs text-slate-500 mt-6">
               Đã có tài khoản?{' '}
-              <Link href="/dang-nhap" className="font-bold text-[#176044] hover:underline">
+              <Link href="/dang-nhap" className="font-bold text-emerald-700 hover:underline">
                 Đăng nhập ngay
               </Link>
             </p>

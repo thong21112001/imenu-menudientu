@@ -1,4 +1,6 @@
 @import "tailwindcss";
+@source "../../../../packages/ui";
+@source "../../../../packages/ui/src/**/*.{ts,tsx}";
 
 @layer base {
   :root {
@@ -19,10 +21,49 @@
   }
 }
 
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes scaleUp {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+@keyframes slideLeft {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-scaleUp {
+  animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slideLeft {
+  animation: slideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
 @media print {
+  /* Default hide all elements */
   body * {
     visibility: hidden;
   }
+
+  /* 1. Thermal bill print (80mm) */
   #thermal-print-area, #thermal-print-area * {
     visibility: visible;
   }
@@ -35,5 +76,36 @@
     padding: 2mm !important;
     background: #fff;
     color: #000;
+  }
+
+  /* 2. QR Code Standee Batch Print (A4 / A6 grid) */
+  #qr-print-area, #qr-print-area * {
+    visibility: visible;
+  }
+  #qr-print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 6mm !important;
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  .print-qr-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 16px !important;
+  }
+
+  .print-qr-card {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    border: 2px solid #09271d !important;
+    border-radius: 16px !important;
+    padding: 16px !important;
+    background: #fff !important;
+    box-shadow: none !important;
   }
 }

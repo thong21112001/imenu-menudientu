@@ -367,7 +367,7 @@ export default function CustomerTableMenuPage() {
   };
 
   return (
-    <div className="max-w-lg mx-auto bg-[#f7f5ef] min-h-screen">
+    <div className="max-w-lg mx-auto bg-[#f7f5ef] min-h-screen pb-28">
       {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
 
       {/* ================= HEADER ================= */}
