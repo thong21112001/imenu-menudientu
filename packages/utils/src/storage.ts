@@ -10,6 +10,9 @@ const STORAGE_KEYS = {
   USERS: 'imenu_users_v1',
   ROLES: 'imenu_roles_v1',
   CURRENT_USER: 'imenu_current_user_v1',
+  ACCESS_TOKEN: 'imenu_access_token_v1',
+  REFRESH_TOKEN: 'imenu_refresh_token_v1',
+  PERMISSIONS: 'imenu_permissions_v1',
 };
 
 // ================= SEED DATA =================
@@ -669,5 +672,67 @@ export const storageService = {
 
   getPermissionGroups(): PermissionGroup[] {
     return SEED_PERMISSION_GROUPS;
+  },
+
+  getAccessToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+  },
+
+  setAccessToken(token: string | null) {
+    if (typeof window === 'undefined') return;
+    if (token) {
+      localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    }
+  },
+
+  getRefreshToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+  },
+
+  setRefreshToken(token: string | null) {
+    if (typeof window === 'undefined') return;
+    if (token) {
+      localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, token);
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    }
+  },
+
+  getCurrentUser(): any | null {
+    if (typeof window === 'undefined') return null;
+    const data = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+    return data ? JSON.parse(data) : null;
+  },
+
+  setCurrentUser(user: any | null) {
+    if (typeof window === 'undefined') return;
+    if (user) {
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    }
+  },
+
+  getPermissions(): string[] {
+    if (typeof window === 'undefined') return [];
+    const data = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
+    return data ? JSON.parse(data) : [];
+  },
+
+  setPermissions(permissions: string[]) {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(STORAGE_KEYS.PERMISSIONS, JSON.stringify(permissions));
+  },
+
+  clearAuth() {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+    localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
   },
 };

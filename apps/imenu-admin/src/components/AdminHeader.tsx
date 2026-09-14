@@ -1,17 +1,37 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { storageService, realtimeHub, soundEngine } from '@imenu/utils';
+import { storageService, realtimeHub, soundEngine, apiClient } from '@imenu/utils';
 import { useSidebar } from './AdminLayoutShell';
-import { Bell, Menu, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Bell, Menu, PanelLeftClose, PanelLeftOpen, LogOut, ChevronDown, User as UserIcon } from 'lucide-react';
 
 export const AdminHeader: React.FC = () => {
   const { isMobile, isCollapsed, toggleSidebar } = useSidebar();
   const [isOpen, setIsOpen] = useState(true);
   const [notifications, setNotifications] = useState<string[]>([]);
   const [showNotificationList, setShowNotificationList] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [user, setUser] = useState<any>(storageService.getCurrentUser() || {
+    fullName: 'Nguyễn Minh An',
+    email: 'owner@sample.vn',
+    role: 'RESTAURANT_ADMIN',
+  });
 
   useEffect(() => {
+    // Lay profile moi nhat tu backend neu co token
+    if (storageService.getAccessToken()) {
+      apiClient.auth
+        .getMe()
+        .then((res) => {
+          if (res.data?.user) {
+            setUser(res.data.user);
+          }
+        })
+        .catch(() => {
+          // Dung storage fallback
+        });
+    }
+
     const unsub = realtimeHub.subscribe('*', (payload) => {
       if (payload.type === 'NEW_ORDER') {
         soundEngine.playNewOrderChime();
@@ -36,6 +56,38 @@ export const AdminHeader: React.FC = () => {
 
     return () => unsub();
   }, []);
+
+  const handleLogout = async () => {
+    await apiClient.auth.logout();
+    window.location.href = 'http://localhost:3004/dang-nhap';
+  };
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'RESTAURANT_ADMIN':
+      case 'system_admin':
+      case 'restaurant_admin':
+        return 'Chủ nhà hàng';
+      case 'RESTAURANT_MANAGER':
+      case 'restaurant_manager':
+        return 'Quản lý ca';
+      case 'CASHIER':
+      case 'cashier':
+        return 'Thu ngân';
+      case 'KITCHEN':
+      case 'kitchen':
+        return 'Nhân viên bếp';
+      case 'WAITER':
+      case 'waiter':
+        return 'Nhân viên phục vụ';
+      default:
+        return 'Nhân viên';
+    }
+  };
+
+  const userInitial = user?.fullName
+    ? user.fullName.charAt(0).toUpperCase()
+    : 'A';
 
   return (
     <header className="h-16 bg-white border-b border-[#e4e8e5] sticky top-0 z-30 flex items-center justify-between px-3 sm:px-6 shadow-2xs w-full min-w-0 max-w-full">
@@ -114,15 +166,39 @@ export const AdminHeader: React.FC = () => {
           )}
         </div>
 
-        {/* User profile */}
-        <div className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-200">
-          <div className="w-8 h-8 rounded-full bg-[#124a36] text-white grid place-items-center font-bold text-xs shrink-0">
-            A
-          </div>
-          <div className="hidden md:block text-left">
-            <strong className="text-xs text-slate-900 block leading-tight">Nguyễn Minh An</strong>
-            <small className="text-[10px] text-slate-500">Chủ nhà hàng</small>
-          </div>
+        {/* User profile with Dropdown */}
+        <div className="relative">
+          <button
+            onClick={() => setShowUserMenu(!showUserMenu)}
+            className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-200 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <div className="w-8 h-8 rounded-full bg-[#124a36] text-white grid place-items-center font-bold text-xs shrink-0">
+              {userInitial}
+            </div>
+            <div className="hidden md:block text-left">
+              <strong className="text-xs text-slate-900 block leading-tight">{user.fullName || 'Chủ nhà hàng'}</strong>
+              <small className="text-[10px] text-slate-500">{getRoleLabel(user.role)}</small>
+            </div>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden md:block" />
+          </button>
+
+          {showUserMenu && (
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-xs">
+              <div className="p-2.5 border-b border-slate-100 mb-1">
+                <p className="font-bold text-slate-900 truncate">{user.fullName}</p>
+                <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+                <span className="inline-block mt-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-semibold">
+                  {getRoleLabel(user.role)}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center gap-2 px-2.5 py-2 text-rose-600 hover:bg-rose-50 rounded-xl transition-colors font-semibold cursor-pointer text-left"
+              >
+                <LogOut className="w-4 h-4" /> Đăng xuất tài khoản
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

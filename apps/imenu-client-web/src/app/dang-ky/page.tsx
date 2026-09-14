@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Logo, Button } from '@imenu/ui';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
-import { storageService, SEED_RESTAURANT } from '@imenu/utils';
+import { CheckCircle2, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { apiClient } from '@imenu/utils';
 
 export default function RegisterPage() {
   const [restaurantName, setRestaurantName] = useState('Bếp Nhà - Ẩm Thực Việt');
@@ -15,25 +15,45 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('owner@sample.vn');
   const [password, setPassword] = useState('Demo@123');
   const [confirmPassword, setConfirmPassword] = useState('Demo@123');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirmPassword) {
-      alert('Mật khẩu xác nhận không khớp!');
+      setError('Mật khẩu xác nhận không khớp!');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Mật khẩu phải có tối thiểu 8 ký tự!');
       return;
     }
 
-    // Save custom restaurant config into localStorage
-    const newRest = {
-      ...SEED_RESTAURANT,
-      name: restaurantName,
-      phone: restaurantPhone,
-      address: address,
-    };
-    storageService.saveRestaurant(newRest);
+    setLoading(true);
+    setError('');
 
-    alert('Đăng ký nhà hàng thành công! Đang chuyển hướng vào bảng quản trị...');
-    window.location.href = 'http://localhost:3003';
+    try {
+      await apiClient.auth.register({
+        restaurant: {
+          name: restaurantName,
+          phone: restaurantPhone,
+          address: address,
+        },
+        owner: {
+          fullName: ownerName,
+          phone: ownerPhone,
+          email: email,
+          password: password,
+        },
+      });
+
+      alert('Đăng ký nhà hàng thành công! Đang chuyển hướng vào bảng quản trị...');
+      window.location.href = 'http://localhost:3003';
+    } catch (err: any) {
+      setError(err.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -79,6 +99,13 @@ export default function RegisterPage() {
             <p className="text-xs text-slate-500 mt-1 mb-6">
               Bạn có thể dễ dàng tùy chỉnh mọi thông tin và thực đơn sau khi đăng ký.
             </p>
+
+            {error && (
+              <div className="mb-6 p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2.5 text-xs text-rose-700 font-medium">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                <span>{error}</span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-6">
               
@@ -188,8 +215,21 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <Button type="submit" variant="primary" className="w-full py-3">
-                Tạo nhà hàng & Dùng thử miễn phí <ArrowRight className="w-4 h-4 ml-2" />
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={loading}
+                className="w-full py-3 flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Đang khởi tạo tài khoản & nhà hàng...
+                  </>
+                ) : (
+                  <>
+                    Tạo nhà hàng & Dùng thử miễn phí <ArrowRight className="w-4 h-4 ml-1" />
+                  </>
+                )}
               </Button>
             </form>
 

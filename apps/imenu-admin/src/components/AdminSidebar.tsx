@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from '@imenu/ui';
+import { storageService } from '@imenu/utils';
 import { useSidebar } from './AdminLayoutShell';
 import {
   LayoutDashboard,
@@ -39,6 +40,24 @@ const NAV_ITEMS = [
 export const AdminSidebar: React.FC = () => {
   const pathname = usePathname();
   const { isMobile, isSidebarOpen, isCollapsed, toggleCollapsed, closeSidebar } = useSidebar();
+  const [restaurant, setRestaurant] = useState<any>(storageService.getRestaurant());
+  const [user, setUser] = useState<any>(storageService.getCurrentUser());
+
+  useEffect(() => {
+    setRestaurant(storageService.getRestaurant());
+    setUser(storageService.getCurrentUser());
+  }, []);
+
+  const restaurantInitials = restaurant?.name
+    ? restaurant.name
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((w: string) => w[0].toUpperCase())
+        .join('')
+    : 'IM';
+
+  const branchName = user?.branchName || restaurant?.branches?.[0]?.name || 'Chi nhánh chính';
 
   const sidebarWidthClass = isMobile
     ? 'w-72'
@@ -83,11 +102,11 @@ export const AdminSidebar: React.FC = () => {
         <div className="px-3.5 py-3">
           <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#eab867] text-[#09271d] grid place-items-center font-bold text-xs shrink-0">
-              BN
+              {restaurantInitials}
             </div>
             <div className="min-w-0 flex-1">
-              <strong className="text-xs text-white block truncate">Bếp Nhà - Q.1</strong>
-              <small className="text-[10px] text-emerald-400 block truncate">Chi nhánh chính</small>
+              <strong className="text-xs text-white block truncate">{restaurant?.name || 'Bếp Nhà'}</strong>
+              <small className="text-[10px] text-emerald-400 block truncate">{branchName}</small>
             </div>
           </div>
         </div>

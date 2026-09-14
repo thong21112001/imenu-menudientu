@@ -1,18 +1,74 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { storageService } from '@imenu/utils';
+import { storageService, apiClient } from '@imenu/utils';
 import { Restaurant } from '@imenu/types';
 import { Card, Button } from '@imenu/ui';
-import { Store, CreditCard, Save } from 'lucide-react';
+import { Store, CreditCard, Save, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
 
 export default function SettingsPage() {
   const [rest, setRest] = useState<Restaurant>(storageService.getRestaurant());
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const handleSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    let isMounted = true;
+    const fetchRestaurant = async () => {
+      setLoading(true);
+      try {
+        const res = await apiClient.restaurant.getCurrent();
+        if (isMounted && res.data) {
+          setRest(res.data);
+        }
+      } catch (err: any) {
+        // Fallback silently to localStorage seed if not logged in or backend offline
+        console.warn('Không thể tải dữ liệu từ backend API, sử dụng dữ liệu cục bộ:', err.message);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    fetchRestaurant();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    storageService.saveRestaurant(rest);
-    alert('Đã lưu cấu hình nhà hàng thành công!');
+    setSaving(true);
+    setStatusMessage(null);
+
+    try {
+      // 1. Luu len backend API
+      const res = await apiClient.restaurant.updateCurrent({
+        name: rest.name,
+        phone: rest.phone,
+        address: rest.address,
+        bankAccount: rest.bankAccount,
+        isOpen: rest.isOpen,
+        openingHours: rest.openingHours,
+        tagline: rest.tagline,
+      });
+
+      if (res.data) {
+        setRest(res.data);
+      }
+
+      // 2. Dong bo localStorage
+      storageService.saveRestaurant(rest);
+      setStatusMessage({ type: 'success', text: 'Đã lưu cấu hình nhà hàng thành công lên máy chủ!' });
+    } catch (err: any) {
+      // Neu loi backend van luu vao localStorage de khong gian doan trai nghiem
+      storageService.saveRestaurant(rest);
+      setStatusMessage({
+        type: 'error',
+        text: `Lưu cục bộ thành công. Lỗi kết nối API: ${err.message}`,
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -23,6 +79,29 @@ export default function SettingsPage() {
           Cấu hình thông tin nhà hàng, tài khoản ngân hàng nhận tiền VietQR và giờ mở cửa
         </p>
       </div>
+
+      {statusMessage && (
+        <div
+          className={`p-3.5 rounded-xl border flex items-center gap-2.5 text-xs font-medium ${
+            statusMessage.type === 'success'
+              ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
+              : 'bg-amber-50 border-amber-200 text-amber-800'
+          }`}
+        >
+          {statusMessage.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+          )}
+          <span>{statusMessage.text}</span>
+        </div>
+      )}
+
+      {loading && (
+        <div className="flex items-center gap-2 text-xs text-slate-500 py-2">
+          <Loader2 className="w-4 h-4 animate-spin text-[#176044]" /> Đang đồng bộ thông tin từ máy chủ...
+        </div>
+      )}
 
       <form onSubmit={handleSave} className="space-y-6">
         <Card className="p-6 space-y-4">
@@ -35,7 +114,7 @@ export default function SettingsPage() {
               <label className="block text-xs font-semibold text-slate-700 mb-1">Tên nhà hàng</label>
               <input
                 type="text"
-                value={rest.name}
+                value={rest.name || ''}
                 onChange={(e) => setRest({ ...rest, name: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#176044]"
               />
@@ -44,7 +123,7 @@ export default function SettingsPage() {
               <label className="block text-xs font-semibold text-slate-700 mb-1">Hotline</label>
               <input
                 type="text"
-                value={rest.phone}
+                value={rest.phone || ''}
                 onChange={(e) => setRest({ ...rest, phone: e.target.value })}
                 className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#176044]"
               />
@@ -53,8 +132,18 @@ export default function SettingsPage() {
               <label className="block text-xs font-semibold text-slate-700 mb-1">Địa chỉ</label>
               <input
                 type="text"
-                value={rest.address}
+                value={rest.address || ''}
                 onChange={(e) => setRest({ ...rest, address: e.target.value })}
+                className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#176044]"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Khẩu hiệu (Slogan / Tagline)</label>
+              <input
+                type="text"
+                value={rest.tagline || ''}
+                onChange={(e) => setRest({ ...rest, tagline: e.target.value })}
+                placeholder="Ví dụ: Hương vị truyền thống, phục vụ hiện đại"
                 className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#176044]"
               />
             </div>
@@ -68,14 +157,19 @@ export default function SettingsPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1">Ngân hàng</label>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">Mã ngân hàng (MB, VCB, TCB...)</label>
               <input
                 type="text"
                 value={rest.bankAccount?.bankId || 'MB'}
                 onChange={(e) =>
                   setRest({
                     ...rest,
-                    bankAccount: { ...rest.bankAccount!, bankId: e.target.value, bankName: e.target.value },
+                    bankAccount: {
+                      bankId: e.target.value,
+                      bankName: rest.bankAccount?.bankName || e.target.value,
+                      accountNo: rest.bankAccount?.accountNo || '',
+                      accountName: rest.bankAccount?.accountName || '',
+                    },
                   })
                 }
                 className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#176044]"
@@ -89,7 +183,12 @@ export default function SettingsPage() {
                 onChange={(e) =>
                   setRest({
                     ...rest,
-                    bankAccount: { ...rest.bankAccount!, accountNo: e.target.value },
+                    bankAccount: {
+                      bankId: rest.bankAccount?.bankId || 'MB',
+                      bankName: rest.bankAccount?.bankName || 'MBBank',
+                      accountNo: e.target.value,
+                      accountName: rest.bankAccount?.accountName || '',
+                    },
                   })
                 }
                 className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#176044]"
@@ -103,7 +202,12 @@ export default function SettingsPage() {
                 onChange={(e) =>
                   setRest({
                     ...rest,
-                    bankAccount: { ...rest.bankAccount!, accountName: e.target.value },
+                    bankAccount: {
+                      bankId: rest.bankAccount?.bankId || 'MB',
+                      bankName: rest.bankAccount?.bankName || 'MBBank',
+                      accountNo: rest.bankAccount?.accountNo || '',
+                      accountName: e.target.value,
+                    },
                   })
                 }
                 className="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-[#176044]"
@@ -112,8 +216,13 @@ export default function SettingsPage() {
           </div>
         </Card>
 
-        <Button type="submit" variant="primary" icon={<Save className="w-4 h-4" />}>
-          Lưu thay đổi cài đặt
+        <Button
+          type="submit"
+          variant="primary"
+          disabled={saving}
+          icon={saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+        >
+          {saving ? 'Đang lưu lên máy chủ...' : 'Lưu thay đổi cài đặt'}
         </Button>
       </form>
     </div>
