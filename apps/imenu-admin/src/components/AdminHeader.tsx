@@ -11,11 +11,7 @@ export const AdminHeader: React.FC = () => {
   const [notifications, setNotifications] = useState<string[]>([]);
   const [showNotificationList, setShowNotificationList] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const [user, setUser] = useState<any>(storageService.getCurrentUser() || {
-    fullName: 'Nguyễn Minh An',
-    email: 'owner@sample.vn',
-    role: 'RESTAURANT_ADMIN',
-  });
+  const [user, setUser] = useState<any>(storageService.getCurrentUser());
 
   useEffect(() => {
     // Lay profile moi nhat tu backend neu co token
@@ -25,6 +21,7 @@ export const AdminHeader: React.FC = () => {
         .then((res) => {
           if (res.data?.user) {
             setUser(res.data.user);
+            storageService.setCurrentUser(res.data.user);
           }
         })
         .catch(() => {
@@ -58,8 +55,14 @@ export const AdminHeader: React.FC = () => {
   }, []);
 
   const handleLogout = async () => {
-    await apiClient.auth.logout();
-    window.location.href = 'http://localhost:3004/dang-nhap';
+    try {
+      await apiClient.auth.logout();
+    } catch {
+      // Bo qua loi network khi logout
+    } finally {
+      storageService.clearAuth();
+      window.location.href = '/login';
+    }
   };
 
   const getRoleLabel = (role: string) => {
@@ -176,8 +179,8 @@ export const AdminHeader: React.FC = () => {
               {userInitial}
             </div>
             <div className="hidden md:block text-left">
-              <strong className="text-xs text-slate-900 block leading-tight">{user.fullName || 'Chủ nhà hàng'}</strong>
-              <small className="text-[10px] text-slate-500">{getRoleLabel(user.role)}</small>
+              <strong className="text-xs text-slate-900 block leading-tight">{user?.fullName || user?.email || 'Tài khoản'}</strong>
+              <small className="text-[10px] text-slate-500">{getRoleLabel(user?.role || '')}</small>
             </div>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden md:block" />
           </button>
@@ -185,10 +188,10 @@ export const AdminHeader: React.FC = () => {
           {showUserMenu && (
             <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-xs">
               <div className="p-2.5 border-b border-slate-100 mb-1">
-                <p className="font-bold text-slate-900 truncate">{user.fullName}</p>
-                <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
+                <p className="font-bold text-slate-900 truncate">{user?.fullName || 'Chưa cập nhật tên'}</p>
+                <p className="text-[11px] text-slate-500 truncate">{user?.email || ''}</p>
                 <span className="inline-block mt-1 px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-semibold">
-                  {getRoleLabel(user.role)}
+                  {getRoleLabel(user?.role || '')}
                 </span>
               </div>
               <button

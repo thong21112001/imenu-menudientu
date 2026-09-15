@@ -120,8 +120,11 @@ async function request<T = any>(
             // Refresh token that bai
           }
         }
-        // Neu khong the lam moi token thi xoa token het han
-        storageService.setAccessToken(null);
+        // Neu khong the lam moi token thi xoa auth va thong bao da vang nguoi dung
+        storageService.clearAuth();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('imenu:unauthorized'));
+        }
       }
 
       const errorMessage =
