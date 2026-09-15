@@ -193,7 +193,7 @@ function LoginForm() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSampleAccount('admin@imenu.vn', 'Admin@123456')}
+                  onClick={() => setSampleAccount('admin@imenu.vn', 'admin123456')}
                   className="px-3 py-1.5 rounded-xl bg-white hover:bg-teal-50 border border-slate-200 hover:border-teal-300 text-xs font-medium text-slate-700 hover:text-teal-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                 >
                   <UserCheck className="w-3.5 h-3.5 text-teal-600" />
