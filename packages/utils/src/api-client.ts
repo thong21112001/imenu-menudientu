@@ -89,6 +89,41 @@ async function request<T = any>(
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
+      // Tu dong thu Refresh Token neu gap loi 401 Unauthorized
+      if (
+        res.status === 401 &&
+        !endpoint.includes('/auth/login') &&
+        !endpoint.includes('/auth/refresh') &&
+        !(options as any)?._isRetry
+      ) {
+        const refreshToken = storageService.getRefreshToken();
+        if (refreshToken) {
+          try {
+            const refreshRes = await fetch(`${baseUrl.replace(/\/$/, '')}/auth/refresh`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ refreshToken }),
+            });
+            const refreshData = await refreshRes.json().catch(() => ({}));
+            if (refreshRes.ok && refreshData?.data?.accessToken) {
+              storageService.setAccessToken(refreshData.data.accessToken);
+              return await request<T>(endpoint, {
+                ...options,
+                headers: {
+                  ...headers,
+                  Authorization: `Bearer ${refreshData.data.accessToken}`,
+                },
+                _isRetry: true,
+              } as any);
+            }
+          } catch {
+            // Refresh token that bai
+          }
+        }
+        // Neu khong the lam moi token thi xoa token het han
+        storageService.setAccessToken(null);
+      }
+
       const errorMessage =
         data?.message ||
         data?.error?.message ||

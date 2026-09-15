@@ -674,58 +674,159 @@ export const storageService = {
     return SEED_PERMISSION_GROUPS;
   },
 
+  getCookie(name: string): string | null {
+    if (typeof document === 'undefined') return null;
+    const match = document.cookie.match(new RegExp('(^|;\\s*)' + name + '=([^;]*)'));
+    return match ? decodeURIComponent(match[2]) : null;
+  },
+
+  setCookie(name: string, value: string | null, days = 7) {
+    if (typeof document === 'undefined') return;
+    if (!value) {
+      document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
+    } else {
+      const maxAge = days * 24 * 60 * 60;
+      document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    }
+  },
+
+  isTokenExpired(token: string | null): boolean {
+    if (!token) return true;
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return false;
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload =
+        typeof atob !== 'undefined'
+          ? decodeURIComponent(
+              atob(base64)
+                .split('')
+                .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join(''),
+            )
+          : Buffer.from(base64, 'base64').toString('utf8');
+      const payload = JSON.parse(jsonPayload);
+      if (!payload.exp) return false;
+      // Dùng buffer 10 giây tránh lệch đồng hồ
+      return payload.exp * 1000 < Date.now() + 10000;
+    } catch {
+      return false;
+    }
+  },
+
   getAccessToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+    let token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+
+    // Nếu token trong localStorage đã hết hạn thì xóa bỏ
+    if (token && this.isTokenExpired(token)) {
+      localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      token = null;
+    }
+
+    if (!token) {
+      token = this.getCookie('imenu_access_token');
+      if (token) {
+        if (this.isTokenExpired(token)) {
+          this.setCookie('imenu_access_token', null);
+          token = null;
+        } else {
+          localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+        }
+      }
+    }
+    return token;
   },
 
   setAccessToken(token: string | null) {
     if (typeof window === 'undefined') return;
     if (token) {
       localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token);
+      this.setCookie('imenu_access_token', token, 7);
     } else {
       localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      this.setCookie('imenu_access_token', null);
     }
   },
 
   getRefreshToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+    let token = localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+
+    if (token && this.isTokenExpired(token)) {
+      localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      token = null;
+    }
+
+    if (!token) {
+      token = this.getCookie('imenu_refresh_token');
+      if (token) {
+        if (this.isTokenExpired(token)) {
+          this.setCookie('imenu_refresh_token', null);
+          token = null;
+        } else {
+          localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, token);
+        }
+      }
+    }
+    return token;
   },
 
   setRefreshToken(token: string | null) {
     if (typeof window === 'undefined') return;
     if (token) {
       localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, token);
+      this.setCookie('imenu_refresh_token', token, 30);
     } else {
       localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      this.setCookie('imenu_refresh_token', null);
     }
   },
 
   getCurrentUser(): any | null {
     if (typeof window === 'undefined') return null;
-    const data = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+    let data = localStorage.getItem(STORAGE_KEYS.CURRENT_USER);
+    if (!data) {
+      const cookieUser = this.getCookie('imenu_user_info');
+      if (cookieUser) {
+        localStorage.setItem(STORAGE_KEYS.CURRENT_USER, cookieUser);
+        data = cookieUser;
+      }
+    }
     return data ? JSON.parse(data) : null;
   },
 
   setCurrentUser(user: any | null) {
     if (typeof window === 'undefined') return;
     if (user) {
-      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, JSON.stringify(user));
+      const userStr = JSON.stringify(user);
+      localStorage.setItem(STORAGE_KEYS.CURRENT_USER, userStr);
+      this.setCookie('imenu_user_info', userStr, 7);
     } else {
       localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
+      this.setCookie('imenu_user_info', null);
     }
   },
 
   getPermissions(): string[] {
     if (typeof window === 'undefined') return [];
-    const data = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
+    let data = localStorage.getItem(STORAGE_KEYS.PERMISSIONS);
+    if (!data) {
+      const cookiePerms = this.getCookie('imenu_permissions');
+      if (cookiePerms) {
+        localStorage.setItem(STORAGE_KEYS.PERMISSIONS, cookiePerms);
+        data = cookiePerms;
+      }
+    }
     return data ? JSON.parse(data) : [];
   },
 
   setPermissions(permissions: string[]) {
     if (typeof window === 'undefined') return;
-    localStorage.setItem(STORAGE_KEYS.PERMISSIONS, JSON.stringify(permissions));
+    const permsStr = JSON.stringify(permissions);
+    localStorage.setItem(STORAGE_KEYS.PERMISSIONS, permsStr);
+    this.setCookie('imenu_permissions', permsStr, 7);
   },
 
   clearAuth() {
@@ -734,5 +835,9 @@ export const storageService = {
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
     localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
+    this.setCookie('imenu_access_token', null);
+    this.setCookie('imenu_refresh_token', null);
+    this.setCookie('imenu_user_info', null);
+    this.setCookie('imenu_permissions', null);
   },
 };

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { storageService, apiClient } from '@imenu/utils';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminHeader } from './AdminHeader';
 
@@ -30,6 +31,51 @@ export const AdminLayoutShell: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+
+  // Auto-detect and sync cross-origin tokens (e.g., from login on port 3004)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const refreshToken = urlParams.get('refreshToken');
+
+      if (token) {
+        storageService.setAccessToken(token);
+        if (refreshToken) {
+          storageService.setRefreshToken(refreshToken);
+        }
+
+        // Clean query parameters from URL without page reload
+        urlParams.delete('token');
+        urlParams.delete('refreshToken');
+        const searchStr = urlParams.toString();
+        const cleanUrl = window.location.pathname + (searchStr ? `?${searchStr}` : '');
+        window.history.replaceState({}, '', cleanUrl);
+
+        // Fetch fresh profile and restaurant info
+        apiClient.auth
+          .getMe()
+          .then((res) => {
+            if (res.data?.user) {
+              storageService.setCurrentUser(res.data.user);
+            }
+          })
+          .catch(() => {});
+
+        apiClient.restaurant
+          .getCurrent()
+          .then((res) => {
+            if (res.data) {
+              storageService.saveRestaurant(res.data);
+            }
+          })
+          .catch(() => {});
+      }
+    } catch {
+      // Ignored
+    }
+  }, []);
 
   // Auto-detect viewport size & handle auto-responsive behavior
   useEffect(() => {

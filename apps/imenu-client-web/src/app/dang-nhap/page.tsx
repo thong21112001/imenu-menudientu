@@ -19,13 +19,19 @@ export default function LoginPage() {
     setError('');
 
     try {
-      await apiClient.auth.login({
+      const res = await apiClient.auth.login({
         email,
         password,
         rememberMe,
       });
 
-      window.location.href = 'http://localhost:3003';
+      const token = res.data?.accessToken;
+      const refreshToken = res.data?.refreshToken;
+      const redirectUrl = token
+        ? `http://localhost:3003?token=${encodeURIComponent(token)}&refreshToken=${encodeURIComponent(refreshToken || '')}`
+        : 'http://localhost:3003';
+
+      window.location.href = redirectUrl;
     } catch (err: any) {
       setError(err.message || 'Email hoặc mật khẩu không chính xác');
     } finally {

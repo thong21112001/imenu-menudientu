@@ -33,7 +33,7 @@ export default function RegisterPage() {
     setError('');
 
     try {
-      await apiClient.auth.register({
+      const res = await apiClient.auth.register({
         restaurant: {
           name: restaurantName,
           phone: restaurantPhone,
@@ -47,8 +47,14 @@ export default function RegisterPage() {
         },
       });
 
+      const token = res.data?.accessToken;
+      const refreshToken = res.data?.refreshToken;
+      const redirectUrl = token
+        ? `http://localhost:3003?token=${encodeURIComponent(token)}&refreshToken=${encodeURIComponent(refreshToken || '')}`
+        : 'http://localhost:3003';
+
       alert('Đăng ký nhà hàng thành công! Đang chuyển hướng vào bảng quản trị...');
-      window.location.href = 'http://localhost:3003';
+      window.location.href = redirectUrl;
     } catch (err: any) {
       setError(err.message || 'Đăng ký thất bại. Vui lòng kiểm tra lại thông tin.');
     } finally {
