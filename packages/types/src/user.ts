@@ -23,6 +23,7 @@ export interface User {
   isMainBranch?: boolean;
   avatarUrl?: string;
   status?: UserStatus;
+  isDemo?: boolean;
   createdAt?: string;
 }
 

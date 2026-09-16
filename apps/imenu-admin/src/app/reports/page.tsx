@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient, formatCurrencyVND, storageService } from '@imenu/utils';
 import { RevenueReportData, TopItemData, RestaurantBranch } from '@imenu/types';
-import { Card, Badge, Button } from '@imenu/ui';
+import { Card, Badge, Button, CustomSelect, useToast } from '@imenu/ui';
 import {
   BarChart3,
   TrendingUp,
@@ -22,6 +22,7 @@ import {
 type DatePreset = 'today' | '7days' | '30days' | 'thisMonth';
 
 export default function ReportsPage() {
+  const { toast } = useToast();
   const [report, setReport] = useState<RevenueReportData | null>(null);
   const [topItems, setTopItems] = useState<TopItemData[]>([]);
   const [branches, setBranches] = useState<RestaurantBranch[]>([]);
@@ -197,7 +198,10 @@ export default function ReportsPage() {
         </div>
 
         <button
-          onClick={() => loadData()}
+          onClick={async () => {
+            await loadData();
+            toast.info('Đã cập nhật số liệu báo cáo mới nhất');
+          }}
           className="self-end sm:self-auto p-2 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-600 cursor-pointer transition-colors"
           title="Làm mới báo cáo"
         >
@@ -234,22 +238,26 @@ export default function ReportsPage() {
 
         {/* Branch Filter for Head Office */}
         {isMainBranchUser && branches.length > 0 && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-500 flex items-center gap-1">
+          <div className="flex items-center gap-2 w-full md:w-80">
+            <span className="text-xs font-semibold text-slate-500 shrink-0 flex items-center gap-1">
               <Building2 className="w-3.5 h-3.5" /> Chi nhánh:
             </span>
-            <select
-              value={activeBranchId || 'all'}
-              onChange={(e) => handleBranchFilterChange(e.target.value)}
-              className="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white text-[#176044]"
-            >
-              <option value="all">🏢 Toàn chuỗi (Hợp nhất)</option>
-              {branches.map((b) => (
-                <option key={b._id || b.id} value={b._id || b.id}>
-                  {b.name} {b.isMainBranch ? '(HQ)' : ''}
-                </option>
-              ))}
-            </select>
+            <div className="flex-1 min-w-0">
+              <CustomSelect
+                value={activeBranchId || 'all'}
+                onChange={(val) => handleBranchFilterChange(val)}
+                options={[
+                  { value: 'all', label: '🏢 Toàn chuỗi (Hợp nhất)' },
+                  ...branches.map((b) => ({
+                    value: b._id || b.id || '',
+                    label: b.name,
+                    sublabel: b.address,
+                    badge: b.isMainBranch ? 'HQ' : undefined,
+                  })),
+                ]}
+                placeholder="Chọn chi nhánh..."
+              />
+            </div>
           </div>
         )}
       </div>

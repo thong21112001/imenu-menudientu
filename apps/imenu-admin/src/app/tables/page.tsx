@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { storageService, formatCurrencyVND, realtimeHub, soundEngine } from '@imenu/utils';
 import { Table, Order, TableStatus } from '@imenu/types';
-import { Card, Button, StatusChip, Drawer, Modal } from '@imenu/ui';
+import { Card, Button, StatusChip, Drawer, Modal, useToast } from '@imenu/ui';
 import {
   Grid3X3,
   Users,
@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 
 export default function TablesMapPage() {
+  const { toast } = useToast();
   const [tables, setTables] = useState<Table[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [activeZone, setActiveZone] = useState<string>('all');
@@ -84,7 +85,7 @@ export default function TablesMapPage() {
     realtimeHub.publish('PAYMENT_COMPLETED', { tableId: selectedTable.id }, 'rest-bep-nha');
     setSelectedTable(null);
     loadData();
-    alert(`Đã hoàn tất thanh toán cho ${selectedTable.name}!`);
+    toast.success(`Đã hoàn tất thanh toán cho ${selectedTable.name}!`);
   };
 
   return (

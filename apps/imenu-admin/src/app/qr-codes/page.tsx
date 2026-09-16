@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { storageService } from '@imenu/utils';
 import { Table, Restaurant, TableZone } from '@imenu/types';
-import { Card, Button, QrCodeRenderer, Badge, Modal } from '@imenu/ui';
+import { Card, Button, QrCodeRenderer, Badge, Modal, CustomSelect, useToast } from '@imenu/ui';
 import {
   Printer,
   Download,
@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 
 export default function QrCodesGeneratorPage() {
+  const { toast } = useToast();
   const [restaurant, setRestaurant] = useState<Restaurant>(storageService.getRestaurant());
   const [tables, setTables] = useState<Table[]>([]);
   const [zones, setZones] = useState<TableZone[]>([]);
@@ -44,9 +45,6 @@ export default function QrCodesGeneratorPage() {
 
   // Copy feedback state
   const [copiedTableId, setCopiedTableId] = useState<string | null>(null);
-
-  // Toast Notification state
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   // Modal 1: Add New Table & QR
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
@@ -90,10 +88,9 @@ export default function QrCodesGeneratorPage() {
   }, []);
 
   const showToast = (text: string, type: 'success' | 'info' | 'error' = 'success') => {
-    setToastMessage({ text, type });
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 3500);
+    if (type === 'error') toast.error(text);
+    else if (type === 'info') toast.info(text);
+    else toast.success(text);
   };
 
   // Helper: Get zone name
@@ -185,7 +182,7 @@ export default function QrCodesGeneratorPage() {
   const handleDeleteZone = (zoneId: string) => {
     const tablesInZone = tables.filter((t) => t.zoneId === zoneId);
     if (tablesInZone.length > 0) {
-      alert(
+      toast.error(
         `Không thể xóa khu vực này vì đang có ${tablesInZone.length} bàn ăn thuộc khu vực này. Vui lòng chuyển các bàn sang khu vực khác trước.`
       );
       return;
@@ -240,7 +237,7 @@ export default function QrCodesGeneratorPage() {
 
     // Check duplicate code
     if (tables.some((t) => t.code.toLowerCase() === newTableCode.trim().toLowerCase())) {
-      alert('Mã bàn này đã tồn tại! Vui lòng chọn mã khác.');
+      toast.error('Mã bàn này đã tồn tại! Vui lòng chọn mã khác.');
       return;
     }
 
@@ -309,7 +306,7 @@ export default function QrCodesGeneratorPage() {
         (t) => t.id !== editingTable.id && t.code.toLowerCase() === editTableCode.trim().toLowerCase()
       )
     ) {
-      alert('Mã bàn này đã trùng với một bàn khác! Vui lòng chọn mã khác.');
+      toast.error('Mã bàn này đã trùng với một bàn khác! Vui lòng chọn mã khác.');
       return;
     }
 
@@ -480,24 +477,6 @@ export default function QrCodesGeneratorPage() {
 
   return (
     <div className="space-y-6 w-full min-w-0 max-w-full">
-      {/* Toast Alert Feedback */}
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 animate-bounce">
-          <div
-            className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-2.5 text-xs font-bold ${
-              toastMessage.type === 'success'
-                ? 'bg-emerald-900 text-emerald-100 border-emerald-700'
-                : toastMessage.type === 'error'
-                ? 'bg-red-900 text-red-100 border-red-700'
-                : 'bg-slate-900 text-white border-slate-700'
-            }`}
-          >
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>{toastMessage.text}</span>
-          </div>
-        </div>
-      )}
-
       {/* ================= HEADER BAR ================= */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full min-w-0">
         <div className="min-w-0 flex-1">
@@ -591,15 +570,17 @@ export default function QrCodesGeneratorPage() {
 
           {/* QR Status Filter & Print format buttons */}
           <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start shrink-0">
-            <select
-              value={selectedQrStatus}
-              onChange={(e) => setSelectedQrStatus(e.target.value as any)}
-              className="px-2.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white font-bold text-slate-700 flex-1 sm:flex-initial"
-            >
-              <option value="all">Tất cả ({tables.length})</option>
-              <option value="active">Kích hoạt ({activeQrCount})</option>
-              <option value="revoked">Đã thu hồi ({revokedQrCount})</option>
-            </select>
+            <div className="w-36">
+              <CustomSelect
+                value={selectedQrStatus}
+                onChange={(val) => setSelectedQrStatus(val as any)}
+                options={[
+                  { value: 'all', label: `Tất cả (${tables.length})` },
+                  { value: 'active', label: `Kích hoạt (${activeQrCount})` },
+                  { value: 'revoked', label: `Đã thu hồi (${revokedQrCount})` },
+                ]}
+              />
+            </div>
 
             {/* Print Size Selection */}
             <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0">
@@ -969,17 +950,15 @@ export default function QrCodesGeneratorPage() {
                   className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-400 bg-emerald-50/30 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 font-bold"
                 />
               ) : (
-                <select
+                <CustomSelect
                   value={newTableZoneId}
-                  onChange={(e) => setNewTableZoneId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-                >
-                  {zones.map((z) => (
-                    <option key={z.id} value={z.id}>
-                      {z.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setNewTableZoneId(val)}
+                  options={zones.map((z) => ({
+                    value: z.id,
+                    label: z.name,
+                  }))}
+                  placeholder="Chọn khu vực..."
+                />
               )}
             </div>
 
@@ -1093,17 +1072,15 @@ export default function QrCodesGeneratorPage() {
                   className="w-full px-3.5 py-2.5 rounded-xl border border-emerald-400 bg-emerald-50/30 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 font-bold"
                 />
               ) : (
-                <select
+                <CustomSelect
                   value={editTableZoneId}
-                  onChange={(e) => setEditTableZoneId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-                >
-                  {zones.map((z) => (
-                    <option key={z.id} value={z.id}>
-                      {z.name}
-                    </option>
-                  ))}
-                </select>
+                  onChange={(val) => setEditTableZoneId(val)}
+                  options={zones.map((z) => ({
+                    value: z.id,
+                    label: z.name,
+                  }))}
+                  placeholder="Chọn khu vực..."
+                />
               )}
             </div>
 

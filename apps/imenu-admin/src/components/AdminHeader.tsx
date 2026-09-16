@@ -1,9 +1,8 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { storageService, realtimeHub, soundEngine, apiClient } from '@imenu/utils';
 import { RestaurantBranch } from '@imenu/types';
 import { useSidebar } from './AdminLayoutShell';
+import { useToast } from '@imenu/ui';
 import {
   Bell,
   Menu,
@@ -20,6 +19,7 @@ import {
 
 export const AdminHeader: React.FC = () => {
   const { isMobile, isCollapsed, toggleSidebar } = useSidebar();
+  const toast = useToast();
   const [notifications, setNotifications] = useState<string[]>([]);
   const [showNotificationList, setShowNotificationList] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
@@ -32,7 +32,12 @@ export const AdminHeader: React.FC = () => {
   const [closeReason, setCloseReason] = useState('');
   const [statusError, setStatusError] = useState('');
 
+  const userMenuRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
+  const branchDropdownRef = useRef<HTMLDivElement>(null);
+
   const isMainBranchUser = Boolean(user?.isMainBranch);
+  const isDemo = Boolean(user?.isDemo || user?.email === 'owner@sample.vn');
 
   const fetchBranches = async () => {
     try {
@@ -95,6 +100,36 @@ export const AdminHeader: React.FC = () => {
     };
   }, []);
 
+  // Click-outside listener for User Menu, Notification List, and Branch Switcher
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotificationList(false);
+      }
+      if (branchDropdownRef.current && !branchDropdownRef.current.contains(event.target as Node)) {
+        setShowBranchDropdown(false);
+      }
+    };
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowUserMenu(false);
+        setShowNotificationList(false);
+        setShowBranchDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, []);
+
   const handleLogout = async () => {
     try {
       await apiClient.auth.logout();
@@ -102,6 +137,7 @@ export const AdminHeader: React.FC = () => {
       // Bo qua loi network khi logout
     } finally {
       storageService.clearAuth();
+      toast.info('Đã đăng xuất tài khoản thành công');
       window.location.href = '/login';
     }
   };
@@ -110,6 +146,10 @@ export const AdminHeader: React.FC = () => {
     storageService.setActiveBranchId(branchId);
     setActiveBranchId(branchId);
     setShowBranchDropdown(false);
+    const targetName = branchId
+      ? branches.find((b) => (b._id || b.id) === branchId)?.name || 'Chi nhánh'
+      : 'Toàn chuỗi (Hợp nhất)';
+    toast.info(`Phạm vi dữ liệu: ${targetName}`);
   };
 
   // Xác định chi nhánh hiện hành để hiển thị trạng thái
@@ -122,13 +162,13 @@ export const AdminHeader: React.FC = () => {
   const currentStatus = currentBranch?.status || 'ACTIVE';
   const isBranchOpen = currentStatus === 'ACTIVE';
 
-  // Toggle trạng thái mở/đóng cửa chi nhánh
+  // Toggle trạng thái mở/đóng cửa chi nhánh (Áp dụng cho cả chi nhánh chính và chi nhánh con)
   const handleToggleBranchStatus = async () => {
     if (!currentBranch) return;
     const branchId = currentBranch._id || currentBranch.id;
 
-    if (currentBranch.isMainBranch && isBranchOpen) {
-      alert('Không thể tạm đóng chi nhánh chính vì đây là trụ sở quản trị của hệ thống nhà hàng.');
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể đổi trạng thái hoạt động.');
       return;
     }
 
@@ -142,9 +182,10 @@ export const AdminHeader: React.FC = () => {
       setLoadingStatusChange(true);
       try {
         await apiClient.branches.reopen(branchId);
+        toast.success(`Đã mở cửa hoạt động cho ${currentBranch.name}`);
         await fetchBranches();
       } catch (err: any) {
-        alert(err.message || 'Không thể mở cửa chi nhánh');
+        toast.error(err.message || 'Không thể mở cửa chi nhánh');
       } finally {
         setLoadingStatusChange(false);
       }
@@ -161,9 +202,11 @@ export const AdminHeader: React.FC = () => {
     try {
       await apiClient.branches.close(branchId, closeReason.trim());
       setShowCloseModal(false);
+      toast.success(`Đã tạm đóng cửa ${currentBranch.name}`);
       await fetchBranches();
     } catch (err: any) {
       setStatusError(err.message || 'Không thể tạm đóng chi nhánh');
+      toast.error(err.message || 'Không thể tạm đóng chi nhánh');
     } finally {
       setLoadingStatusChange(false);
     }
@@ -222,7 +265,7 @@ export const AdminHeader: React.FC = () => {
 
           {/* Branch Switcher / Current Branch Indicator */}
           {isMainBranchUser ? (
-            <div className="relative">
+            <div ref={branchDropdownRef} className="relative">
               <button
                 onClick={() => setShowBranchDropdown(!showBranchDropdown)}
                 className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-xs font-bold text-[#09271d] transition-all cursor-pointer border border-slate-200/60"
@@ -317,19 +360,11 @@ export const AdminHeader: React.FC = () => {
               <span className="text-slate-700">{isBranchOpen ? 'Đang mở cửa' : 'Tạm đóng cửa'}</span>
               <button
                 onClick={handleToggleBranchStatus}
-                disabled={loadingStatusChange || (currentBranch.isMainBranch && isBranchOpen)}
-                className={`ml-0.5 text-[10px] font-bold ${
-                  currentBranch.isMainBranch && isBranchOpen
-                    ? 'text-slate-400 cursor-not-allowed'
-                    : 'text-[#176044] hover:underline cursor-pointer'
-                }`}
-                title={
-                  currentBranch.isMainBranch && isBranchOpen
-                    ? 'Trụ sở chính luôn mở cửa vận hành'
-                    : 'Chuyển đổi trạng thái hoạt động'
-                }
+                disabled={loadingStatusChange}
+                className="ml-0.5 text-[10px] font-bold text-[#176044] hover:underline cursor-pointer"
+                title={isBranchOpen ? 'Tạm đóng cửa chi nhánh (hết ca/ngày)' : 'Mở cửa hoạt động chi nhánh'}
               >
-                {loadingStatusChange ? '...' : currentBranch.isMainBranch && isBranchOpen ? 'Cố định' : 'Đổi'}
+                {loadingStatusChange ? '...' : isBranchOpen ? 'Đóng cửa' : 'Mở cửa'}
               </button>
             </div>
           )}
@@ -337,7 +372,7 @@ export const AdminHeader: React.FC = () => {
 
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           {/* Notification Bell */}
-          <div className="relative">
+          <div ref={notifRef} className="relative">
             <button
               onClick={() => setShowNotificationList(!showNotificationList)}
               className="p-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl relative cursor-pointer"
@@ -380,7 +415,7 @@ export const AdminHeader: React.FC = () => {
           </div>
 
           {/* User profile with Dropdown */}
-          <div className="relative">
+          <div ref={userMenuRef} className="relative">
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center gap-2 pl-2 sm:pl-3 border-l border-slate-200 cursor-pointer hover:opacity-80 transition-opacity"
@@ -402,13 +437,18 @@ export const AdminHeader: React.FC = () => {
                 <div className="p-2.5 border-b border-slate-100 mb-1">
                   <p className="font-bold text-slate-900 truncate">{user?.fullName || 'Chưa cập nhật tên'}</p>
                   <p className="text-[11px] text-slate-500 truncate">{user?.email || ''}</p>
-                  <div className="mt-1 flex items-center gap-1.5">
+                  <div className="mt-1 flex items-center gap-1.5 flex-wrap">
                     <span className="inline-block px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-semibold">
                       {getRoleLabel(user?.role || '')}
                     </span>
                     {isMainBranchUser && (
                       <span className="inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-bold">
                         Trụ sở chính
+                      </span>
+                    )}
+                    {isDemo && (
+                      <span className="inline-block px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 text-[9px] font-bold">
+                        Dùng thử (Demo)
                       </span>
                     )}
                   </div>

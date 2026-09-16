@@ -3,10 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { storageService, apiClient } from '@imenu/utils';
 import { Restaurant } from '@imenu/types';
-import { Card, Button } from '@imenu/ui';
-import { Store, CreditCard, Save, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Card, Button, useToast } from '@imenu/ui';
+import { Store, CreditCard, Save, CheckCircle2, AlertCircle, Loader2, Shield } from 'lucide-react';
 
 export default function SettingsPage() {
+  const toast = useToast();
+  const currentUser = storageService.getCurrentUser();
+  const isDemo = Boolean(currentUser?.isDemo || currentUser?.email === 'owner@sample.vn');
   const [rest, setRest] = useState<Restaurant>(storageService.getRestaurant());
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -37,6 +40,10 @@ export default function SettingsPage() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể sửa thông tin cài đặt nhà hàng.');
+      return;
+    }
     setSaving(true);
     setStatusMessage(null);
 
@@ -58,10 +65,12 @@ export default function SettingsPage() {
 
       // 2. Dong bo localStorage
       storageService.saveRestaurant(rest);
+      toast.success('Đã lưu cấu hình nhà hàng thành công lên máy chủ!');
       setStatusMessage({ type: 'success', text: 'Đã lưu cấu hình nhà hàng thành công lên máy chủ!' });
     } catch (err: any) {
       // Neu loi backend van luu vao localStorage de khong gian doan trai nghiem
       storageService.saveRestaurant(rest);
+      toast.error(`Lỗi cập nhật cấu hình: ${err.message}`);
       setStatusMessage({
         type: 'error',
         text: `Lưu cục bộ thành công. Lỗi kết nối API: ${err.message}`,
@@ -79,6 +88,26 @@ export default function SettingsPage() {
           Cấu hình thông tin nhà hàng, tài khoản ngân hàng nhận tiền VietQR và giờ mở cửa
         </p>
       </div>
+
+      {/* Demo Account Notice */}
+      {isDemo && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-between gap-3 text-amber-900 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 grid place-items-center shrink-0">
+              <Shield className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold">Chế độ trải nghiệm (Demo Account)</p>
+              <p className="text-xs text-amber-700/90">
+                Bạn đang xem cấu hình nhà hàng ở chế độ xem thử. Các thao tác cập nhật tên, địa chỉ, số tài khoản nhận tiền đã được khóa bảo vệ.
+              </p>
+            </div>
+          </div>
+          <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-200/70 text-amber-900">
+            Chỉ xem (View Only)
+          </span>
+        </div>
+      )}
 
       {statusMessage && (
         <div

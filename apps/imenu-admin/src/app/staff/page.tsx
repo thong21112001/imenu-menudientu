@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { storageService, apiClient } from '@imenu/utils';
 import { User, RoleDefinition, PermissionGroup, UserRole, RestaurantBranch } from '@imenu/types';
-import { Card, Button, Badge, Modal } from '@imenu/ui';
+import { Card, Button, Badge, Modal, useToast, CustomSelect } from '@imenu/ui';
 import {
   Users,
   UserPlus,
@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 
 export default function StaffPage() {
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
   const [users, setUsers] = useState<User[]>([]);
   const [roles, setRoles] = useState<RoleDefinition[]>([]);
@@ -38,6 +39,8 @@ export default function StaffPage() {
   const [branches, setBranches] = useState<RestaurantBranch[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(storageService.getCurrentUser());
   const [staffLoading, setStaffLoading] = useState<boolean>(false);
+
+  const isDemo = Boolean(currentUser?.isDemo || currentUser?.email === 'owner@sample.vn');
 
   // Search & Filter state for Users
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -137,6 +140,10 @@ export default function StaffPage() {
 
   // Open Add/Edit User Modal
   const handleOpenUserModal = (usr?: User) => {
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể thêm hoặc sửa nhân viên.');
+      return;
+    }
     if (usr) {
       setEditingUser(usr);
       setUserFullName(usr.fullName);
@@ -164,6 +171,10 @@ export default function StaffPage() {
 
   // Open Transfer Modal
   const handleOpenTransferModal = (usr: User) => {
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể điều chuyển nhân sự.');
+      return;
+    }
     setTransferUser(usr);
     setTransferMsg(null);
     // Default target branch to another branch
@@ -176,16 +187,24 @@ export default function StaffPage() {
   const handleConfirmTransfer = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!transferUser || !targetBranchId) return;
+
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể điều chuyển nhân sự.');
+      return;
+    }
+
     setTransferLoading(true);
     setTransferMsg(null);
 
     try {
       await apiClient.staff.transfer(transferUser.id, targetBranchId);
       const targetB = branches.find((b) => (b._id || b.id) === targetBranchId);
+      const successText = `Đã điều chuyển nhân viên "${transferUser.fullName}" sang "${targetB?.name || 'Chi nhánh mới'}" thành công!`;
       setTransferMsg({
         type: 'success',
-        text: `Đã điều chuyển nhân viên "${transferUser.fullName}" sang "${targetB?.name || 'Chi nhánh mới'}" thành công!`,
+        text: successText,
       });
+      toast.success(successText);
       // Cập nhật state cục bộ
       const updated = users.map((u) =>
         u.id === transferUser.id
@@ -201,12 +220,14 @@ export default function StaffPage() {
       setTimeout(() => {
         setIsTransferModalOpen(false);
         setTransferMsg(null);
-      }, 1500);
+      }, 1200);
     } catch (err: any) {
+      const errMsg = err.message || 'Không thể điều chuyển nhân sự giữa các chi nhánh';
       setTransferMsg({
         type: 'error',
-        text: err.message || 'Không thể điều chuyển nhân sự giữa các chi nhánh',
+        text: errMsg,
       });
+      toast.error(errMsg);
     } finally {
       setTransferLoading(false);
     }
@@ -216,6 +237,11 @@ export default function StaffPage() {
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userFullName.trim() || !userEmail.trim()) return;
+
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể thay đổi thông tin nhân viên.');
+      return;
+    }
 
     try {
       if (editingUser) {
@@ -242,6 +268,7 @@ export default function StaffPage() {
         );
         setUsers(updated);
         storageService.saveUsers(updated);
+        toast.success(`Đã cập nhật nhân viên "${userFullName.trim()}" thành công`);
       } else {
         const createPayload = {
           fullName: userFullName.trim(),
@@ -268,37 +295,54 @@ export default function StaffPage() {
         const updated = [newUser, ...users];
         setUsers(updated);
         storageService.saveUsers(updated);
+        toast.success(`Đã tạo mới nhân viên "${userFullName.trim()}" thành công`);
       }
       setIsUserModalOpen(false);
     } catch (err: any) {
-      alert(err.message || 'Lỗi lưu thông tin nhân viên');
+      toast.error(err.message || 'Lỗi lưu thông tin nhân viên');
     }
   };
 
   // Toggle User Status (Lock/Unlock)
   const handleToggleUserStatus = (userId: string) => {
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể khóa/mở khóa nhân viên.');
+      return;
+    }
+    const targetUser = users.find((u) => u.id === userId);
+    const nextStatus = targetUser?.status === 'INACTIVE' ? 'ACTIVE' : 'INACTIVE';
     const updated = users.map((u) => {
       if (u.id === userId) {
-        const nextStatus = u.status === 'INACTIVE' ? 'ACTIVE' : 'INACTIVE';
         return { ...u, status: nextStatus as 'ACTIVE' | 'INACTIVE' };
       }
       return u;
     });
     setUsers(updated);
     storageService.saveUsers(updated);
+    toast.info(nextStatus === 'ACTIVE' ? 'Đã mở khóa tài khoản' : 'Đã tạm khóa tài khoản');
   };
 
   // Delete User
   const handleDeleteUser = (userId: string) => {
-    if (confirm('Bạn có chắc muốn xóa nhân viên này khỏi hệ thống?')) {
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể xóa nhân viên.');
+      return;
+    }
+    const targetUser = users.find((u) => u.id === userId);
+    if (confirm(`Bạn có chắc muốn xóa nhân viên "${targetUser?.fullName || 'này'}" khỏi hệ thống?`)) {
       const updated = users.filter((u) => u.id !== userId);
       setUsers(updated);
       storageService.saveUsers(updated);
+      toast.success('Đã xóa nhân viên thành công');
     }
   };
 
   // Open Add/Edit Role Modal
   const handleOpenRoleModal = (rl?: RoleDefinition) => {
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể thay đổi vai trò phân quyền.');
+      return;
+    }
     if (rl) {
       setEditingRole(rl);
       setRoleName(rl.name);
@@ -355,6 +399,11 @@ export default function StaffPage() {
     e.preventDefault();
     if (!roleName.trim() || !roleCode.trim()) return;
 
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể thay đổi phân quyền.');
+      return;
+    }
+
     let updated: RoleDefinition[];
     if (editingRole) {
       updated = roles.map((r) =>
@@ -368,6 +417,7 @@ export default function StaffPage() {
             }
           : r
       );
+      toast.success(`Đã cập nhật vai trò "${roleName.trim()}"`);
     } else {
       const newRole: RoleDefinition = {
         id: `role-${Date.now()}`,
@@ -380,6 +430,7 @@ export default function StaffPage() {
         createdAt: new Date().toISOString(),
       };
       updated = [...roles, newRole];
+      toast.success(`Đã tạo vai trò mới "${roleName.trim()}"`);
     }
 
     setRoles(updated);
@@ -389,21 +440,26 @@ export default function StaffPage() {
 
   // Delete Custom Role
   const handleDeleteRole = (roleId: string) => {
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể xóa vai trò.');
+      return;
+    }
     const roleToDelete = roles.find((r) => r.id === roleId);
     if (!roleToDelete) return;
     if (roleToDelete.isSystem) {
-      alert('Không thể xóa vai trò mặc định của hệ thống!');
+      toast.error('Không thể xóa vai trò mặc định của hệ thống!');
       return;
     }
     const usersWithRole = users.filter((u) => u.role === roleToDelete.code);
     if (usersWithRole.length > 0) {
-      alert(`Đang có ${usersWithRole.length} nhân viên thuộc vai trò này. Hãy chuyển vai trò của họ trước khi xóa!`);
+      toast.error(`Đang có ${usersWithRole.length} nhân viên thuộc vai trò này. Hãy chuyển vai trò của họ trước khi xóa!`);
       return;
     }
     if (confirm(`Bạn có chắc muốn xóa vai trò "${roleToDelete.name}"?`)) {
       const updated = roles.filter((r) => r.id !== roleId);
       setRoles(updated);
       storageService.saveRoles(updated);
+      toast.success(`Đã xóa vai trò "${roleToDelete.name}"`);
     }
   };
 
@@ -460,6 +516,26 @@ export default function StaffPage() {
         </div>
       </div>
 
+      {/* Demo Account Protection Notice */}
+      {isDemo && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-between gap-3 text-amber-900 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 grid place-items-center shrink-0">
+              <Shield className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold">Chế độ trải nghiệm (Demo Account)</p>
+              <p className="text-xs text-amber-700/90">
+                Bạn đang sử dụng tài khoản mẫu. Dữ liệu nhân sự và vai trò chỉ ở chế độ xem, các thao tác thêm, sửa, xóa, điều chuyển đã được bảo vệ.
+              </p>
+            </div>
+          </div>
+          <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-200/70 text-amber-900">
+            Chỉ xem (View Only)
+          </span>
+        </div>
+      )}
+
       {/* Main Tab Navigation */}
       <div className="flex items-center gap-2 border-b border-slate-200">
         <button
@@ -509,46 +585,51 @@ export default function StaffPage() {
               />
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              <select
-                value={roleFilter}
-                onChange={(e) => setRoleFilter(e.target.value)}
-                className="px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-              >
-                <option value="all">Tất cả vai trò</option>
-                {roles.map((r) => (
-                  <option key={r.id} value={r.code}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
+            <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              <div className="w-full sm:w-44">
+                <CustomSelect
+                  size="sm"
+                  value={roleFilter}
+                  onChange={(val) => setRoleFilter(val)}
+                  options={[
+                    { value: 'all', label: 'Tất cả vai trò' },
+                    ...roles.map((r) => ({ value: r.code, label: r.name })),
+                  ]}
+                />
+              </div>
 
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-              >
-                <option value="all">Tất cả trạng thái</option>
-                <option value="ACTIVE">Đang hoạt động</option>
-                <option value="INACTIVE">Tạm khóa</option>
-              </select>
+              <div className="w-full sm:w-36">
+                <CustomSelect
+                  size="sm"
+                  value={statusFilter}
+                  onChange={(val) => setStatusFilter(val)}
+                  options={[
+                    { value: 'all', label: 'Tất cả trạng thái' },
+                    { value: 'ACTIVE', label: 'Đang hoạt động' },
+                    { value: 'INACTIVE', label: 'Tạm khóa' },
+                  ]}
+                />
+              </div>
 
               {isMainBranchUser && branches.length > 0 && (
-                <select
-                  value={branchFilter}
-                  onChange={(e) => {
-                    setBranchFilter(e.target.value);
-                    loadStaffData(e.target.value);
-                  }}
-                  className="px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white font-semibold text-[#176044]"
-                >
-                  <option value="all">🏢 Tất cả chi nhánh</option>
-                  {branches.map((b) => (
-                    <option key={b._id || b.id} value={b._id || b.id}>
-                      {b.name} {b.isMainBranch ? '(HQ)' : ''}
-                    </option>
-                  ))}
-                </select>
+                <div className="w-full sm:w-52">
+                  <CustomSelect
+                    size="sm"
+                    value={branchFilter}
+                    onChange={(val) => {
+                      setBranchFilter(val);
+                      loadStaffData(val);
+                    }}
+                    options={[
+                      { value: 'all', label: '🏢 Tất cả chi nhánh' },
+                      ...branches.map((b) => ({
+                        value: (b._id || b.id) as string,
+                        label: b.name,
+                        badge: b.isMainBranch ? 'HQ' : undefined,
+                      })),
+                    ]}
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -814,38 +895,34 @@ export default function StaffPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">Vai trò phân quyền *</label>
-              <select
+              <CustomSelect
+                options={roles.map((r) => ({
+                  value: r.code,
+                  label: r.name,
+                  sublabel: r.description,
+                }))}
                 value={userRole}
-                onChange={(e) => setUserRole(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-              >
-                {roles.map((r) => (
-                  <option key={r.id} value={r.code}>
-                    {r.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setUserRole(val)}
+              />
             </div>
 
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">Chi nhánh làm việc *</label>
-              <select
+              <CustomSelect
+                options={branches.map((b) => ({
+                  value: (b._id || b.id) as string,
+                  label: b.name,
+                  sublabel: b.address,
+                  badge: b.isMainBranch ? 'Trụ sở HQ' : undefined,
+                }))}
                 value={userBranchId}
-                onChange={(e) => {
-                  const bId = e.target.value;
-                  setUserBranchId(bId);
-                  const selectedB = branches.find((b) => (b._id || b.id) === bId);
+                onChange={(val) => {
+                  setUserBranchId(val);
+                  const selectedB = branches.find((b) => (b._id || b.id) === val);
                   setUserBranch(selectedB?.name || '');
                 }}
                 disabled={!isMainBranchUser && Boolean(currentUser?.branchId)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white disabled:bg-slate-100"
-              >
-                {branches.map((b) => (
-                  <option key={b._id || b.id} value={b._id || b.id}>
-                    {b.name} {b.isMainBranch ? '(HQ)' : ''}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
           </div>
 
@@ -862,14 +939,14 @@ export default function StaffPage() {
 
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">Trạng thái hoạt động</label>
-              <select
+              <CustomSelect
+                options={[
+                  { value: 'ACTIVE', label: 'Kích hoạt (Hoạt động)' },
+                  { value: 'INACTIVE', label: 'Tạm khóa (Không thể đăng nhập)' },
+                ]}
                 value={userStatus}
-                onChange={(e) => setUserStatus(e.target.value as 'ACTIVE' | 'INACTIVE')}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-              >
-                <option value="ACTIVE">Kích hoạt (Hoạt động)</option>
-                <option value="INACTIVE">Tạm khóa (Không thể đăng nhập)</option>
-              </select>
+                onChange={(val) => setUserStatus(val as 'ACTIVE' | 'INACTIVE')}
+              />
             </div>
           </div>
 
@@ -1057,23 +1134,19 @@ export default function StaffPage() {
               <label className="text-xs font-bold text-slate-700 block mb-1">
                 Chọn chi nhánh tiếp nhận *
               </label>
-              <select
-                required
-                value={targetBranchId}
-                onChange={(e) => setTargetBranchId(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-              >
-                <option value="" disabled>
-                  -- Chọn chi nhánh tiếp nhận --
-                </option>
-                {branches
+              <CustomSelect
+                options={branches
                   .filter((b) => (b._id || b.id) !== transferUser.branchId)
-                  .map((b) => (
-                    <option key={b._id || b.id} value={b._id || b.id}>
-                      {b.name} {b.isMainBranch ? '(Trụ sở chính HQ)' : ''} - {b.address}
-                    </option>
-                  ))}
-              </select>
+                  .map((b) => ({
+                    value: (b._id || b.id) as string,
+                    label: b.name,
+                    sublabel: b.address,
+                    badge: b.isMainBranch ? 'Trụ sở chính HQ' : undefined,
+                  }))}
+                value={targetBranchId}
+                onChange={(val) => setTargetBranchId(val)}
+                placeholder="-- Chọn chi nhánh tiếp nhận --"
+              />
             </div>
 
             <p className="text-[11px] text-slate-500 leading-relaxed bg-amber-50/70 border border-amber-200/60 p-3 rounded-xl">

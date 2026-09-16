@@ -3,10 +3,11 @@
 import React, { useState, useEffect } from 'react';
 import { storageService, formatCurrencyVND, soundEngine, realtimeHub } from '@imenu/utils';
 import { Table, MenuItem, Order, OrderItem } from '@imenu/types';
-import { Card, Button } from '@imenu/ui';
+import { Card, Button, CustomSelect, useToast } from '@imenu/ui';
 import { Search, Plus, Minus, Trash2, Send } from 'lucide-react';
 
 export default function PosTerminalPage() {
+  const { toast } = useToast();
   const [tables, setTables] = useState<Table[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedTableId, setSelectedTableId] = useState<string>('');
@@ -85,7 +86,7 @@ export default function PosTerminalPage() {
 
     realtimeHub.publish('NEW_ORDER', newOrder, 'rest-bep-nha');
     setPosCart([]);
-    alert(`Đã gửi đơn POS thành công cho ${table.name}!`);
+    toast.success(`Đã gửi đơn POS thành công cho ${table.name}!`);
   };
 
   const filteredItems = menuItems.filter((i) =>
@@ -134,19 +135,19 @@ export default function PosTerminalPage() {
       {/* POS Order Cart Right Column */}
       <div className="lg:col-span-5">
         <Card className="p-5 space-y-4 sticky top-20 bg-white shadow-md">
-          <div className="flex items-center justify-between pb-3 border-b border-slate-200">
-            <h3 className="text-sm font-bold text-slate-900">Chi tiết phiếu Order</h3>
-            <select
-              value={selectedTableId}
-              onChange={(e) => setSelectedTableId(e.target.value)}
-              className="px-2.5 py-1 rounded-lg border border-slate-300 text-xs font-bold text-[#176044] focus:outline-none"
-            >
-              {tables.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name} ({t.zoneName})
-                </option>
-              ))}
-            </select>
+          <div className="flex items-center justify-between pb-3 border-b border-slate-200 gap-2">
+            <h3 className="text-sm font-bold text-slate-900 shrink-0">Chi tiết phiếu Order</h3>
+            <div className="w-52">
+              <CustomSelect
+                value={selectedTableId}
+                onChange={(val) => setSelectedTableId(val)}
+                options={tables.map((t) => ({
+                  value: t.id,
+                  label: `${t.name} (${t.zoneName})`,
+                }))}
+                placeholder="Chọn bàn..."
+              />
+            </div>
           </div>
 
           {/* Cart list */}

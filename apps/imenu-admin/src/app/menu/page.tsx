@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { storageService, formatCurrencyVND, realtimeHub } from '@imenu/utils';
 import { MenuItem, MenuCategory } from '@imenu/types';
-import { Card, Button, Badge, Modal } from '@imenu/ui';
+import { Card, Button, Badge, Modal, CustomSelect, useToast } from '@imenu/ui';
 import {
   Plus,
   Check,
@@ -28,14 +28,12 @@ import {
 const EMOJI_SUGGESTIONS = ['🍲', '🥗', '🧋', '🍨', '🥩', '🍺', '☕', '🍱', '🍕', '🍜', '🥘', '🥤', '🍣', '🍰', '🍔', '🍙'];
 
 export default function MenuManagementPage() {
+  const { toast } = useToast();
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [selectedCatId, setSelectedCatId] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'unavailable'>('all');
-
-  // Toast feedback
-  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'info' | 'error' } | null>(null);
 
   // Modal 1: Add Item
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
@@ -77,10 +75,9 @@ export default function MenuManagementPage() {
   }, []);
 
   const showToast = (text: string, type: 'success' | 'info' | 'error' = 'success') => {
-    setToastMessage({ text, type });
-    setTimeout(() => {
-      setToastMessage(null);
-    }, 3500);
+    if (type === 'error') toast.error(text);
+    else if (type === 'info') toast.info(text);
+    else toast.success(text);
   };
 
   // Quick stats
@@ -289,7 +286,7 @@ export default function MenuManagementPage() {
   const handleDeleteCategory = (catId: string) => {
     const itemsInCat = menuItems.filter((i) => i.categoryId === catId);
     if (itemsInCat.length > 0) {
-      alert(
+      toast.error(
         `Không thể xóa danh mục này vì đang có ${itemsInCat.length} món ăn. Vui lòng chuyển các món sang danh mục khác trước.`
       );
       return;
@@ -308,24 +305,6 @@ export default function MenuManagementPage() {
 
   return (
     <div className="space-y-6">
-      {/* Toast Alert Feedback */}
-      {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 animate-bounce">
-          <div
-            className={`px-4 py-3 rounded-2xl shadow-xl border flex items-center gap-2.5 text-xs font-bold ${
-              toastMessage.type === 'success'
-                ? 'bg-emerald-900 text-emerald-100 border-emerald-700'
-                : toastMessage.type === 'error'
-                ? 'bg-red-900 text-red-100 border-red-700'
-                : 'bg-slate-900 text-white border-slate-700'
-            }`}
-          >
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>{toastMessage.text}</span>
-          </div>
-        </div>
-      )}
-
       {/* ================= TOP HEADER BAR ================= */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 w-full min-w-0">
         <div className="min-w-0 flex-1">
@@ -419,17 +398,19 @@ export default function MenuManagementPage() {
           </div>
 
           {/* Availability filter */}
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start shrink-0">
+          <div className="flex items-center gap-2 w-full sm:w-64 justify-between sm:justify-start shrink-0">
             <span className="text-xs font-bold text-slate-500 shrink-0">Trạng thái:</span>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white font-bold text-slate-700 flex-1 sm:flex-initial"
-            >
-              <option value="all">Tất cả món ({menuItems.length})</option>
-              <option value="available">Đang phục vụ ({availableItemsCount})</option>
-              <option value="unavailable">Tạm hết món ({unavailableItemsCount})</option>
-            </select>
+            <div className="flex-1 min-w-0">
+              <CustomSelect
+                value={statusFilter}
+                onChange={(val) => setStatusFilter(val as any)}
+                options={[
+                  { value: 'all', label: `Tất cả món (${menuItems.length})` },
+                  { value: 'available', label: `Đang phục vụ (${availableItemsCount})` },
+                  { value: 'unavailable', label: `Tạm hết món (${unavailableItemsCount})` },
+                ]}
+              />
+            </div>
           </div>
         </div>
 
@@ -685,17 +666,15 @@ export default function MenuManagementPage() {
 
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">Danh mục *</label>
-              <select
+              <CustomSelect
                 value={newItemCategory}
-                onChange={(e) => setNewItemCategory(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.icon} {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setNewItemCategory(val)}
+                options={categories.map((c) => ({
+                  value: c.id,
+                  label: `${c.icon} ${c.name}`,
+                }))}
+                placeholder="Chọn danh mục..."
+              />
             </div>
           </div>
 
@@ -794,17 +773,15 @@ export default function MenuManagementPage() {
 
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">Danh mục *</label>
-              <select
+              <CustomSelect
                 value={editItemCategory}
-                onChange={(e) => setEditItemCategory(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
-              >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.icon} {c.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setEditItemCategory(val)}
+                options={categories.map((c) => ({
+                  value: c.id,
+                  label: `${c.icon} ${c.name}`,
+                }))}
+                placeholder="Chọn danh mục..."
+              />
             </div>
           </div>
 

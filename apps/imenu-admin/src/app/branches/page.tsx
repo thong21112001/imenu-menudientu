@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiClient, storageService } from '@imenu/utils';
 import { RestaurantBranch, BranchStatus } from '@imenu/types';
-import { Card, Button, StatusChip } from '@imenu/ui';
+import { Card, Button, StatusChip, useToast } from '@imenu/ui';
 import {
   Building2,
   Plus,
@@ -21,9 +21,11 @@ import {
   Loader2,
   ShieldCheck,
   Calendar,
+  Shield,
 } from 'lucide-react';
 
 export default function BranchesPage() {
+  const toast = useToast();
   const [branches, setBranches] = useState<RestaurantBranch[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<any>(storageService.getCurrentUser());
@@ -45,6 +47,7 @@ export default function BranchesPage() {
   const [actionLoading, setActionLoading] = useState(false);
 
   const isMainBranchUser = Boolean(user?.isMainBranch);
+  const isDemo = Boolean(user?.isDemo || user?.email === 'owner@sample.vn');
 
   const loadBranches = async () => {
     setLoading(true);
@@ -79,6 +82,10 @@ export default function BranchesPage() {
 
   // 1. Thêm chi nhánh mới
   const handleOpenAddModal = () => {
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể tạo chi nhánh.');
+      return;
+    }
     setBranchName('');
     setBranchAddress('');
     setBranchPhone('');
@@ -88,7 +95,11 @@ export default function BranchesPage() {
   const handleCreateBranch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!branchName.trim() || !branchAddress.trim() || !branchPhone.trim()) {
-      alert('Vui lòng điền đầy đủ tên, địa chỉ và số điện thoại chi nhánh');
+      toast.error('Vui lòng điền đầy đủ tên, địa chỉ và số điện thoại chi nhánh');
+      return;
+    }
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể tạo chi nhánh.');
       return;
     }
     setActionLoading(true);
@@ -99,9 +110,11 @@ export default function BranchesPage() {
         phone: branchPhone.trim(),
       });
       setIsAddModalOpen(false);
+      toast.success(`Đã tạo mới chi nhánh "${branchName}" thành công!`);
       showNotification('success', `Đã tạo mới chi nhánh "${branchName}" thành công!`);
       await loadBranches();
     } catch (err: any) {
+      toast.error(err.message || 'Lỗi tạo chi nhánh mới');
       showNotification('error', err.message || 'Lỗi tạo chi nhánh mới');
     } finally {
       setActionLoading(false);
@@ -110,6 +123,10 @@ export default function BranchesPage() {
 
   // 2. Chỉnh sửa chi nhánh
   const handleOpenEditModal = (b: RestaurantBranch) => {
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể sửa chi nhánh.');
+      return;
+    }
     setSelectedBranch(b);
     setBranchName(b.name);
     setBranchAddress(b.address);
@@ -120,6 +137,10 @@ export default function BranchesPage() {
   const handleUpdateBranch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBranch) return;
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể sửa chi nhánh.');
+      return;
+    }
     const branchId = selectedBranch._id || selectedBranch.id;
     setActionLoading(true);
     try {
@@ -129,37 +150,45 @@ export default function BranchesPage() {
         phone: branchPhone.trim(),
       });
       setIsEditModalOpen(false);
+      toast.success(`Đã cập nhật chi nhánh "${branchName}"!`);
       showNotification('success', `Đã cập nhật chi nhánh "${branchName}"!`);
       await loadBranches();
     } catch (err: any) {
+      toast.error(err.message || 'Lỗi cập nhật chi nhánh');
       showNotification('error', err.message || 'Lỗi cập nhật chi nhánh');
     } finally {
       setActionLoading(false);
     }
   };
 
-  // 3. Tạm đóng cửa chi nhánh
+  // 3. Tạm đóng cửa chi nhánh (Áp dụng cho cả chi nhánh chính và chi nhánh con)
   const handleOpenCloseModal = (b: RestaurantBranch) => {
-    if (b.isMainBranch) {
-      alert('Không thể tạm đóng chi nhánh chính vì đây là trụ sở quản trị của hệ thống nhà hàng.');
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể tạm đóng chi nhánh.');
       return;
     }
     setSelectedBranch(b);
-    setActionReason('');
+    setActionReason(b.isMainBranch ? 'Hết giờ làm việc trong ngày' : '');
     setIsCloseModalOpen(true);
   };
 
   const handleConfirmClose = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBranch) return;
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể tạm đóng chi nhánh.');
+      return;
+    }
     const branchId = selectedBranch._id || selectedBranch.id;
     setActionLoading(true);
     try {
       await apiClient.branches.close(branchId, actionReason.trim());
       setIsCloseModalOpen(false);
+      toast.success(`Đã tạm đóng chi nhánh "${selectedBranch.name}"!`);
       showNotification('success', `Đã tạm đóng chi nhánh "${selectedBranch.name}"!`);
       await loadBranches();
     } catch (err: any) {
+      toast.error(err.message || 'Không thể tạm đóng chi nhánh');
       showNotification('error', err.message || 'Không thể tạm đóng chi nhánh');
     } finally {
       setActionLoading(false);
@@ -168,13 +197,19 @@ export default function BranchesPage() {
 
   // 4. Mở cửa trở lại
   const handleReopenBranch = async (b: RestaurantBranch) => {
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể mở lại chi nhánh.');
+      return;
+    }
     const branchId = b._id || b.id;
     setActionLoading(true);
     try {
       await apiClient.branches.reopen(branchId);
+      toast.success(`Chi nhánh "${b.name}" đã mở cửa hoạt động trở lại!`);
       showNotification('success', `Chi nhánh "${b.name}" đã mở cửa hoạt động trở lại!`);
       await loadBranches();
     } catch (err: any) {
+      toast.error(err.message || 'Không thể mở cửa chi nhánh');
       showNotification('error', err.message || 'Không thể mở cửa chi nhánh');
     } finally {
       setActionLoading(false);
@@ -183,8 +218,12 @@ export default function BranchesPage() {
 
   // 5. Ngừng hoạt động (INACTIVE)
   const handleOpenDeactivateModal = (b: RestaurantBranch) => {
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể ngừng hoạt động chi nhánh.');
+      return;
+    }
     if (b.isMainBranch) {
-      alert('Không thể ngừng hoạt động chi nhánh chính.');
+      toast.error('Không thể ngừng hoạt động vĩnh viễn chi nhánh chính.');
       return;
     }
     setSelectedBranch(b);
@@ -195,14 +234,20 @@ export default function BranchesPage() {
   const handleConfirmDeactivate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedBranch) return;
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể ngừng hoạt động chi nhánh.');
+      return;
+    }
     const branchId = selectedBranch._id || selectedBranch.id;
     setActionLoading(true);
     try {
       await apiClient.branches.deactivate(branchId, actionReason.trim());
       setIsDeactivateModalOpen(false);
+      toast.success(`Đã chuyển chi nhánh "${selectedBranch.name}" sang trạng thái Ngừng hoạt động!`);
       showNotification('success', `Đã chuyển chi nhánh "${selectedBranch.name}" sang trạng thái Ngừng hoạt động!`);
       await loadBranches();
     } catch (err: any) {
+      toast.error(err.message || 'Không thể ngừng hoạt động chi nhánh');
       showNotification('error', err.message || 'Không thể ngừng hoạt động chi nhánh');
     } finally {
       setActionLoading(false);
@@ -211,8 +256,12 @@ export default function BranchesPage() {
 
   // 6. Xóa chi nhánh (với kiểm tra lịch sử đơn)
   const handleDeleteBranch = async (b: RestaurantBranch) => {
+    if (isDemo) {
+      toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể xóa chi nhánh.');
+      return;
+    }
     if (b.isMainBranch) {
-      alert('Không thể xóa chi nhánh chính.');
+      toast.error('Không thể xóa chi nhánh chính.');
       return;
     }
 
@@ -223,6 +272,7 @@ export default function BranchesPage() {
     const branchId = b._id || b.id;
     try {
       await apiClient.branches.delete(branchId);
+      toast.success(`Đã xóa chi nhánh "${b.name}" thành công!`);
       showNotification('success', `Đã xóa chi nhánh "${b.name}" thành công!`);
       await loadBranches();
     } catch (err: any) {
@@ -236,6 +286,7 @@ export default function BranchesPage() {
           handleOpenDeactivateModal(b);
         }
       } else {
+        toast.error(err.message || 'Không thể xóa chi nhánh');
         showNotification('error', err.message || 'Không thể xóa chi nhánh');
       }
     }
@@ -270,6 +321,26 @@ export default function BranchesPage() {
           </Button>
         )}
       </div>
+
+      {/* Demo Account Notice */}
+      {isDemo && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 flex items-center justify-between gap-3 text-amber-900 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 grid place-items-center shrink-0">
+              <Shield className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold">Chế độ trải nghiệm (Demo Account)</p>
+              <p className="text-xs text-amber-700/90">
+                Bạn đang xem dữ liệu hệ thống chi nhánh với quyền xem mẫu. Thao tác thêm chi nhánh, chỉnh sửa, đóng/mở và xóa đã được bảo vệ an toàn.
+              </p>
+            </div>
+          </div>
+          <span className="shrink-0 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-200/70 text-amber-900">
+            Chỉ xem (View Only)
+          </span>
+        </div>
+      )}
 
       {/* Notifications */}
       {successMsg && (
@@ -416,13 +487,8 @@ export default function BranchesPage() {
                     {status === 'ACTIVE' ? (
                       <button
                         onClick={() => handleOpenCloseModal(branch)}
-                        disabled={isMain}
-                        className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1 ${
-                          isMain
-                            ? 'text-slate-300 cursor-not-allowed'
-                            : 'text-amber-700 bg-amber-50 hover:bg-amber-100 cursor-pointer'
-                        }`}
-                        title={isMain ? 'Trụ sở chính luôn mở cửa' : 'Tạm đóng cửa chi nhánh'}
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 transition-colors cursor-pointer flex items-center gap-1"
+                        title={isMain ? 'Tạm đóng cửa chi nhánh chính (hết giờ làm việc)' : 'Tạm đóng cửa chi nhánh'}
                       >
                         <Clock className="w-3.5 h-3.5" /> Tạm đóng
                       </button>
