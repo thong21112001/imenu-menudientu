@@ -20,9 +20,14 @@ export interface User {
   restaurantId?: string;
   branchId?: string;
   branchName?: string;
+  isMainBranch?: boolean;
   avatarUrl?: string;
   status?: UserStatus;
   createdAt?: string;
+}
+
+export interface TransferStaffDto {
+  targetBranchId: string;
 }
 
 export interface PermissionItem {

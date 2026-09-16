@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   ACCESS_TOKEN: 'imenu_access_token_v1',
   REFRESH_TOKEN: 'imenu_refresh_token_v1',
   PERMISSIONS: 'imenu_permissions_v1',
+  ACTIVE_BRANCH: 'imenu_active_branch_v1',
 };
 
 // ================= SEED DATA =================
@@ -829,12 +830,28 @@ export const storageService = {
     this.setCookie('imenu_permissions', permsStr, 7);
   },
 
+  getActiveBranchId(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(STORAGE_KEYS.ACTIVE_BRANCH);
+  },
+
+  setActiveBranchId(branchId: string | null) {
+    if (typeof window === 'undefined') return;
+    if (branchId) {
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_BRANCH, branchId);
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.ACTIVE_BRANCH);
+    }
+    window.dispatchEvent(new CustomEvent('imenu:branch_changed', { detail: { branchId } }));
+  },
+
   clearAuth() {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
     localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
+    localStorage.removeItem(STORAGE_KEYS.ACTIVE_BRANCH);
     this.setCookie('imenu_access_token', null);
     this.setCookie('imenu_refresh_token', null);
     this.setCookie('imenu_user_info', null);

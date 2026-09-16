@@ -16,6 +16,7 @@ import {
   Receipt,
   BarChart3,
   Users,
+  Building2,
   Settings,
   Store,
   ExternalLink,
@@ -34,6 +35,7 @@ const NAV_ITEMS = [
   { name: 'Hóa đơn & In Bill', href: '/bills', icon: Receipt },
   { name: 'Báo cáo & Doanh thu', href: '/reports', icon: BarChart3 },
   { name: 'Nhân viên & Phân quyền', href: '/staff', icon: Users },
+  { name: 'Quản lý Chi nhánh', href: '/branches', icon: Building2 },
   { name: 'Cài đặt Nhà hàng', href: '/settings', icon: Settings },
 ];
 

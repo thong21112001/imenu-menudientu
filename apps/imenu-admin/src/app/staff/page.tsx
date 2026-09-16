@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { storageService } from '@imenu/utils';
-import { User, RoleDefinition, PermissionGroup, UserRole } from '@imenu/types';
+import { storageService, apiClient } from '@imenu/utils';
+import { User, RoleDefinition, PermissionGroup, UserRole, RestaurantBranch } from '@imenu/types';
 import { Card, Button, Badge, Modal } from '@imenu/ui';
 import {
   Users,
@@ -23,6 +23,10 @@ import {
   Check,
   KeyRound,
   Sparkles,
+  ArrowRightLeft,
+  Loader2,
+  ArrowRight,
+  AlertTriangle,
 } from 'lucide-react';
 
 export default function StaffPage() {
@@ -31,11 +35,22 @@ export default function StaffPage() {
   const [roles, setRoles] = useState<RoleDefinition[]>([]);
   const [permissionGroups, setPermissionGroups] = useState<PermissionGroup[]>([]);
   const [restaurant, setRestaurant] = useState(storageService.getRestaurant());
+  const [branches, setBranches] = useState<RestaurantBranch[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(storageService.getCurrentUser());
+  const [staffLoading, setStaffLoading] = useState<boolean>(false);
 
   // Search & Filter state for Users
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [branchFilter, setBranchFilter] = useState<string>('all');
+
+  // Cross-Branch Transfer Modal
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState<boolean>(false);
+  const [transferUser, setTransferUser] = useState<User | null>(null);
+  const [targetBranchId, setTargetBranchId] = useState<string>('');
+  const [transferLoading, setTransferLoading] = useState<boolean>(false);
+  const [transferMsg, setTransferMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Add/Edit User Modal
   const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
@@ -45,6 +60,7 @@ export default function StaffPage() {
   const [userPhone, setUserPhone] = useState<string>('');
   const [userRole, setUserRole] = useState<string>('CASHIER');
   const [userBranch, setUserBranch] = useState<string>('Chi nhánh Quận 1 (Chính)');
+  const [userBranchId, setUserBranchId] = useState<string>('');
   const [userPassword, setUserPassword] = useState<string>('123456');
   const [userStatus, setUserStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
 
@@ -56,11 +72,52 @@ export default function StaffPage() {
   const [roleDescription, setRoleDescription] = useState<string>('');
   const [rolePermissions, setRolePermissions] = useState<string[]>([]);
 
-  useEffect(() => {
+  const isMainBranchUser = Boolean(currentUser?.isMainBranch);
+
+  const loadStaffData = async (bFilter = branchFilter) => {
+    setStaffLoading(true);
+    try {
+      const res = await apiClient.staff.list({
+        branchId: bFilter !== 'all' ? bFilter : undefined,
+        search: searchTerm || undefined,
+      });
+      if (res?.data) {
+        const staffList = Array.isArray(res.data) ? res.data : res.data.items || [];
+        if (staffList.length > 0) {
+          setUsers(staffList);
+          return;
+        }
+      }
+    } catch {
+      // Fallback
+    } finally {
+      setStaffLoading(false);
+    }
     setUsers(storageService.getUsers());
+  };
+
+  const loadBranches = async () => {
+    try {
+      const res = await apiClient.branches.list();
+      if (res.data && Array.isArray(res.data)) {
+        setBranches(res.data);
+      } else if (restaurant.branches) {
+        setBranches(restaurant.branches);
+      }
+    } catch {
+      if (restaurant.branches) {
+        setBranches(restaurant.branches);
+      }
+    }
+  };
+
+  useEffect(() => {
+    setCurrentUser(storageService.getCurrentUser());
     setRoles(storageService.getRoles());
     setPermissionGroups(storageService.getPermissionGroups());
     setRestaurant(storageService.getRestaurant());
+    loadBranches();
+    loadStaffData();
   }, []);
 
   // Filtered Users
@@ -71,7 +128,11 @@ export default function StaffPage() {
       u.phone.includes(searchTerm);
     const matchesRole = roleFilter === 'all' || u.role === roleFilter;
     const matchesStatus = statusFilter === 'all' || u.status === statusFilter;
-    return matchesSearch && matchesRole && matchesStatus;
+    const matchesBranch =
+      branchFilter === 'all' ||
+      u.branchId === branchFilter ||
+      (branches.find((b) => (b._id || b.id) === branchFilter)?.name === u.branchName);
+    return matchesSearch && matchesRole && matchesStatus && matchesBranch;
   });
 
   // Open Add/Edit User Modal
@@ -82,7 +143,8 @@ export default function StaffPage() {
       setUserEmail(usr.email);
       setUserPhone(usr.phone);
       setUserRole(usr.role);
-      setUserBranch(usr.branchName || 'Chi nhánh Quận 1 (Chính)');
+      setUserBranch(usr.branchName || branches[0]?.name || 'Chi nhánh Quận 1 (Chính)');
+      setUserBranchId(usr.branchId || branches[0]?._id || branches[0]?.id || '');
       setUserPassword('••••••');
       setUserStatus(usr.status || 'ACTIVE');
     } else {
@@ -91,50 +153,126 @@ export default function StaffPage() {
       setUserEmail('');
       setUserPhone('');
       setUserRole('CASHIER');
-      setUserBranch(restaurant.branches?.[0]?.name || 'Chi nhánh Quận 1 (Chính)');
+      const defaultBranch = branches[0];
+      setUserBranch(defaultBranch?.name || 'Chi nhánh Quận 1 (Chính)');
+      setUserBranchId(defaultBranch?._id || defaultBranch?.id || '');
       setUserPassword('123456');
       setUserStatus('ACTIVE');
     }
     setIsUserModalOpen(true);
   };
 
-  // Save User Submit
-  const handleSaveUser = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userFullName.trim() || !userEmail.trim()) return;
+  // Open Transfer Modal
+  const handleOpenTransferModal = (usr: User) => {
+    setTransferUser(usr);
+    setTransferMsg(null);
+    // Default target branch to another branch
+    const otherBranch = branches.find((b) => (b._id || b.id) !== usr.branchId);
+    setTargetBranchId(otherBranch?._id || otherBranch?.id || '');
+    setIsTransferModalOpen(true);
+  };
 
-    let updated: User[];
-    if (editingUser) {
-      updated = users.map((u) =>
-        u.id === editingUser.id
+  // Confirm Staff Transfer
+  const handleConfirmTransfer = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!transferUser || !targetBranchId) return;
+    setTransferLoading(true);
+    setTransferMsg(null);
+
+    try {
+      await apiClient.staff.transfer(transferUser.id, targetBranchId);
+      const targetB = branches.find((b) => (b._id || b.id) === targetBranchId);
+      setTransferMsg({
+        type: 'success',
+        text: `Đã điều chuyển nhân viên "${transferUser.fullName}" sang "${targetB?.name || 'Chi nhánh mới'}" thành công!`,
+      });
+      // Cập nhật state cục bộ
+      const updated = users.map((u) =>
+        u.id === transferUser.id
           ? {
               ...u,
-              fullName: userFullName.trim(),
-              email: userEmail.trim(),
-              phone: userPhone.trim(),
-              role: userRole as UserRole,
-              branchName: userBranch,
-              status: userStatus,
+              branchId: targetBranchId,
+              branchName: targetB?.name || u.branchName,
             }
           : u
       );
-    } else {
-      const newUser: User = {
-        id: `usr-${Date.now()}`,
-        fullName: userFullName.trim(),
-        email: userEmail.trim(),
-        phone: userPhone.trim(),
-        role: userRole as UserRole,
-        branchName: userBranch,
-        status: userStatus,
-        createdAt: new Date().toISOString(),
-      };
-      updated = [newUser, ...users];
+      setUsers(updated);
+      storageService.saveUsers(updated);
+      setTimeout(() => {
+        setIsTransferModalOpen(false);
+        setTransferMsg(null);
+      }, 1500);
+    } catch (err: any) {
+      setTransferMsg({
+        type: 'error',
+        text: err.message || 'Không thể điều chuyển nhân sự giữa các chi nhánh',
+      });
+    } finally {
+      setTransferLoading(false);
     }
+  };
 
-    setUsers(updated);
-    storageService.saveUsers(updated);
-    setIsUserModalOpen(false);
+  // Save User Submit
+  const handleSaveUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userFullName.trim() || !userEmail.trim()) return;
+
+    try {
+      if (editingUser) {
+        await apiClient.staff.update(editingUser.id, {
+          fullName: userFullName.trim(),
+          phone: userPhone.trim(),
+          role: userRole,
+          status: userStatus,
+        }).catch(() => {});
+
+        const updated = users.map((u) =>
+          u.id === editingUser.id
+            ? {
+                ...u,
+                fullName: userFullName.trim(),
+                email: userEmail.trim(),
+                phone: userPhone.trim(),
+                role: userRole as UserRole,
+                branchName: userBranch,
+                branchId: userBranchId,
+                status: userStatus,
+              }
+            : u
+        );
+        setUsers(updated);
+        storageService.saveUsers(updated);
+      } else {
+        const createPayload = {
+          fullName: userFullName.trim(),
+          email: userEmail.trim(),
+          phone: userPhone.trim(),
+          role: userRole,
+          branchId: userBranchId || undefined,
+          password: userPassword || '123456',
+        };
+
+        const res = await apiClient.staff.create(createPayload).catch(() => null);
+
+        const newUser: User = {
+          id: res?.data?.id || res?.data?._id || `usr-${Date.now()}`,
+          fullName: userFullName.trim(),
+          email: userEmail.trim(),
+          phone: userPhone.trim(),
+          role: userRole as UserRole,
+          branchName: userBranch,
+          branchId: userBranchId,
+          status: userStatus,
+          createdAt: new Date().toISOString(),
+        };
+        const updated = [newUser, ...users];
+        setUsers(updated);
+        storageService.saveUsers(updated);
+      }
+      setIsUserModalOpen(false);
+    } catch (err: any) {
+      alert(err.message || 'Lỗi lưu thông tin nhân viên');
+    }
   };
 
   // Toggle User Status (Lock/Unlock)
@@ -394,6 +532,24 @@ export default function StaffPage() {
                 <option value="ACTIVE">Đang hoạt động</option>
                 <option value="INACTIVE">Tạm khóa</option>
               </select>
+
+              {isMainBranchUser && branches.length > 0 && (
+                <select
+                  value={branchFilter}
+                  onChange={(e) => {
+                    setBranchFilter(e.target.value);
+                    loadStaffData(e.target.value);
+                  }}
+                  className="px-3 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white font-semibold text-[#176044]"
+                >
+                  <option value="all">🏢 Tất cả chi nhánh</option>
+                  {branches.map((b) => (
+                    <option key={b._id || b.id} value={b._id || b.id}>
+                      {b.name} {b.isMainBranch ? '(HQ)' : ''}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
           </div>
 
@@ -446,7 +602,7 @@ export default function StaffPage() {
                           <span>•</span>
                           <span className="flex items-center gap-1 text-slate-600 font-medium">
                             <Building2 className="w-3 h-3 text-emerald-700" />
-                            {usr.branchName || 'Chi nhánh Quận 1 (Chính)'}
+                            {usr.branchName || 'Chi nhánh chính'}
                           </span>
                         </div>
                       </div>
@@ -454,6 +610,18 @@ export default function StaffPage() {
 
                     {/* Actions */}
                     <div className="flex items-center gap-2 self-end md:self-center border-t md:border-t-0 pt-2 md:pt-0 w-full md:w-auto justify-end">
+                      {/* Nút Điều chuyển chi nhánh (Chỉ Trụ sở chính / Admin) */}
+                      {isMainBranchUser && (
+                        <button
+                          onClick={() => handleOpenTransferModal(usr)}
+                          className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 transition-colors cursor-pointer flex items-center gap-1 border border-teal-200"
+                          title="Điều chuyển nhân viên sang chi nhánh khác"
+                        >
+                          <ArrowRightLeft className="w-3.5 h-3.5 text-teal-600" />
+                          <span className="hidden sm:inline">Điều chuyển</span>
+                        </button>
+                      )}
+
                       <button
                         onClick={() => handleToggleUserStatus(usr.id)}
                         className={`p-2 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 ${
@@ -662,15 +830,21 @@ export default function StaffPage() {
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">Chi nhánh làm việc *</label>
               <select
-                value={userBranch}
-                onChange={(e) => setUserBranch(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
+                value={userBranchId}
+                onChange={(e) => {
+                  const bId = e.target.value;
+                  setUserBranchId(bId);
+                  const selectedB = branches.find((b) => (b._id || b.id) === bId);
+                  setUserBranch(selectedB?.name || '');
+                }}
+                disabled={!isMainBranchUser && Boolean(currentUser?.branchId)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white disabled:bg-slate-100"
               >
-                {restaurant.branches?.map((b) => (
-                  <option key={b.id} value={b.name}>
-                    {b.name}
+                {branches.map((b) => (
+                  <option key={b._id || b.id} value={b._id || b.id}>
+                    {b.name} {b.isMainBranch ? '(HQ)' : ''}
                   </option>
-                )) || <option value="Chi nhánh Quận 1 (Chính)">Chi nhánh Quận 1 (Chính)</option>}
+                ))}
               </select>
             </div>
           </div>
@@ -833,6 +1007,100 @@ export default function StaffPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* ================= MODAL ĐIỀU CHUYỂN NHÂN SỰ GIỮA CHI NHÁNH ================= */}
+      <Modal
+        isOpen={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
+        title="Điều Chuyển Chi Nhánh Làm Việc"
+        subtitle="Chuyển giao quyền hạn và dữ liệu nhân sự sang chi nhánh mới trong chuỗi"
+        maxWidth="md"
+      >
+        {transferUser && (
+          <form onSubmit={handleConfirmTransfer} className="space-y-4">
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 text-xs">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-semibold">Nhân viên:</span>
+                <strong className="text-slate-900 font-bold">{transferUser.fullName}</strong>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-semibold">Email:</span>
+                <span className="text-slate-700">{transferUser.email}</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500 font-semibold">Chi nhánh hiện tại:</span>
+                <span className="text-[#176044] font-bold">
+                  {transferUser.branchName || 'Chi nhánh chính'}
+                </span>
+              </div>
+            </div>
+
+            {transferMsg && (
+              <div
+                className={`p-3.5 rounded-2xl flex items-center gap-2 text-xs font-semibold ${
+                  transferMsg.type === 'success'
+                    ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+                    : 'bg-rose-50 border border-rose-200 text-rose-800'
+                }`}
+              >
+                {transferMsg.type === 'success' ? (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                )}
+                <span>{transferMsg.text}</span>
+              </div>
+            )}
+
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">
+                Chọn chi nhánh tiếp nhận *
+              </label>
+              <select
+                required
+                value={targetBranchId}
+                onChange={(e) => setTargetBranchId(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 bg-white"
+              >
+                <option value="" disabled>
+                  -- Chọn chi nhánh tiếp nhận --
+                </option>
+                {branches
+                  .filter((b) => (b._id || b.id) !== transferUser.branchId)
+                  .map((b) => (
+                    <option key={b._id || b.id} value={b._id || b.id}>
+                      {b.name} {b.isMainBranch ? '(Trụ sở chính HQ)' : ''} - {b.address}
+                    </option>
+                  ))}
+              </select>
+            </div>
+
+            <p className="text-[11px] text-slate-500 leading-relaxed bg-amber-50/70 border border-amber-200/60 p-3 rounded-xl">
+              💡 <strong>Lưu ý:</strong> Sau khi điều chuyển, nhân sự sẽ được cấp lại phạm vi dữ liệu theo chi
+              nhánh mới. Chỉ Chủ nhà hàng/Trụ sở chính mới có quyền thực hiện thao tác này.
+            </p>
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => setIsTransferModalOpen(false)}
+                disabled={transferLoading}
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                variant="primary"
+                type="submit"
+                disabled={transferLoading || !targetBranchId}
+                icon={transferLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRightLeft className="w-4 h-4" />}
+              >
+                {transferLoading ? 'Đang điều chuyển...' : 'Xác nhận điều chuyển'}
+              </Button>
+            </div>
+          </form>
+        )}
       </Modal>
     </div>
   );

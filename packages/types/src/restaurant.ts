@@ -1,9 +1,39 @@
+export type BranchStatus = 'ACTIVE' | 'TEMPORARILY_CLOSED' | 'INACTIVE';
+
 export interface RestaurantBranch {
+  _id?: string;
   id: string;
   name: string;
   address: string;
   phone: string;
   isMainBranch?: boolean;
+  status?: BranchStatus;
+  closedAt?: string | null;
+  closedReason?: string | null;
+}
+
+export interface CreateBranchDto {
+  name: string;
+  address: string;
+  phone: string;
+  isMainBranch?: boolean;
+  status?: BranchStatus;
+}
+
+export interface UpdateBranchDto {
+  name?: string;
+  address?: string;
+  phone?: string;
+  status?: BranchStatus;
+  closedReason?: string;
+}
+
+export interface CloseBranchDto {
+  reason?: string;
+}
+
+export interface DeactivateBranchDto {
+  reason?: string;
 }
 
 export interface BankAccountConfig {
@@ -27,6 +57,6 @@ export interface Restaurant {
   isOpen?: boolean;
   bankAccount?: BankAccountConfig;
   branches: RestaurantBranch[];
-  plan: 'Basic' | 'Standard' | 'Advanced';
+  plan: 'Basic' | 'Standard' | 'Advanced' | 'Pro' | 'Enterprise';
   createdAt: string;
 }

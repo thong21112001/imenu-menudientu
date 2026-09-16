@@ -5,3 +5,5 @@ export * from './order';
 export * from './user';
 export * from './realtime';
 export * from './analytics';
+export * from './dashboard';
+export * from './reports';

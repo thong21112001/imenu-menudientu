@@ -282,5 +282,92 @@ export const apiClient = {
         method: 'DELETE',
       });
     },
+
+    async close(id: string, reason?: string) {
+      return request<any>(`/branches/${id}/close`, {
+        method: 'PATCH',
+        body: JSON.stringify({ reason }),
+      });
+    },
+
+    async reopen(id: string) {
+      return request<any>(`/branches/${id}/reopen`, {
+        method: 'PATCH',
+        body: JSON.stringify({}),
+      });
+    },
+
+    async deactivate(id: string, reason?: string) {
+      return request<any>(`/branches/${id}/deactivate`, {
+        method: 'PATCH',
+        body: JSON.stringify({ reason }),
+      });
+    },
+  },
+
+  staff: {
+    async list(params?: { branchId?: string; search?: string; page?: number; limit?: number }) {
+      const q = new URLSearchParams();
+      if (params?.branchId) q.append('branchId', params.branchId);
+      if (params?.search) q.append('search', params.search);
+      if (params?.page) q.append('page', String(params.page));
+      if (params?.limit) q.append('limit', String(params.limit));
+      const queryStr = q.toString();
+      return request<any>(`/users${queryStr ? `?${queryStr}` : ''}`);
+    },
+
+    async get(id: string) {
+      return request<any>(`/users/${id}`);
+    },
+
+    async create(payload: any) {
+      return request<any>('/users', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async update(id: string, payload: any) {
+      return request<any>(`/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async transfer(id: string, targetBranchId: string) {
+      return request<any>(`/users/${id}/transfer`, {
+        method: 'POST',
+        body: JSON.stringify({ targetBranchId }),
+      });
+    },
+  },
+
+  dashboard: {
+    async getOverview(branchId?: string | null) {
+      const q = branchId ? `?branchId=${encodeURIComponent(branchId)}` : '';
+      return request<any>(`/dashboard/overview${q}`);
+    },
+  },
+
+  reports: {
+    async getRevenue(params?: { startDate?: string; endDate?: string; branchId?: string | null }) {
+      const q = new URLSearchParams();
+      if (params?.startDate) q.append('startDate', params.startDate);
+      if (params?.endDate) q.append('endDate', params.endDate);
+      if (params?.branchId) q.append('branchId', params.branchId);
+      const queryStr = q.toString();
+      return request<any>(`/reports/revenue${queryStr ? `?${queryStr}` : ''}`);
+    },
+
+    async getTopItems(params?: { startDate?: string; endDate?: string; branchId?: string | null; limit?: number }) {
+      const q = new URLSearchParams();
+      if (params?.startDate) q.append('startDate', params.startDate);
+      if (params?.endDate) q.append('endDate', params.endDate);
+      if (params?.branchId) q.append('branchId', params.branchId);
+      if (params?.limit) q.append('limit', String(params.limit));
+      const queryStr = q.toString();
+      return request<any>(`/reports/top-items${queryStr ? `?${queryStr}` : ''}`);
+    },
   },
 };
+
