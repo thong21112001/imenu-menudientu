@@ -58,5 +58,20 @@ export interface Restaurant {
   bankAccount?: BankAccountConfig;
   branches: RestaurantBranch[];
   plan: 'Basic' | 'Standard' | 'Advanced' | 'Pro' | 'Enterprise';
-  createdAt: string;
+  createdAt?: string;
+}
+
+export interface RestaurantSummary {
+  id: string;
+  name: string;
+  slug: string;
+  phone?: string;
+  address?: string;
+  logoUrl?: string;
+  coverUrl?: string;
+  plan?: string;
+  isOpen?: boolean;
+  branchCount: number;
+  staffCount: number;
+  createdAt?: string;
 }

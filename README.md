@@ -49,3 +49,35 @@ npm install
 # Run all apps in development mode
 npm run dev
 ```
+
+---
+
+## 👥 Staff Management & RBAC (Phase 3)
+
+The platform provides an end-to-end staff and role-based access control system synchronized across Backend API and Admin Frontend:
+
+1. **System Administrator (Super Admin)**:
+   - Configured securely via `.env` (`SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD`).
+   - Integrated **Restaurant Switcher** in the top navigation bar (`AdminHeader`) to toggle between **"All Platform"** global overview and specific restaurant scopes.
+   - Global view and onboarding assistance: Super Admin can view all restaurants and create staff for any tenant by passing target `restaurantId`.
+2. **Staff Lifecycle & Security**:
+   - Add, edit, branch reassignment, and cross-branch employee transfer (`POST /users/transfer`).
+   - Quick lock/unlock toggle (`PATCH /users/:id/toggle-status`), with self-lockout and Super Admin protection.
+   - **Soft Delete** mechanism (`DELETE /users/:id`): preserves bill and order audit integrity while aliasing emails to release MongoDB unique constraints.
+3. **Role-Based Access Control (RBAC) & Permission Matrix**:
+   - 6 default system roles (`SYSTEM_ADMIN`, `RESTAURANT_ADMIN`, `RESTAURANT_MANAGER`, `CASHIER`, `KITCHEN`, `WAITER`).
+   - Create custom roles (`POST /roles`) and fine-tune permission matrices across POS, Kitchen KDS, Menu, Reports, Staff, and Settings.
+   - Protected against deletion of system roles or roles currently assigned to active employees.
+
+---
+
+## 📦 Build & Verification
+
+```bash
+# Build all workspaces
+npm run build
+
+# Run type checks
+npm run typecheck
+```
+

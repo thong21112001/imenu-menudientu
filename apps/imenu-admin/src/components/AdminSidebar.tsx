@@ -44,22 +44,42 @@ export const AdminSidebar: React.FC = () => {
   const { isMobile, isSidebarOpen, isCollapsed, toggleCollapsed, closeSidebar } = useSidebar();
   const [restaurant, setRestaurant] = useState<any>(storageService.getRestaurant());
   const [user, setUser] = useState<any>(storageService.getCurrentUser());
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(storageService.getSelectedRestaurantId());
 
   useEffect(() => {
     setRestaurant(storageService.getRestaurant());
     setUser(storageService.getCurrentUser());
+    setSelectedRestaurantId(storageService.getSelectedRestaurantId());
+
+    const handleRestaurantChanged = (e: any) => {
+      setSelectedRestaurantId(e.detail?.restaurantId ?? null);
+      setRestaurant(storageService.getRestaurant());
+    };
+
+    window.addEventListener('imenu:restaurant_changed', handleRestaurantChanged);
+    return () => {
+      window.removeEventListener('imenu:restaurant_changed', handleRestaurantChanged);
+    };
   }, []);
 
-  const restaurantInitials = restaurant?.name
-    ? restaurant.name
+  const isSuperAdmin = user?.role === 'SYSTEM_ADMIN' || user?.role === 'system_admin' || user?.role === 'super_admin';
+
+  const restaurantName = isSuperAdmin && !selectedRestaurantId
+    ? 'iMenu Platform'
+    : restaurant?.name || 'Bếp Nhà';
+
+  const restaurantInitials = isSuperAdmin && !selectedRestaurantId
+    ? 'SA'
+    : restaurantName
         .split(' ')
         .filter(Boolean)
         .slice(0, 2)
         .map((w: string) => w[0].toUpperCase())
-        .join('')
-    : 'IM';
+        .join('') || 'IM';
 
-  const branchName = user?.branchName || restaurant?.branches?.[0]?.name || 'Chi nhánh chính';
+  const branchName = isSuperAdmin && !selectedRestaurantId
+    ? 'Toàn bộ hệ thống'
+    : user?.branchName || restaurant?.branches?.[0]?.name || 'Chi nhánh chính';
 
   const sidebarWidthClass = isMobile
     ? 'w-72'
@@ -107,7 +127,7 @@ export const AdminSidebar: React.FC = () => {
               {restaurantInitials}
             </div>
             <div className="min-w-0 flex-1">
-              <strong className="text-xs text-white block truncate">{restaurant?.name || 'Bếp Nhà'}</strong>
+              <strong className="text-xs text-white block truncate">{restaurantName}</strong>
               <small className="text-[10px] text-emerald-400 block truncate">{branchName}</small>
             </div>
           </div>

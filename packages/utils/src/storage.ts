@@ -14,6 +14,7 @@ const STORAGE_KEYS = {
   REFRESH_TOKEN: 'imenu_refresh_token_v1',
   PERMISSIONS: 'imenu_permissions_v1',
   ACTIVE_BRANCH: 'imenu_active_branch_v1',
+  SELECTED_RESTAURANT: 'imenu_selected_restaurant_v1',
 };
 
 // ================= SEED DATA =================
@@ -561,8 +562,12 @@ export const storageService = {
     return JSON.parse(data);
   },
 
-  saveRestaurant(restaurant: Restaurant) {
+  saveRestaurant(restaurant: Restaurant | null) {
     if (typeof window === 'undefined') return;
+    if (!restaurant) {
+      localStorage.removeItem(STORAGE_KEYS.RESTAURANT);
+      return;
+    }
     localStorage.setItem(STORAGE_KEYS.RESTAURANT, JSON.stringify(restaurant));
   },
 
@@ -845,6 +850,21 @@ export const storageService = {
     window.dispatchEvent(new CustomEvent('imenu:branch_changed', { detail: { branchId } }));
   },
 
+  getSelectedRestaurantId(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(STORAGE_KEYS.SELECTED_RESTAURANT);
+  },
+
+  setSelectedRestaurantId(restaurantId: string | null) {
+    if (typeof window === 'undefined') return;
+    if (restaurantId) {
+      localStorage.setItem(STORAGE_KEYS.SELECTED_RESTAURANT, restaurantId);
+    } else {
+      localStorage.removeItem(STORAGE_KEYS.SELECTED_RESTAURANT);
+    }
+    window.dispatchEvent(new CustomEvent('imenu:restaurant_changed', { detail: { restaurantId } }));
+  },
+
   clearAuth() {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
@@ -852,6 +872,7 @@ export const storageService = {
     localStorage.removeItem(STORAGE_KEYS.CURRENT_USER);
     localStorage.removeItem(STORAGE_KEYS.PERMISSIONS);
     localStorage.removeItem(STORAGE_KEYS.ACTIVE_BRANCH);
+    localStorage.removeItem(STORAGE_KEYS.SELECTED_RESTAURANT);
     this.setCookie('imenu_access_token', null);
     this.setCookie('imenu_refresh_token', null);
     this.setCookie('imenu_user_info', null);

@@ -93,6 +93,25 @@ Dự án tích hợp sẵn **Mock Storage Engine** và **Realtime Hub (Broadcast
 
 ---
 
+## 👥 Quản Lý Nhân Sự & Phân Quyền (Phase 3: Staff & RBAC)
+
+Hệ thống cung cấp giải pháp quản trị phân quyền nhân sự toàn diện tích hợp chặt chẽ giữa Backend API và Frontend Admin:
+
+1. **Quản Trị Viên Hệ Thống (Super Admin)**:
+   - Được định danh bảo mật thông qua cấu hình `.env` (`SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD`).
+   - Có bộ chọn nhà hàng (**Restaurant Switcher**) trên thanh điều hướng đầu trang (`AdminHeader`) để chuyển đổi nhanh giữa chế độ xem **"Toàn hệ thống"** hoặc từng nhà hàng cụ thể.
+   - Toàn quyền xem, lọc và phụ tạo nhân viên cho bất kỳ nhà hàng/chi nhánh nào trong hệ thống (`restaurantId`).
+2. **Quản Lý Nhân Viên & Khóa/Mở Khóa**:
+   - Thêm mới, chỉnh sửa thông tin, đổi chi nhánh và điều chuyển nhân sự giữa các chi nhánh (`POST /users/transfer`).
+   - Khóa/Mở khóa nhanh tài khoản (`PATCH /users/:id/toggle-status`), bảo vệ không tự khóa chính mình hoặc khóa tài khoản Super Admin.
+   - Xóa nhân viên theo cơ chế **Soft Delete** (`DELETE /users/:id`): bảo toàn toàn vẹn dữ liệu lịch sử hóa đơn và đơn hàng, đồng thời đổi alias email giải phóng ràng buộc unique để tạo lại nhân viên mới khi cần.
+3. **Phân Quyền Vai Trò & Ma Trận Quyền Hạn (RBAC Matrix)**:
+   - Hỗ trợ 6 vai trò mặc định hệ thống (`SYSTEM_ADMIN`, `RESTAURANT_ADMIN`, `RESTAURANT_MANAGER`, `CASHIER`, `KITCHEN`, `WAITER`).
+   - Tạo vai trò tùy chỉnh (`POST /roles`) và cấu hình chi tiết ma trận quyền theo từng phân hệ (Bán hàng, Bếp KDS, Thực đơn, Báo cáo, Nhân sự, Cài đặt).
+   - Bảo vệ không thể xóa vai trò hệ thống hoặc vai trò đang có nhân viên kích hoạt đảm nhiệm.
+
+---
+
 ## 📦 Build & Kiểm Tra Chất Lượng Mã (Build & Quality)
 
 ```bash
@@ -112,7 +131,8 @@ npm run typecheck
 
 ```bash
 git add .
-git commit -m "feat: complete initial iMenu monorepo architecture with client, admin and customer menu"
+git commit -m "feat(phase-03): implement staff management, RBAC, and super admin platform switcher"
 git branch -M main
 git push -u origin main
 ```
+

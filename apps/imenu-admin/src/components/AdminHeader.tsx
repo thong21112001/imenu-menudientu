@@ -15,6 +15,8 @@ import {
   Store,
   AlertTriangle,
   Loader2,
+  Globe,
+  Crown,
 } from 'lucide-react';
 
 export const AdminHeader: React.FC = () => {
@@ -24,7 +26,10 @@ export const AdminHeader: React.FC = () => {
   const [showNotificationList, setShowNotificationList] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showBranchDropdown, setShowBranchDropdown] = useState(false);
+  const [showRestaurantDropdown, setShowRestaurantDropdown] = useState(false);
   const [user, setUser] = useState<any>(storageService.getCurrentUser());
+  const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(storageService.getSelectedRestaurantId());
   const [branches, setBranches] = useState<RestaurantBranch[]>([]);
   const [activeBranchId, setActiveBranchId] = useState<string | null>(storageService.getActiveBranchId());
   const [loadingStatusChange, setLoadingStatusChange] = useState(false);
@@ -35,18 +40,39 @@ export const AdminHeader: React.FC = () => {
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
   const branchDropdownRef = useRef<HTMLDivElement>(null);
+  const restaurantDropdownRef = useRef<HTMLDivElement>(null);
 
-  const isMainBranchUser = Boolean(user?.isMainBranch);
+  const isSuperAdmin = Boolean(
+    user?.isSuperAdmin ||
+    user?.role === 'SYSTEM_ADMIN' ||
+    user?.role === 'system_admin' ||
+    user?.role === 'super_admin'
+  );
+  const isMainBranchUser = isSuperAdmin || Boolean(user?.isMainBranch);
   const isDemo = Boolean(user?.isDemo || user?.email === 'owner@sample.vn');
 
-  const fetchBranches = async () => {
+  const fetchRestaurants = async () => {
     try {
-      const res = await apiClient.branches.list();
+      const res = await apiClient.restaurant.listAll();
       if (res.data && Array.isArray(res.data)) {
-        setBranches(res.data);
+        setRestaurants(res.data);
       }
     } catch {
-      // Fallback
+      // Ignored
+    }
+  };
+
+  const fetchBranches = async (targetRestId?: string | null) => {
+    try {
+      const effectiveRestId = targetRestId !== undefined ? targetRestId : selectedRestaurantId;
+      const res = await apiClient.branches.list(effectiveRestId || undefined);
+      if (res.data && Array.isArray(res.data)) {
+        setBranches(res.data);
+      } else {
+        setBranches([]);
+      }
+    } catch {
+      setBranches([]);
     }
   };
 
@@ -64,13 +90,23 @@ export const AdminHeader: React.FC = () => {
         .catch(() => {});
     }
 
-    fetchBranches();
+    if (isSuperAdmin) {
+      fetchRestaurants();
+    }
+    fetchBranches(selectedRestaurantId);
 
     const handleBranchChange = (e: any) => {
       setActiveBranchId(e.detail?.branchId ?? null);
     };
 
+    const handleRestaurantChange = (e: any) => {
+      const restId = e.detail?.restaurantId ?? null;
+      setSelectedRestaurantId(restId);
+      fetchBranches(restId);
+    };
+
     window.addEventListener('imenu:branch_changed', handleBranchChange);
+    window.addEventListener('imenu:restaurant_changed', handleRestaurantChange);
 
     const unsub = realtimeHub.subscribe('*', (payload) => {
       if (payload.type === 'NEW_ORDER') {
@@ -96,11 +132,12 @@ export const AdminHeader: React.FC = () => {
 
     return () => {
       window.removeEventListener('imenu:branch_changed', handleBranchChange);
+      window.removeEventListener('imenu:restaurant_changed', handleRestaurantChange);
       unsub();
     };
-  }, []);
+  }, [isSuperAdmin]);
 
-  // Click-outside listener for User Menu, Notification List, and Branch Switcher
+  // Click-outside listener for User Menu, Notification List, Branch Switcher and Restaurant Switcher
   useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
       if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
@@ -112,6 +149,9 @@ export const AdminHeader: React.FC = () => {
       if (branchDropdownRef.current && !branchDropdownRef.current.contains(event.target as Node)) {
         setShowBranchDropdown(false);
       }
+      if (restaurantDropdownRef.current && !restaurantDropdownRef.current.contains(event.target as Node)) {
+        setShowRestaurantDropdown(false);
+      }
     };
 
     const handleEscape = (event: KeyboardEvent) => {
@@ -119,6 +159,7 @@ export const AdminHeader: React.FC = () => {
         setShowUserMenu(false);
         setShowNotificationList(false);
         setShowBranchDropdown(false);
+        setShowRestaurantDropdown(false);
       }
     };
 
@@ -151,6 +192,36 @@ export const AdminHeader: React.FC = () => {
       : 'Toàn chuỗi (Hợp nhất)';
     toast.info(`Phạm vi dữ liệu: ${targetName}`);
   };
+
+  const handleSelectRestaurant = (restId: string | null) => {
+    storageService.setSelectedRestaurantId(restId);
+    setSelectedRestaurantId(restId);
+    storageService.setActiveBranchId(null);
+    setActiveBranchId(null);
+    setShowRestaurantDropdown(false);
+
+    if (restId) {
+      const rest = restaurants.find((r) => (r._id || r.id) === restId);
+      if (rest) {
+        storageService.saveRestaurant(rest);
+      }
+      toast.info(`Phạm vi nhà hàng: ${rest?.name || 'Đã chọn'}`);
+    } else {
+      storageService.saveRestaurant(null);
+      toast.info('Phạm vi: Toàn bộ hệ thống');
+    }
+
+    window.dispatchEvent(new CustomEvent('imenu:restaurant_changed', { detail: { restaurantId: restId } }));
+    window.dispatchEvent(new CustomEvent('imenu:branch_changed', { detail: { branchId: null } }));
+    fetchBranches(restId);
+  };
+
+  const currentRestaurant = selectedRestaurantId
+    ? restaurants.find((r) => (r._id || r.id) === selectedRestaurantId)
+    : null;
+  const selectedRestaurantLabel = currentRestaurant
+    ? currentRestaurant.name
+    : '🌐 Toàn hệ thống';
 
   // Xác định chi nhánh hiện hành để hiển thị trạng thái
   const currentBranch = activeBranchId
@@ -214,8 +285,11 @@ export const AdminHeader: React.FC = () => {
 
   const getRoleLabel = (role: string) => {
     switch (role) {
-      case 'RESTAURANT_ADMIN':
+      case 'SYSTEM_ADMIN':
       case 'system_admin':
+      case 'super_admin':
+        return 'Super Admin';
+      case 'RESTAURANT_ADMIN':
       case 'restaurant_admin':
         return 'Chủ nhà hàng (HQ)';
       case 'RESTAURANT_MANAGER':
@@ -263,90 +337,171 @@ export const AdminHeader: React.FC = () => {
             )}
           </button>
 
-          {/* Branch Switcher / Current Branch Indicator */}
-          {isMainBranchUser ? (
-            <div ref={branchDropdownRef} className="relative">
+          {/* Super Admin: Restaurant Switcher */}
+          {isSuperAdmin && (
+            <div ref={restaurantDropdownRef} className="relative">
               <button
-                onClick={() => setShowBranchDropdown(!showBranchDropdown)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-xs font-bold text-[#09271d] transition-all cursor-pointer border border-slate-200/60"
-                title="Chọn chi nhánh để lọc dữ liệu"
+                onClick={() => setShowRestaurantDropdown(!showRestaurantDropdown)}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-50 hover:bg-purple-100/80 text-xs font-bold text-purple-900 transition-all cursor-pointer border border-purple-200/80 shadow-2xs"
+                title="Chọn nhà hàng để quản trị"
               >
-                <Building2 className="w-3.5 h-3.5 text-[#176044] shrink-0" />
-                <span className="truncate max-w-[140px] sm:max-w-[200px]">{selectedBranchLabel}</span>
-                <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
+                <Crown className="w-3.5 h-3.5 text-purple-600 shrink-0" />
+                <span className="truncate max-w-[130px] sm:max-w-[170px]">{selectedRestaurantLabel}</span>
+                <ChevronDown className="w-3 h-3 text-purple-400 shrink-0" />
               </button>
 
-              {showBranchDropdown && (
-                <div className="absolute left-0 mt-2 w-64 sm:w-72 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
+              {showRestaurantDropdown && (
+                <div className="absolute left-0 mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
                   <div className="px-2.5 py-1.5 border-b border-slate-100 mb-1 flex items-center justify-between">
                     <span className="font-bold text-slate-500 text-[10px] uppercase tracking-wider">
-                      Phạm vi hoạt động
+                      Phạm vi Nhà hàng
                     </span>
-                    <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-semibold">
-                      Chủ chuỗi (HQ)
+                    <span className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded font-semibold flex items-center gap-1">
+                      <Crown className="w-2.5 h-2.5" /> Super Admin
                     </span>
                   </div>
 
                   <button
-                    onClick={() => handleSelectBranch(null)}
+                    onClick={() => handleSelectRestaurant(null)}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left cursor-pointer transition-colors ${
-                      activeBranchId === null
-                        ? 'bg-[#176044] text-white font-bold'
+                      selectedRestaurantId === null
+                        ? 'bg-purple-700 text-white font-bold'
                         : 'hover:bg-slate-100 text-slate-700'
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <Store className="w-4 h-4 shrink-0" />
-                      <span>Toàn chuỗi (Báo cáo hợp nhất)</span>
+                      <Globe className="w-4 h-4 shrink-0" />
+                      <span>Toàn hệ thống (Tất cả nhà hàng)</span>
                     </div>
-                    {activeBranchId === null && <Check className="w-3.5 h-3.5" />}
+                    {selectedRestaurantId === null && <Check className="w-3.5 h-3.5" />}
                   </button>
 
                   <div className="my-1 border-t border-slate-100" />
 
-                  <div className="max-h-56 overflow-y-auto space-y-1">
-                    {branches.map((b) => {
-                      const bId = b._id || b.id;
-                      const isSelected = activeBranchId === bId;
-                      return (
-                        <button
-                          key={bId}
-                          onClick={() => handleSelectBranch(bId)}
-                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left cursor-pointer transition-colors ${
-                            isSelected
-                              ? 'bg-emerald-50 text-[#176044] font-bold border border-emerald-200'
-                              : 'hover:bg-slate-50 text-slate-700'
-                          }`}
-                        >
-                          <div className="min-w-0 flex-1 pr-2">
-                            <div className="flex items-center gap-1.5">
-                              <span className="truncate">{b.name}</span>
-                              {b.isMainBranch && (
-                                <span className="text-[9px] px-1 py-0.2 bg-amber-100 text-amber-800 font-bold rounded">
-                                  HQ
-                                </span>
-                              )}
+                  <div className="max-h-60 overflow-y-auto space-y-1">
+                    {restaurants.length === 0 ? (
+                      <p className="text-center py-4 text-slate-400">Không có nhà hàng nào</p>
+                    ) : (
+                      restaurants.map((r) => {
+                        const rId = r._id || r.id;
+                        const isSelected = selectedRestaurantId === rId;
+                        return (
+                          <button
+                            key={rId}
+                            onClick={() => handleSelectRestaurant(rId)}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'bg-purple-50 text-purple-950 font-bold border border-purple-200'
+                                : 'hover:bg-slate-50 text-slate-700'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1 pr-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className="truncate">{r.name}</span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-0.5 text-[10px] text-slate-400">
+                                <span>{r.branchCount ?? 1} chi nhánh</span>
+                                <span>•</span>
+                                <span>{r.staffCount ?? 0} nhân viên</span>
+                              </div>
                             </div>
-                            <small className="text-[10px] text-slate-400 block truncate">{b.address}</small>
-                          </div>
-                          {isSelected && <Check className="w-3.5 h-3.5 text-[#176044] shrink-0" />}
-                        </button>
-                      );
-                    })}
+                            {isSelected && <Check className="w-3.5 h-3.5 text-purple-700 shrink-0" />}
+                          </button>
+                        );
+                      })
+                    )}
                   </div>
                 </div>
               )}
             </div>
-          ) : (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-800">
-              <Building2 className="w-3.5 h-3.5 text-[#176044]" />
-              <span className="truncate max-w-[120px] sm:max-w-[180px]">
-                {user?.branchName || currentBranch?.name || 'Chi nhánh con'}
-              </span>
-              <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 font-medium">
-                Chi nhánh con
-              </span>
-            </div>
+          )}
+
+          {/* Branch Switcher / Current Branch Indicator */}
+          {(!isSuperAdmin || selectedRestaurantId !== null) && (
+            isMainBranchUser ? (
+              <div ref={branchDropdownRef} className="relative">
+                <button
+                  onClick={() => setShowBranchDropdown(!showBranchDropdown)}
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-xs font-bold text-[#09271d] transition-all cursor-pointer border border-slate-200/60"
+                  title="Chọn chi nhánh để lọc dữ liệu"
+                >
+                  <Building2 className="w-3.5 h-3.5 text-[#176044] shrink-0" />
+                  <span className="truncate max-w-[140px] sm:max-w-[200px]">{selectedBranchLabel}</span>
+                  <ChevronDown className="w-3 h-3 text-slate-400 shrink-0" />
+                </button>
+
+                {showBranchDropdown && (
+                  <div className="absolute left-0 mt-2 w-64 sm:w-72 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
+                    <div className="px-2.5 py-1.5 border-b border-slate-100 mb-1 flex items-center justify-between">
+                      <span className="font-bold text-slate-500 text-[10px] uppercase tracking-wider">
+                        Phạm vi hoạt động
+                      </span>
+                      <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-semibold">
+                        Chủ chuỗi (HQ)
+                      </span>
+                    </div>
+
+                    <button
+                      onClick={() => handleSelectBranch(null)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left cursor-pointer transition-colors ${
+                        activeBranchId === null
+                          ? 'bg-[#176044] text-white font-bold'
+                          : 'hover:bg-slate-100 text-slate-700'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Store className="w-4 h-4 shrink-0" />
+                        <span>Toàn chuỗi (Báo cáo hợp nhất)</span>
+                      </div>
+                      {activeBranchId === null && <Check className="w-3.5 h-3.5" />}
+                    </button>
+
+                    <div className="my-1 border-t border-slate-100" />
+
+                    <div className="max-h-56 overflow-y-auto space-y-1">
+                      {branches.map((b) => {
+                        const bId = b._id || b.id;
+                        const isSelected = activeBranchId === bId;
+                        return (
+                          <button
+                            key={bId}
+                            onClick={() => handleSelectBranch(bId)}
+                            className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left cursor-pointer transition-colors ${
+                              isSelected
+                                ? 'bg-emerald-50 text-[#176044] font-bold border border-emerald-200'
+                                : 'hover:bg-slate-50 text-slate-700'
+                            }`}
+                          >
+                            <div className="min-w-0 flex-1 pr-2">
+                              <div className="flex items-center gap-1.5">
+                                <span className="truncate">{b.name}</span>
+                                {b.isMainBranch && (
+                                  <span className="text-[9px] px-1 py-0.2 bg-amber-100 text-amber-800 font-bold rounded">
+                                    HQ
+                                  </span>
+                                )}
+                              </div>
+                              <small className="text-[10px] text-slate-400 block truncate">{b.address}</small>
+                            </div>
+                            {isSelected && <Check className="w-3.5 h-3.5 text-[#176044] shrink-0" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-800">
+                <Building2 className="w-3.5 h-3.5 text-[#176044]" />
+                <span className="truncate max-w-[120px] sm:max-w-[180px]">
+                  {user?.branchName || currentBranch?.name || 'Chi nhánh con'}
+                </span>
+                <span className="hidden sm:inline-block text-[10px] px-1.5 py-0.5 rounded bg-slate-200 text-slate-600 font-medium">
+                  Chi nhánh con
+                </span>
+              </div>
+            )
           )}
 
           {/* Store / Branch Status Toggle */}
@@ -441,7 +596,12 @@ export const AdminHeader: React.FC = () => {
                     <span className="inline-block px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 text-[10px] font-semibold">
                       {getRoleLabel(user?.role || '')}
                     </span>
-                    {isMainBranchUser && (
+                    {isSuperAdmin && (
+                      <span className="inline-block px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 text-[9px] font-bold">
+                        👑 Super Admin
+                      </span>
+                    )}
+                    {isMainBranchUser && !isSuperAdmin && (
                       <span className="inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[9px] font-bold">
                         Trụ sở chính
                       </span>

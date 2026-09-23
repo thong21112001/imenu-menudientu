@@ -27,6 +27,8 @@ import {
   Loader2,
   ArrowRight,
   AlertTriangle,
+  Crown,
+  Globe,
 } from 'lucide-react';
 
 export default function StaffPage() {
@@ -39,8 +41,21 @@ export default function StaffPage() {
   const [branches, setBranches] = useState<RestaurantBranch[]>([]);
   const [currentUser, setCurrentUser] = useState<any>(storageService.getCurrentUser());
   const [staffLoading, setStaffLoading] = useState<boolean>(false);
+  const [rolesLoading, setRolesLoading] = useState<boolean>(false);
+
+  // Super Admin state
+  const isSuperAdmin = Boolean(
+    currentUser?.isSuperAdmin ||
+    currentUser?.role === 'SYSTEM_ADMIN' ||
+    currentUser?.role === 'system_admin' ||
+    currentUser?.role === 'super_admin'
+  );
+  const [restaurants, setRestaurants] = useState<any[]>([]);
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(storageService.getSelectedRestaurantId());
+  const [restaurantFilter, setRestaurantFilter] = useState<string>('all');
 
   const isDemo = Boolean(currentUser?.isDemo || currentUser?.email === 'owner@sample.vn');
+  const isMainBranchUser = isSuperAdmin || Boolean(currentUser?.isMainBranch);
 
   // Search & Filter state for Users
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -58,6 +73,8 @@ export default function StaffPage() {
   // Add/Edit User Modal
   const [isUserModalOpen, setIsUserModalOpen] = useState<boolean>(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [userRestaurantId, setUserRestaurantId] = useState<string>('');
+  const [modalBranches, setModalBranches] = useState<RestaurantBranch[]>([]);
   const [userFullName, setUserFullName] = useState<string>('');
   const [userEmail, setUserEmail] = useState<string>('');
   const [userPhone, setUserPhone] = useState<string>('');
@@ -75,52 +92,132 @@ export default function StaffPage() {
   const [roleDescription, setRoleDescription] = useState<string>('');
   const [rolePermissions, setRolePermissions] = useState<string[]>([]);
 
-  const isMainBranchUser = Boolean(currentUser?.isMainBranch);
-
-  const loadStaffData = async (bFilter = branchFilter) => {
+  const loadStaffData = async (bFilter = branchFilter, rFilter = restaurantFilter) => {
     setStaffLoading(true);
     try {
+      const effectiveRestId = rFilter !== 'all' ? rFilter : (selectedRestaurantId || undefined);
       const res = await apiClient.staff.list({
+        restaurantId: effectiveRestId,
         branchId: bFilter !== 'all' ? bFilter : undefined,
         search: searchTerm || undefined,
       });
       if (res?.data) {
-        const staffList = Array.isArray(res.data) ? res.data : res.data.items || [];
-        if (staffList.length > 0) {
-          setUsers(staffList);
-          return;
-        }
+        const staffList = Array.isArray(res.data) ? res.data : (res.data.items || []);
+        const normalized: User[] = staffList
+          .map((u: any) => ({
+            id: u._id || u.id,
+            fullName: u.fullName || '',
+            email: u.email || '',
+            phone: u.phone || '',
+            role: typeof u.role === 'object' ? u.role?.slug || u.role?.code || u.role?.name : u.role,
+            branchName: typeof u.branchId === 'object' ? u.branchId?.name : (u.branchName || 'Chi nhánh chính'),
+            branchId: typeof u.branchId === 'object' ? u.branchId?._id || u.branchId?.id : u.branchId,
+            restaurantId: typeof u.restaurantId === 'object' ? u.restaurantId?._id || u.restaurantId?.id : u.restaurantId,
+            restaurantName: typeof u.restaurantId === 'object' ? u.restaurantId?.name : (u.restaurantName || ''),
+            status: u.status || 'ACTIVE',
+            isDeleted: Boolean(u.isDeleted),
+            deletedAt: u.deletedAt,
+            createdAt: u.createdAt,
+          }))
+          .filter((u: any) => !u.isDeleted && u.status !== 'DELETED');
+        setUsers(normalized);
+        return;
       }
-    } catch {
-      // Fallback
+    } catch (err) {
+      console.error('Lỗi khi tải danh sách nhân viên:', err);
     } finally {
       setStaffLoading(false);
     }
-    setUsers(storageService.getUsers());
+    setUsers(storageService.getUsers().filter((u) => u.status !== 'DELETED'));
   };
 
-  const loadBranches = async () => {
+  const loadBranches = async (targetRestId?: string | null) => {
     try {
-      const res = await apiClient.branches.list();
+      const restId = targetRestId !== undefined ? targetRestId : selectedRestaurantId;
+      const res = await apiClient.branches.list(restId || undefined);
       if (res.data && Array.isArray(res.data)) {
         setBranches(res.data);
-      } else if (restaurant.branches) {
+      } else if (restaurant?.branches) {
         setBranches(restaurant.branches);
       }
     } catch {
-      if (restaurant.branches) {
+      if (restaurant?.branches) {
         setBranches(restaurant.branches);
       }
+    }
+  };
+
+  const loadRoles = async (targetRestId?: string | null) => {
+    setRolesLoading(true);
+    try {
+      const restId = targetRestId !== undefined ? targetRestId : selectedRestaurantId;
+      const res = await apiClient.roles.list(restId || undefined);
+      if (res?.data && Array.isArray(res.data)) {
+        const mapped: RoleDefinition[] = res.data.map((r: any) => ({
+          id: r._id || r.id,
+          code: r.slug || r.code || r.name,
+          name: r.name,
+          description: r.description || '',
+          isSystem: Boolean(r.isSystem),
+          color: r.color || '#124a36',
+          permissions: r.permissionIds || r.permissions || [],
+          createdAt: r.createdAt,
+        }));
+        setRoles(mapped);
+        return;
+      }
+    } catch (err) {
+      console.error('Lỗi tải danh sách vai trò:', err);
+    } finally {
+      setRolesLoading(false);
+    }
+    setRoles(storageService.getRoles());
+  };
+
+  const loadRestaurants = async () => {
+    try {
+      const res = await apiClient.restaurant.listAll();
+      if (res?.data && Array.isArray(res.data)) {
+        setRestaurants(res.data);
+      }
+    } catch (err) {
+      console.error('Lỗi tải danh sách nhà hàng:', err);
     }
   };
 
   useEffect(() => {
-    setCurrentUser(storageService.getCurrentUser());
-    setRoles(storageService.getRoles());
+    const usr = storageService.getCurrentUser();
+    setCurrentUser(usr);
     setPermissionGroups(storageService.getPermissionGroups());
     setRestaurant(storageService.getRestaurant());
+    setSelectedRestaurantId(storageService.getSelectedRestaurantId());
+
+    const isSup = Boolean(
+      usr?.isSuperAdmin ||
+      usr?.role === 'SYSTEM_ADMIN' ||
+      usr?.role === 'system_admin' ||
+      usr?.role === 'super_admin'
+    );
+    if (isSup) {
+      loadRestaurants();
+    }
     loadBranches();
+    loadRoles();
     loadStaffData();
+
+    const handleRestaurantChanged = (e: any) => {
+      const restId = e.detail?.restaurantId ?? null;
+      setSelectedRestaurantId(restId);
+      setRestaurantFilter('all');
+      loadBranches(restId);
+      loadRoles(restId);
+      loadStaffData(branchFilter, restId || 'all');
+    };
+
+    window.addEventListener('imenu:restaurant_changed', handleRestaurantChanged);
+    return () => {
+      window.removeEventListener('imenu:restaurant_changed', handleRestaurantChanged);
+    };
   }, []);
 
   // Filtered Users
@@ -135,11 +232,14 @@ export default function StaffPage() {
       branchFilter === 'all' ||
       u.branchId === branchFilter ||
       (branches.find((b) => (b._id || b.id) === branchFilter)?.name === u.branchName);
-    return matchesSearch && matchesRole && matchesStatus && matchesBranch;
+    const matchesRestaurant =
+      restaurantFilter === 'all' ||
+      u.restaurantId === restaurantFilter;
+    return matchesSearch && matchesRole && matchesStatus && matchesBranch && matchesRestaurant;
   });
 
   // Open Add/Edit User Modal
-  const handleOpenUserModal = (usr?: User) => {
+  const handleOpenUserModal = async (usr?: User) => {
     if (isDemo) {
       toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể thêm hoặc sửa nhân viên.');
       return;
@@ -150,23 +250,64 @@ export default function StaffPage() {
       setUserEmail(usr.email);
       setUserPhone(usr.phone);
       setUserRole(usr.role);
+      const restId = usr.restaurantId || selectedRestaurantId || (restaurants[0]?._id || restaurants[0]?.id || '');
+      setUserRestaurantId(restId);
       setUserBranch(usr.branchName || branches[0]?.name || 'Chi nhánh Quận 1 (Chính)');
       setUserBranchId(usr.branchId || branches[0]?._id || branches[0]?.id || '');
       setUserPassword('••••••');
-      setUserStatus(usr.status || 'ACTIVE');
+      setUserStatus(usr.status === 'INACTIVE' ? 'INACTIVE' : 'ACTIVE');
+      setModalBranches(branches);
     } else {
       setEditingUser(null);
       setUserFullName('');
       setUserEmail('');
       setUserPhone('');
       setUserRole('CASHIER');
-      const defaultBranch = branches[0];
-      setUserBranch(defaultBranch?.name || 'Chi nhánh Quận 1 (Chính)');
+      const targetRestId = selectedRestaurantId || (restaurants[0]?._id || restaurants[0]?.id || '');
+      setUserRestaurantId(targetRestId);
+
+      // Load branches cho nhà hàng được chọn trong modal
+      let currentModalBranches = branches;
+      if (isSuperAdmin && targetRestId) {
+        try {
+          const res = await apiClient.branches.list(targetRestId);
+          if (res?.data && Array.isArray(res.data)) {
+            currentModalBranches = res.data;
+          }
+        } catch {
+          // Keep current branches
+        }
+      }
+      setModalBranches(currentModalBranches);
+      const defaultBranch = currentModalBranches[0];
+      setUserBranch(defaultBranch?.name || 'Chi nhánh chính');
       setUserBranchId(defaultBranch?._id || defaultBranch?.id || '');
       setUserPassword('123456');
       setUserStatus('ACTIVE');
     }
     setIsUserModalOpen(true);
+  };
+
+  // Super Admin đổi nhà hàng mục tiêu trong Add User modal
+  const handleModalRestaurantChange = async (targetRestId: string) => {
+    setUserRestaurantId(targetRestId);
+    try {
+      const res = await apiClient.branches.list(targetRestId);
+      if (res?.data && Array.isArray(res.data)) {
+        setModalBranches(res.data);
+        if (res.data.length > 0) {
+          setUserBranchId(res.data[0]._id || res.data[0].id);
+          setUserBranch(res.data[0].name);
+        } else {
+          setUserBranchId('');
+          setUserBranch('');
+        }
+      }
+    } catch {
+      setModalBranches([]);
+      setUserBranchId('');
+      setUserBranch('');
+    }
   };
 
   // Open Transfer Modal
@@ -177,7 +318,6 @@ export default function StaffPage() {
     }
     setTransferUser(usr);
     setTransferMsg(null);
-    // Default target branch to another branch
     const otherBranch = branches.find((b) => (b._id || b.id) !== usr.branchId);
     setTargetBranchId(otherBranch?._id || otherBranch?.id || '');
     setIsTransferModalOpen(true);
@@ -205,18 +345,7 @@ export default function StaffPage() {
         text: successText,
       });
       toast.success(successText);
-      // Cập nhật state cục bộ
-      const updated = users.map((u) =>
-        u.id === transferUser.id
-          ? {
-              ...u,
-              branchId: targetBranchId,
-              branchName: targetB?.name || u.branchName,
-            }
-          : u
-      );
-      setUsers(updated);
-      storageService.saveUsers(updated);
+      await loadStaffData();
       setTimeout(() => {
         setIsTransferModalOpen(false);
         setTransferMsg(null);
@@ -250,27 +379,10 @@ export default function StaffPage() {
           phone: userPhone.trim(),
           role: userRole,
           status: userStatus,
-        }).catch(() => {});
-
-        const updated = users.map((u) =>
-          u.id === editingUser.id
-            ? {
-                ...u,
-                fullName: userFullName.trim(),
-                email: userEmail.trim(),
-                phone: userPhone.trim(),
-                role: userRole as UserRole,
-                branchName: userBranch,
-                branchId: userBranchId,
-                status: userStatus,
-              }
-            : u
-        );
-        setUsers(updated);
-        storageService.saveUsers(updated);
+        });
         toast.success(`Đã cập nhật nhân viên "${userFullName.trim()}" thành công`);
       } else {
-        const createPayload = {
+        const createPayload: any = {
           fullName: userFullName.trim(),
           email: userEmail.trim(),
           phone: userPhone.trim(),
@@ -278,62 +390,62 @@ export default function StaffPage() {
           branchId: userBranchId || undefined,
           password: userPassword || '123456',
         };
+        if (isSuperAdmin && userRestaurantId) {
+          createPayload.restaurantId = userRestaurantId;
+        }
 
-        const res = await apiClient.staff.create(createPayload).catch(() => null);
-
-        const newUser: User = {
-          id: res?.data?.id || res?.data?._id || `usr-${Date.now()}`,
-          fullName: userFullName.trim(),
-          email: userEmail.trim(),
-          phone: userPhone.trim(),
-          role: userRole as UserRole,
-          branchName: userBranch,
-          branchId: userBranchId,
-          status: userStatus,
-          createdAt: new Date().toISOString(),
-        };
-        const updated = [newUser, ...users];
-        setUsers(updated);
-        storageService.saveUsers(updated);
+        await apiClient.staff.create(createPayload);
         toast.success(`Đã tạo mới nhân viên "${userFullName.trim()}" thành công`);
       }
       setIsUserModalOpen(false);
+      await loadStaffData();
     } catch (err: any) {
       toast.error(err.message || 'Lỗi lưu thông tin nhân viên');
     }
   };
 
   // Toggle User Status (Lock/Unlock)
-  const handleToggleUserStatus = (userId: string) => {
+  const handleToggleUserStatus = async (userId: string) => {
     if (isDemo) {
       toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể khóa/mở khóa nhân viên.');
       return;
     }
-    const targetUser = users.find((u) => u.id === userId);
-    const nextStatus = targetUser?.status === 'INACTIVE' ? 'ACTIVE' : 'INACTIVE';
-    const updated = users.map((u) => {
-      if (u.id === userId) {
-        return { ...u, status: nextStatus as 'ACTIVE' | 'INACTIVE' };
-      }
-      return u;
-    });
-    setUsers(updated);
-    storageService.saveUsers(updated);
-    toast.info(nextStatus === 'ACTIVE' ? 'Đã mở khóa tài khoản' : 'Đã tạm khóa tài khoản');
+    try {
+      const res = await apiClient.staff.toggleStatus(userId);
+      const newStatus = res?.data?.status;
+      setUsers((prev) =>
+        prev.map((u) => {
+          if (u.id === userId) {
+            return {
+              ...u,
+              status: (newStatus || (u.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')) as any,
+            };
+          }
+          return u;
+        })
+      );
+      toast.info(newStatus === 'ACTIVE' ? 'Đã mở khóa tài khoản' : 'Đã tạm khóa tài khoản');
+    } catch (err: any) {
+      toast.error(err.message || 'Không thể thay đổi trạng thái nhân viên');
+    }
   };
 
-  // Delete User
-  const handleDeleteUser = (userId: string) => {
+  // Delete User (Soft Delete)
+  const handleDeleteUser = async (userId: string) => {
     if (isDemo) {
       toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể xóa nhân viên.');
       return;
     }
     const targetUser = users.find((u) => u.id === userId);
-    if (confirm(`Bạn có chắc muốn xóa nhân viên "${targetUser?.fullName || 'này'}" khỏi hệ thống?`)) {
-      const updated = users.filter((u) => u.id !== userId);
-      setUsers(updated);
-      storageService.saveUsers(updated);
-      toast.success('Đã xóa nhân viên thành công');
+    if (!confirm(`Bạn có chắc muốn xóa nhân viên "${targetUser?.fullName || 'này'}" khỏi hệ thống? (Thao tác sẽ thực hiện soft delete bảo vệ lịch sử hóa đơn).`)) {
+      return;
+    }
+    try {
+      await apiClient.staff.delete(userId);
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      toast.success('Đã xóa nhân viên (Soft Delete) thành công');
+    } catch (err: any) {
+      toast.error(err.message || 'Không thể xóa nhân viên');
     }
   };
 
@@ -395,7 +507,7 @@ export default function StaffPage() {
   };
 
   // Save Role Submit
-  const handleSaveRole = (e: React.FormEvent) => {
+  const handleSaveRole = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!roleName.trim() || !roleCode.trim()) return;
 
@@ -404,42 +516,33 @@ export default function StaffPage() {
       return;
     }
 
-    let updated: RoleDefinition[];
-    if (editingRole) {
-      updated = roles.map((r) =>
-        r.id === editingRole.id
-          ? {
-              ...r,
-              name: roleName.trim(),
-              code: roleCode.trim(),
-              description: roleDescription.trim(),
-              permissions: rolePermissions,
-            }
-          : r
-      );
-      toast.success(`Đã cập nhật vai trò "${roleName.trim()}"`);
-    } else {
-      const newRole: RoleDefinition = {
-        id: `role-${Date.now()}`,
-        code: roleCode.trim(),
-        name: roleName.trim(),
-        description: roleDescription.trim() || 'Vai trò tùy chỉnh',
-        isSystem: false,
-        color: '#124a36',
-        permissions: rolePermissions,
-        createdAt: new Date().toISOString(),
-      };
-      updated = [...roles, newRole];
-      toast.success(`Đã tạo vai trò mới "${roleName.trim()}"`);
+    try {
+      if (editingRole) {
+        await apiClient.roles.update(editingRole.id, {
+          name: roleName.trim(),
+          description: roleDescription.trim(),
+          permissionIds: rolePermissions,
+        });
+        toast.success(`Đã cập nhật vai trò "${roleName.trim()}"`);
+      } else {
+        await apiClient.roles.create({
+          name: roleName.trim(),
+          slug: roleCode.trim(),
+          description: roleDescription.trim() || 'Vai trò tùy chỉnh',
+          permissionIds: rolePermissions,
+          restaurantId: selectedRestaurantId || undefined,
+        });
+        toast.success(`Đã tạo vai trò mới "${roleName.trim()}"`);
+      }
+      await loadRoles();
+      setIsRoleModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || 'Không thể lưu vai trò phân quyền');
     }
-
-    setRoles(updated);
-    storageService.saveRoles(updated);
-    setIsRoleModalOpen(false);
   };
 
   // Delete Custom Role
-  const handleDeleteRole = (roleId: string) => {
+  const handleDeleteRole = async (roleId: string) => {
     if (isDemo) {
       toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể xóa vai trò.');
       return;
@@ -455,11 +558,14 @@ export default function StaffPage() {
       toast.error(`Đang có ${usersWithRole.length} nhân viên thuộc vai trò này. Hãy chuyển vai trò của họ trước khi xóa!`);
       return;
     }
-    if (confirm(`Bạn có chắc muốn xóa vai trò "${roleToDelete.name}"?`)) {
-      const updated = roles.filter((r) => r.id !== roleId);
-      setRoles(updated);
-      storageService.saveRoles(updated);
+    if (!confirm(`Bạn có chắc muốn xóa vai trò "${roleToDelete.name}"?`)) return;
+
+    try {
+      await apiClient.roles.delete(roleId);
       toast.success(`Đã xóa vai trò "${roleToDelete.name}"`);
+      await loadRoles();
+    } catch (err: any) {
+      toast.error(err.message || 'Không thể xóa vai trò này');
     }
   };
 
@@ -467,18 +573,26 @@ export default function StaffPage() {
     const r = roles.find((item) => item.code === roleCode);
     const roleName = r ? r.name : roleCode;
     switch (roleCode) {
+      case 'SYSTEM_ADMIN':
+      case 'system_admin':
+        return <Badge variant="brand">👑 Super Admin</Badge>;
       case 'RESTAURANT_ADMIN':
+      case 'restaurant_admin':
         return <Badge variant="brand">{roleName}</Badge>;
       case 'RESTAURANT_MANAGER':
+      case 'restaurant_manager':
         return <Badge variant="neutral">{roleName}</Badge>;
       case 'CASHIER':
+      case 'cashier':
         return <Badge variant="amber">{roleName}</Badge>;
       case 'KITCHEN':
+      case 'kitchen':
         return <Badge variant="danger">{roleName}</Badge>;
       case 'WAITER':
+      case 'waiter':
         return <Badge variant="neutral">{roleName}</Badge>;
       default:
-        return <Badge variant="brand">{roleName}</Badge>;
+        return <Badge variant="neutral">{roleName}</Badge>;
     }
   };
 
@@ -586,6 +700,26 @@ export default function StaffPage() {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+              {isSuperAdmin && restaurants.length > 0 && (
+                <div className="w-full sm:w-52">
+                  <CustomSelect
+                    size="sm"
+                    value={restaurantFilter}
+                    onChange={(val) => {
+                      setRestaurantFilter(val);
+                      loadStaffData(branchFilter, val);
+                    }}
+                    options={[
+                      { value: 'all', label: '🌐 Tất cả nhà hàng' },
+                      ...restaurants.map((r) => ({
+                        value: (r._id || r.id) as string,
+                        label: r.name,
+                      })),
+                    ]}
+                  />
+                </div>
+              )}
+
               <div className="w-full sm:w-44">
                 <CustomSelect
                   size="sm"
@@ -618,7 +752,7 @@ export default function StaffPage() {
                     value={branchFilter}
                     onChange={(val) => {
                       setBranchFilter(val);
-                      loadStaffData(val);
+                      loadStaffData(val, restaurantFilter);
                     }}
                     options={[
                       { value: 'all', label: '🏢 Tất cả chi nhánh' },
@@ -685,6 +819,15 @@ export default function StaffPage() {
                             <Building2 className="w-3 h-3 text-emerald-700" />
                             {usr.branchName || 'Chi nhánh chính'}
                           </span>
+                          {isSuperAdmin && usr.restaurantName && (
+                            <>
+                              <span>•</span>
+                              <span className="flex items-center gap-1 text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200 text-[11px]">
+                                <Crown className="w-3 h-3 text-purple-600" />
+                                {usr.restaurantName}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -749,15 +892,6 @@ export default function StaffPage() {
                 Cấu hình phân quyền truy cập theo từng phân hệ (Thực đơn, POS Bàn, Màn hình Bếp KDS, Báo cáo và Cài đặt)
               </p>
             </div>
-
-            {/* <Button
-              variant="outline"
-              icon={<Plus className="w-4 h-4 text-[#176044]" />}
-              onClick={() => handleOpenRoleModal()}
-              className="cursor-pointer text-xs"
-            >
-              + Tạo mới phân quyền
-            </Button> */}
           </div>
 
           {/* Roles Grid */}
@@ -854,6 +988,23 @@ export default function StaffPage() {
         maxWidth="md"
       >
         <form onSubmit={handleSaveUser} className="space-y-4">
+          {isSuperAdmin && !editingUser && (
+            <div>
+              <label className="text-xs font-bold text-slate-700 block mb-1">
+                Thuộc Nhà Hàng Quản Lý *
+              </label>
+              <CustomSelect
+                options={restaurants.map((r) => ({
+                  value: (r._id || r.id) as string,
+                  label: r.name,
+                  sublabel: `${r.branchCount ?? 1} chi nhánh • ${r.staffCount ?? 0} nhân viên`,
+                }))}
+                value={userRestaurantId}
+                onChange={(val) => handleModalRestaurantChange(val)}
+              />
+            </div>
+          )}
+
           <div>
             <label className="text-xs font-bold text-slate-700 block mb-1">Họ và tên nhân viên *</label>
             <input
@@ -909,7 +1060,7 @@ export default function StaffPage() {
             <div>
               <label className="text-xs font-bold text-slate-700 block mb-1">Chi nhánh làm việc *</label>
               <CustomSelect
-                options={branches.map((b) => ({
+                options={(modalBranches.length > 0 ? modalBranches : branches).map((b) => ({
                   value: (b._id || b.id) as string,
                   label: b.name,
                   sublabel: b.address,
@@ -918,7 +1069,8 @@ export default function StaffPage() {
                 value={userBranchId}
                 onChange={(val) => {
                   setUserBranchId(val);
-                  const selectedB = branches.find((b) => (b._id || b.id) === val);
+                  const branchPool = modalBranches.length > 0 ? modalBranches : branches;
+                  const selectedB = branchPool.find((b) => (b._id || b.id) === val);
                   setUserBranch(selectedB?.name || '');
                 }}
                 disabled={!isMainBranchUser && Boolean(currentUser?.branchId)}

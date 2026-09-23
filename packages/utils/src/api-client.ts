@@ -252,15 +252,25 @@ export const apiClient = {
       }
       return res;
     },
+
+    async listAll() {
+      return request<any[]>('/restaurants');
+    },
+
+    async getById(id: string) {
+      return request<any>(`/restaurants/${id}`);
+    },
   },
 
   branches: {
-    async list() {
-      return request<any[]>('/branches');
+    async list(restaurantId?: string) {
+      const q = restaurantId ? `?restaurantId=${encodeURIComponent(restaurantId)}` : '';
+      return request<any[]>(`/branches${q}`);
     },
 
-    async get(id: string) {
-      return request<any>(`/branches/${id}`);
+    async get(id: string, restaurantId?: string) {
+      const q = restaurantId ? `?restaurantId=${encodeURIComponent(restaurantId)}` : '';
+      return request<any>(`/branches/${id}${q}`);
     },
 
     async create(payload: BranchPayload) {
@@ -306,9 +316,10 @@ export const apiClient = {
   },
 
   staff: {
-    async list(params?: { branchId?: string; search?: string; page?: number; limit?: number }) {
+    async list(params?: { restaurantId?: string; branchId?: string; search?: string; page?: number; limit?: number }) {
       const q = new URLSearchParams();
-      if (params?.branchId) q.append('branchId', params.branchId);
+      if (params?.restaurantId && params.restaurantId !== 'all') q.append('restaurantId', params.restaurantId);
+      if (params?.branchId && params.branchId !== 'all') q.append('branchId', params.branchId);
       if (params?.search) q.append('search', params.search);
       if (params?.page) q.append('page', String(params.page));
       if (params?.limit) q.append('limit', String(params.limit));
@@ -334,10 +345,57 @@ export const apiClient = {
       });
     },
 
+    async toggleStatus(id: string) {
+      return request<any>(`/users/${id}/toggle-status`, {
+        method: 'PATCH',
+      });
+    },
+
+    async delete(id: string) {
+      return request<any>(`/users/${id}`, {
+        method: 'DELETE',
+      });
+    },
+
     async transfer(id: string, targetBranchId: string) {
       return request<any>(`/users/${id}/transfer`, {
         method: 'POST',
         body: JSON.stringify({ targetBranchId }),
+      });
+    },
+  },
+
+  roles: {
+    async list(restaurantId?: string) {
+      const q = restaurantId && restaurantId !== 'all' ? `?restaurantId=${encodeURIComponent(restaurantId)}` : '';
+      return request<any>(`/roles${q}`);
+    },
+
+    async get(id: string) {
+      return request<any>(`/roles/${id}`);
+    },
+
+    async getPermissionsMatrix() {
+      return request<any>('/roles/permissions/matrix');
+    },
+
+    async create(payload: { name: string; slug: string; description?: string; color?: string; permissionIds?: string[]; restaurantId?: string }) {
+      return request<any>('/roles', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async update(id: string, payload: { name?: string; description?: string; color?: string; permissionIds?: string[] }) {
+      return request<any>(`/roles/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async delete(id: string) {
+      return request<any>(`/roles/${id}`, {
+        method: 'DELETE',
       });
     },
   },

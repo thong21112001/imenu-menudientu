@@ -58,14 +58,19 @@ function LoginForm() {
       });
 
       if (res?.data?.accessToken) {
-        // Lay thong tin nha hang hien tai de luu vao storage
-        try {
-          const restRes = await apiClient.restaurant.getCurrent();
-          if (restRes?.data) {
-            storageService.saveRestaurant(restRes.data);
+        const userRole = (res.data.user as any)?.role;
+        const isSuperAdmin = userRole === 'SYSTEM_ADMIN' || userRole === 'system_admin';
+
+        // Neu khong phai Super Admin -> lay thong tin nha hang hien tai
+        if (!isSuperAdmin) {
+          try {
+            const restRes = await apiClient.restaurant.getCurrent();
+            if (restRes?.data && !restRes.data.isPlatformAdmin) {
+              storageService.saveRestaurant(restRes.data);
+            }
+          } catch {
+            // Khong lam gian doan qua trinh dang nhap neu loi nha hang
           }
-        } catch {
-          // Khong lam gian doan qua trinh dang nhap neu loi nha hang
         }
 
         // Chuyen huong ve trang dich
@@ -193,11 +198,11 @@ function LoginForm() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setSampleAccount('admin@imenu.vn', 'admin123456')}
+                  onClick={() => setSampleAccount('superadmin@imenu.vn', 'SuperAdmin@2026!')}
                   className="px-3 py-1.5 rounded-xl bg-white hover:bg-teal-50 border border-slate-200 hover:border-teal-300 text-xs font-medium text-slate-700 hover:text-teal-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                 >
                   <UserCheck className="w-3.5 h-3.5 text-teal-600" />
-                  Super Admin: <span className="font-bold text-slate-900">admin@imenu.vn</span>
+                  Super Admin: <span className="font-bold text-slate-900">superadmin@imenu.vn</span>
                 </button>
               </div>
             </div>
