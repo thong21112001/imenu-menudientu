@@ -63,6 +63,19 @@ export const AdminSidebar: React.FC = () => {
   }, []);
 
   const isSuperAdmin = user?.role === 'SYSTEM_ADMIN' || user?.role === 'system_admin' || user?.role === 'super_admin';
+  const isMainBranchUser = isSuperAdmin || Boolean(user?.isMainBranch);
+
+  const navItems = NAV_ITEMS.filter((item) => {
+    if (item.href === '/branches' && !isMainBranchUser) {
+      return false;
+    }
+    return true;
+  }).map((item) => {
+    if (item.href === '/settings' && !isMainBranchUser) {
+      return { ...item, name: 'Cài đặt Chi nhánh' };
+    }
+    return item;
+  });
 
   const restaurantName = isSuperAdmin && !selectedRestaurantId
     ? 'iMenu Platform'
@@ -136,7 +149,7 @@ export const AdminSidebar: React.FC = () => {
 
       {/* Navigation Links */}
       <nav className="flex-1 px-2.5 py-2 space-y-1 overflow-y-auto overflow-x-hidden">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
           return (

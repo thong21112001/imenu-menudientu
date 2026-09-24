@@ -46,7 +46,12 @@ export default function BranchesPage() {
   const [actionReason, setActionReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
 
-  const isMainBranchUser = Boolean(user?.isMainBranch);
+  const isSuperAdmin =
+    user?.role === 'SYSTEM_ADMIN' ||
+    user?.role === 'system_admin' ||
+    user?.role === 'super_admin' ||
+    Boolean(user?.isSuperAdmin);
+  const isMainBranchUser = isSuperAdmin || Boolean(user?.isMainBranch);
   const isDemo = Boolean(user?.isDemo || user?.email === 'owner@sample.vn');
 
   const loadBranches = async () => {
@@ -296,6 +301,26 @@ export default function BranchesPage() {
   const activeCount = branches.filter((b) => !b.status || b.status === 'ACTIVE').length;
   const closedCount = branches.filter((b) => b.status === 'TEMPORARILY_CLOSED').length;
   const inactiveCount = branches.filter((b) => b.status === 'INACTIVE').length;
+
+  if (!loading && !isMainBranchUser) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center text-center p-6 space-y-4">
+        <div className="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200 shadow-sm">
+          <Lock className="w-8 h-8" />
+        </div>
+        <div className="max-w-md space-y-2">
+          <h2 className="text-xl font-bold text-slate-900">Khu vực dành riêng cho Trụ sở chính (HQ)</h2>
+          <p className="text-xs text-slate-500 leading-relaxed">
+            Tài khoản thuộc chi nhánh con không có quyền truy cập trang quản lý mạng lưới chi nhánh. 
+            Vui lòng liên hệ Quản trị viên trụ sở chính hoặc chuyển sang trang cài đặt chi nhánh của bạn.
+          </p>
+        </div>
+        <Button variant="secondary" size="sm" onClick={() => window.location.href = '/'}>
+          Về trang Tổng quan
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

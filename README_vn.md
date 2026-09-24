@@ -101,14 +101,18 @@ Hệ thống cung cấp giải pháp quản trị phân quyền nhân sự toàn
    - Được định danh bảo mật thông qua cấu hình `.env` (`SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD`).
    - Có bộ chọn nhà hàng (**Restaurant Switcher**) trên thanh điều hướng đầu trang (`AdminHeader`) để chuyển đổi nhanh giữa chế độ xem **"Toàn hệ thống"** hoặc từng nhà hàng cụ thể.
    - Toàn quyền xem, lọc và phụ tạo nhân viên cho bất kỳ nhà hàng/chi nhánh nào trong hệ thống (`restaurantId`).
-2. **Quản Lý Nhân Viên & Khóa/Mở Khóa**:
-   - Thêm mới, chỉnh sửa thông tin, đổi chi nhánh và điều chuyển nhân sự giữa các chi nhánh (`POST /users/transfer`).
-   - Khóa/Mở khóa nhanh tài khoản (`PATCH /users/:id/toggle-status`), bảo vệ không tự khóa chính mình hoặc khóa tài khoản Super Admin.
-   - Xóa nhân viên theo cơ chế **Soft Delete** (`DELETE /users/:id`): bảo toàn toàn vẹn dữ liệu lịch sử hóa đơn và đơn hàng, đồng thời đổi alias email giải phóng ràng buộc unique để tạo lại nhân viên mới khi cần.
-3. **Phân Quyền Vai Trò & Ma Trận Quyền Hạn (RBAC Matrix)**:
-   - Hỗ trợ 6 vai trò mặc định hệ thống (`SYSTEM_ADMIN`, `RESTAURANT_ADMIN`, `RESTAURANT_MANAGER`, `CASHIER`, `KITCHEN`, `WAITER`).
-   - Tạo vai trò tùy chỉnh (`POST /roles`) và cấu hình chi tiết ma trận quyền theo từng phân hệ (Bán hàng, Bếp KDS, Thực đơn, Báo cáo, Nhân sự, Cài đặt).
-   - Bảo vệ không thể xóa vai trò hệ thống hoặc vai trò đang có nhân viên kích hoạt đảm nhiệm.
+2. **Phân Lập Nghiệp Vụ Chi Nhánh Con (Sub-branch Scoping)**:
+   - **Thanh Header & Bộ chuyển Chi nhánh**: Tài khoản thuộc chi nhánh con (kể cả có vai trò `restaurant_admin`) được khóa chặt phạm vi tại chi nhánh của mình; ẩn dropdown đổi chi nhánh và hiển thị huy hiệu tĩnh kèm nhãn "Chi nhánh con".
+   - **Thanh Bên (Sidebar) & Truy Cập /branches**: Tự động ẩn menu "Quản lý Chi nhánh" đối với chi nhánh con; truy cập trực tiếp URL `/branches` sẽ hiển thị màn hình từ chối quyền truy cập (Access Denied).
+   - **Cài Đặt Chi Nhánh Độc Lập**: Menu "Cài đặt Nhà hàng" tự động đổi thành "Cài đặt Chi nhánh", cho phép mỗi chi nhánh con cấu hình số điện thoại hotline, giờ phục vụ và tài khoản ngân hàng nhận tiền VietQR riêng biệt.
+3. **Quản Lý Nhân Viên & Khóa/Mở Khóa**:
+   - Thêm mới, chỉnh sửa thông tin, khóa/mở khóa (`PATCH /users/:id/toggle-status`) và xóa mềm (`DELETE /users/:id`) trong phạm vi chi nhánh của mình.
+   - Chặn chi nhánh con tạo/sửa/xóa nhân sự của chi nhánh khác hoặc gán các vai trò quản trị (`restaurant_admin`, `restaurant_manager`).
+   - Quyền điều chuyển nhân sự giữa các chi nhánh (`POST /users/transfer`) dành riêng cho Trụ sở chính (HQ).
+4. **Phân Quyền Vai Trò & Ma Trận Quyền Hạn (RBAC Matrix)**:
+   - Hỗ trợ 6 vai trò mặc định hệ thống (`SYSTEM_ADMIN`, `RESTAURANT_ADMIN`, `RESTAURANT_MANAGER`, `CASHIER`, `KITCHEN`, `WAITER`). Vai trò mặc định hệ thống được bảo vệ tuyệt đối và chỉ có Super Admin mới có quyền cập nhật.
+   - Trụ sở chính (HQ) có thể tạo và quản lý vai trò tùy chỉnh (`POST /roles`), thống kê nhân sự theo quy mô toàn chuỗi (`{userCount} nhân sự (toàn chuỗi) đang giữ vai trò này`).
+   - Chi nhánh con không được phép tạo/sửa/xóa vai trò; giao diện Tab 2 RBAC hiển thị số lượng nhân sự thuộc phạm vi chi nhánh mình (`{userCount} nhân sự (tại chi nhánh này) đang giữ vai trò này`).
 
 ---
 

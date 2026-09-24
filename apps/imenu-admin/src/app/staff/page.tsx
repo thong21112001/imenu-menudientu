@@ -64,9 +64,10 @@ export default function StaffPage() {
   const [restaurantFilter, setRestaurantFilter] = useState<string>('all');
 
   const isDemo = Boolean(currentUser?.isDemo || currentUser?.email === 'owner@sample.vn');
-  const isMainBranchUser =
+  const isMainBranchUser = isSuperAdmin || Boolean(currentUser?.isMainBranch);
+  const canManageStaff =
     isSuperAdmin ||
-    Boolean(currentUser?.isMainBranch) ||
+    isMainBranchUser ||
     currentUser?.role === 'RESTAURANT_ADMIN' ||
     currentUser?.role === 'restaurant_admin';
 
@@ -83,9 +84,15 @@ export default function StaffPage() {
     return true;
   });
 
-  // Khi phân quyền vai trò cho nhân viên, tuyệt đối không được gán role Super Admin (system_admin)
+  // Khi phân quyền vai trò cho nhân viên:
+  // - Tuyệt đối không gán role Super Admin (system_admin)
+  // - Nếu không phải Trụ sở chính (HQ), không thể gán vai trò quản trị (restaurant_admin, restaurant_manager)
   const assignableRoles = visibleRoles.filter((r) => {
     if (isSuperAdminRole(r.code)) return false;
+    if (!isMainBranchUser) {
+      const s = String(r.code || '').toLowerCase();
+      if (s === 'restaurant_admin' || s === 'restaurant_manager') return false;
+    }
     return true;
   });
 
@@ -437,6 +444,10 @@ export default function StaffPage() {
       const defaultBranch = currentModalBranches[0];
       setUserBranch(defaultBranch?.name || 'Chi nhánh chính');
       setUserBranchId(defaultBranch?._id || defaultBranch?.id || '');
+      if (!isMainBranchUser && currentUser?.branchId) {
+        setUserBranch(currentUser.branchName || 'Chi nhánh hiện tại');
+        setUserBranchId(currentUser.branchId);
+      }
       setUserPassword('123456');
       setUserStatus('ACTIVE');
     }
@@ -806,23 +817,23 @@ export default function StaffPage() {
               variant="primary"
               icon={<UserPlus className="w-4 h-4" />}
               onClick={() => handleOpenUserModal()}
-              disabled={!isMainBranchUser}
-              className={`cursor-pointer shadow-md ${!isMainBranchUser ? 'opacity-60 cursor-not-allowed' : ''}`}
-              title={!isMainBranchUser ? 'Chỉ tài khoản chính của chủ nhà hàng mới có quyền thêm nhân viên' : undefined}
+              disabled={!canManageStaff}
+              className={`cursor-pointer shadow-md ${!canManageStaff ? 'opacity-60 cursor-not-allowed' : ''}`}
+              title={!canManageStaff ? 'Chỉ quản trị viên mới có quyền thêm nhân viên' : undefined}
             >
               Thêm nhân viên mới
             </Button>
           ) : (
-            <Button
-              variant="primary"
-              icon={<ShieldCheck className="w-4 h-4" />}
-              onClick={() => handleOpenRoleModal()}
-              disabled={!isMainBranchUser}
-              className={`cursor-pointer shadow-md ${!isMainBranchUser ? 'opacity-60 cursor-not-allowed' : ''}`}
-              title={!isMainBranchUser ? 'Chỉ tài khoản chính của chủ nhà hàng mới có quyền tạo vai trò' : undefined}
-            >
-              + Tạo mới phân quyền
-            </Button>
+            isMainBranchUser && (
+              <Button
+                variant="primary"
+                icon={<ShieldCheck className="w-4 h-4" />}
+                onClick={() => handleOpenRoleModal()}
+                className="cursor-pointer shadow-md"
+              >
+                + Tạo mới phân quyền
+              </Button>
+            )
           )}
         </div>
       </div>
@@ -1171,7 +1182,7 @@ export default function StaffPage() {
                                 </button>
                               )}
 
-                              {isMainBranchUser && (
+                              {canManageStaff && (
                                 <>
                                   <button
                                     onClick={() => handleToggleUserStatus(usr.id)}
@@ -1376,7 +1387,7 @@ export default function StaffPage() {
                           </button>
                         )}
 
-                        {isMainBranchUser && (
+                        {canManageStaff && (
                           <>
                             <button
                               onClick={() => handleToggleUserStatus(usr.id)}
@@ -1538,7 +1549,7 @@ export default function StaffPage() {
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
-                      {isMainBranchUser && (
+                      {((!r.isSystem && isMainBranchUser) || (r.isSystem && isSuperAdmin)) && (
                         <button
                           onClick={() => handleOpenRoleModal(r)}
                           className="p-1.5 text-slate-500 hover:text-[#176044] hover:bg-emerald-50 rounded-lg cursor-pointer"
@@ -1590,7 +1601,13 @@ export default function StaffPage() {
                   <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
                     <span className="flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{userCount} nhân sự đang giữ vai trò này</span>
+                      <span>
+                        {isSuperAdmin
+                          ? `${userCount} nhân sự đang giữ vai trò này`
+                          : isMainBranchUser
+                          ? `${userCount} nhân sự (toàn chuỗi) đang giữ vai trò này`
+                          : `${userCount} nhân sự (tại chi nhánh này) đang giữ vai trò này`}
+                      </span>
                     </span>
                   </div>
                 </Card>

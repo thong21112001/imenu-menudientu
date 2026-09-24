@@ -85,9 +85,18 @@ export const AdminHeader: React.FC = () => {
           if (res.data?.user) {
             setUser(res.data.user);
             storageService.setCurrentUser(res.data.user);
+            if (!res.data.user.isSuperAdmin && !res.data.user.isMainBranch && res.data.user.branchId) {
+              setActiveBranchId(res.data.user.branchId);
+              storageService.setActiveBranchId(res.data.user.branchId);
+            }
           }
         })
         .catch(() => {});
+    }
+
+    if (!isSuperAdmin && !user?.isMainBranch && user?.branchId) {
+      setActiveBranchId(user.branchId);
+      storageService.setActiveBranchId(user.branchId);
     }
 
     if (isSuperAdmin) {

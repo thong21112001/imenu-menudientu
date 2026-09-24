@@ -52,6 +52,15 @@ export interface BranchPayload {
   address: string;
   phone: string;
   isMainBranch?: boolean;
+  bankAccount?: {
+    bankId?: string;
+    bankName?: string;
+    accountNo?: string;
+    accountName?: string;
+    template?: string;
+  };
+  openingHours?: string;
+  tagline?: string;
 }
 
 const DEFAULT_API_URL = 'http://localhost:3001/api';

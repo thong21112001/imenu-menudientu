@@ -1,5 +1,13 @@
 export type BranchStatus = 'ACTIVE' | 'TEMPORARILY_CLOSED' | 'INACTIVE';
 
+export interface BankAccountConfig {
+  bankId: string; // e.g., 'MB', 'VCB', 'TCB'
+  bankName: string;
+  accountNo: string;
+  accountName: string;
+  template?: 'compact' | 'qr_only' | 'print';
+}
+
 export interface RestaurantBranch {
   _id?: string;
   id: string;
@@ -10,6 +18,9 @@ export interface RestaurantBranch {
   status?: BranchStatus;
   closedAt?: string | null;
   closedReason?: string | null;
+  bankAccount?: BankAccountConfig;
+  openingHours?: string;
+  tagline?: string;
 }
 
 export interface CreateBranchDto {
@@ -18,14 +29,21 @@ export interface CreateBranchDto {
   phone: string;
   isMainBranch?: boolean;
   status?: BranchStatus;
+  bankAccount?: BankAccountConfig;
+  openingHours?: string;
+  tagline?: string;
 }
 
 export interface UpdateBranchDto {
   name?: string;
   address?: string;
   phone?: string;
+  isMainBranch?: boolean;
   status?: BranchStatus;
   closedReason?: string;
+  bankAccount?: BankAccountConfig;
+  openingHours?: string;
+  tagline?: string;
 }
 
 export interface CloseBranchDto {
@@ -34,14 +52,6 @@ export interface CloseBranchDto {
 
 export interface DeactivateBranchDto {
   reason?: string;
-}
-
-export interface BankAccountConfig {
-  bankId: string; // e.g., 'MB', 'VCB', 'TCB'
-  bankName: string;
-  accountNo: string;
-  accountName: string;
-  template?: 'compact' | 'qr_only' | 'print';
 }
 
 export interface Restaurant {
