@@ -316,10 +316,22 @@ export const apiClient = {
   },
 
   staff: {
-    async list(params?: { restaurantId?: string; branchId?: string; search?: string; page?: number; limit?: number }) {
+    async list(params?: {
+      restaurantId?: string;
+      branchId?: string;
+      search?: string;
+      status?: string;
+      roleId?: string;
+      role?: string;
+      page?: number;
+      limit?: number;
+    }) {
       const q = new URLSearchParams();
       if (params?.restaurantId && params.restaurantId !== 'all') q.append('restaurantId', params.restaurantId);
       if (params?.branchId && params.branchId !== 'all') q.append('branchId', params.branchId);
+      if (params?.status && params.status !== 'all') q.append('status', params.status);
+      if (params?.roleId && params.roleId !== 'all') q.append('roleId', params.roleId);
+      if (params?.role && params.role !== 'all') q.append('role', params.role);
       if (params?.search) q.append('search', params.search);
       if (params?.page) q.append('page', String(params.page));
       if (params?.limit) q.append('limit', String(params.limit));

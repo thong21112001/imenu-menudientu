@@ -13,6 +13,7 @@ export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'DELETED';
 
 export interface User {
   id: string;
+  username?: string;
   email: string;
   fullName: string;
   phone: string;

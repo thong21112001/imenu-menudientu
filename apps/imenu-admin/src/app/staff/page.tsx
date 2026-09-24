@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { storageService, apiClient } from '@imenu/utils';
 import { User, RoleDefinition, PermissionGroup, UserRole, RestaurantBranch } from '@imenu/types';
 import { Card, Button, Badge, Modal, useToast, CustomSelect } from '@imenu/ui';
@@ -29,6 +29,15 @@ import {
   AlertTriangle,
   Crown,
   Globe,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+  Calendar,
+  LayoutGrid,
+  List,
+  RotateCcw,
+  X,
 } from 'lucide-react';
 
 export default function StaffPage() {
@@ -55,13 +64,44 @@ export default function StaffPage() {
   const [restaurantFilter, setRestaurantFilter] = useState<string>('all');
 
   const isDemo = Boolean(currentUser?.isDemo || currentUser?.email === 'owner@sample.vn');
-  const isMainBranchUser = isSuperAdmin || Boolean(currentUser?.isMainBranch);
+  const isMainBranchUser =
+    isSuperAdmin ||
+    Boolean(currentUser?.isMainBranch) ||
+    currentUser?.role === 'RESTAURANT_ADMIN' ||
+    currentUser?.role === 'restaurant_admin';
+
+  // Lọc vai trò: system_admin CHỈ hiển thị duy nhất cho Super Admin
+  const isSuperAdminRole = (slugOrCode: string) => {
+    const s = String(slugOrCode || '').toLowerCase();
+    return s === 'system_admin' || s === 'super_admin';
+  };
+
+  const visibleRoles = roles.filter((r) => {
+    if (isSuperAdminRole(r.code)) {
+      return isSuperAdmin;
+    }
+    return true;
+  });
+
+  // Khi phân quyền vai trò cho nhân viên, tuyệt đối không được gán role Super Admin (system_admin)
+  const assignableRoles = visibleRoles.filter((r) => {
+    if (isSuperAdminRole(r.code)) return false;
+    return true;
+  });
 
   // Search & Filter state for Users
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [branchFilter, setBranchFilter] = useState<string>('all');
+
+  // Pagination & View Mode state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [pageSize, setPageSize] = useState<number>(10);
+  const [totalItems, setTotalItems] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
+  const isSearchMounted = useRef(false);
 
   // Cross-Branch Transfer Modal
   const [isTransferModalOpen, setIsTransferModalOpen] = useState<boolean>(false);
@@ -92,20 +132,61 @@ export default function StaffPage() {
   const [roleDescription, setRoleDescription] = useState<string>('');
   const [rolePermissions, setRolePermissions] = useState<string[]>([]);
 
-  const loadStaffData = async (bFilter = branchFilter, rFilter = restaurantFilter) => {
+  const loadStaffData = async (options?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    role?: string;
+    status?: string;
+    branchId?: string;
+    restaurantId?: string;
+  }) => {
     setStaffLoading(true);
+    const targetPage = options?.page ?? currentPage;
+    const targetLimit = options?.limit ?? pageSize;
+    const sTerm = options?.search !== undefined ? options.search : searchTerm;
+    const rRole = options?.role !== undefined ? options.role : roleFilter;
+    const sStatus = options?.status !== undefined ? options.status : statusFilter;
+    const bFilter = options?.branchId !== undefined ? options.branchId : branchFilter;
+    const rFilter = options?.restaurantId !== undefined ? options.restaurantId : restaurantFilter;
+
     try {
       const effectiveRestId = rFilter !== 'all' ? rFilter : (selectedRestaurantId || undefined);
       const res = await apiClient.staff.list({
         restaurantId: effectiveRestId,
         branchId: bFilter !== 'all' ? bFilter : undefined,
-        search: searchTerm || undefined,
+        role: rRole !== 'all' ? rRole : undefined,
+        status: sStatus !== 'all' ? sStatus : undefined,
+        search: sTerm?.trim() || undefined,
+        page: targetPage,
+        limit: targetLimit,
       });
+
       if (res?.data) {
-        const staffList = Array.isArray(res.data) ? res.data : (res.data.items || []);
+        let staffList: any[] = [];
+        let totalCount = 0;
+        let pagesCount = 1;
+
+        if (Array.isArray(res.data)) {
+          staffList = res.data;
+          totalCount = res.data.length;
+          pagesCount = Math.max(1, Math.ceil(totalCount / targetLimit));
+        } else if (res.data && typeof res.data === 'object') {
+          if (Array.isArray(res.data.data)) {
+            staffList = res.data.data;
+            totalCount = typeof res.data.total === 'number' ? res.data.total : staffList.length;
+            pagesCount = typeof res.data.totalPages === 'number' ? res.data.totalPages : Math.max(1, Math.ceil(totalCount / targetLimit));
+          } else if (Array.isArray(res.data.items)) {
+            staffList = res.data.items;
+            totalCount = typeof res.data.total === 'number' ? res.data.total : staffList.length;
+            pagesCount = typeof res.data.totalPages === 'number' ? res.data.totalPages : Math.max(1, Math.ceil(totalCount / targetLimit));
+          }
+        }
+
         const normalized: User[] = staffList
           .map((u: any) => ({
             id: u._id || u.id,
+            username: u.username || '',
             fullName: u.fullName || '',
             email: u.email || '',
             phone: u.phone || '',
@@ -120,7 +201,11 @@ export default function StaffPage() {
             createdAt: u.createdAt,
           }))
           .filter((u: any) => !u.isDeleted && u.status !== 'DELETED');
+
         setUsers(normalized);
+        setTotalItems(totalCount);
+        setTotalPages(pagesCount);
+        setCurrentPage(targetPage);
         return;
       }
     } catch (err) {
@@ -128,7 +213,11 @@ export default function StaffPage() {
     } finally {
       setStaffLoading(false);
     }
-    setUsers(storageService.getUsers().filter((u) => u.status !== 'DELETED'));
+
+    const localUsers = storageService.getUsers().filter((u) => u.status !== 'DELETED');
+    setUsers(localUsers);
+    setTotalItems(localUsers.length);
+    setTotalPages(Math.max(1, Math.ceil(localUsers.length / targetLimit)));
   };
 
   const loadBranches = async (targetRestId?: string | null) => {
@@ -203,7 +292,7 @@ export default function StaffPage() {
     }
     loadBranches();
     loadRoles();
-    loadStaffData();
+    loadStaffData({ page: 1 });
 
     const handleRestaurantChanged = (e: any) => {
       const restId = e.detail?.restaurantId ?? null;
@@ -211,7 +300,7 @@ export default function StaffPage() {
       setRestaurantFilter('all');
       loadBranches(restId);
       loadRoles(restId);
-      loadStaffData(branchFilter, restId || 'all');
+      loadStaffData({ branchId: branchFilter, restaurantId: restId || 'all', page: 1 });
     };
 
     window.addEventListener('imenu:restaurant_changed', handleRestaurantChanged);
@@ -220,28 +309,93 @@ export default function StaffPage() {
     };
   }, []);
 
-  // Filtered Users
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch =
-      u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.phone.includes(searchTerm);
-    const matchesRole = roleFilter === 'all' || u.role === roleFilter;
-    const matchesStatus = statusFilter === 'all' || u.status === statusFilter;
-    const matchesBranch =
-      branchFilter === 'all' ||
-      u.branchId === branchFilter ||
-      (branches.find((b) => (b._id || b.id) === branchFilter)?.name === u.branchName);
-    const matchesRestaurant =
-      restaurantFilter === 'all' ||
-      u.restaurantId === restaurantFilter;
-    return matchesSearch && matchesRole && matchesStatus && matchesBranch && matchesRestaurant;
-  });
+  // Debounced search on searchTerm change
+  useEffect(() => {
+    if (!isSearchMounted.current) {
+      isSearchMounted.current = true;
+      return;
+    }
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      loadStaffData({ page: 1, search: searchTerm });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages || newPage === currentPage) return;
+    setCurrentPage(newPage);
+    loadStaffData({ page: newPage });
+  };
+
+  const handlePageSizeChange = (newSize: number) => {
+    setPageSize(newSize);
+    setCurrentPage(1);
+    loadStaffData({ page: 1, limit: newSize });
+  };
+
+  const handleResetFilters = () => {
+    setSearchTerm('');
+    setRoleFilter('all');
+    setStatusFilter('all');
+    setBranchFilter('all');
+    setRestaurantFilter('all');
+    setCurrentPage(1);
+    loadStaffData({
+      page: 1,
+      search: '',
+      role: 'all',
+      status: 'all',
+      branchId: 'all',
+      restaurantId: 'all',
+    });
+  };
+
+  const hasActiveFilters =
+    Boolean(searchTerm) ||
+    roleFilter !== 'all' ||
+    statusFilter !== 'all' ||
+    branchFilter !== 'all' ||
+    restaurantFilter !== 'all';
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '—';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '—';
+      return d.toLocaleDateString('vi-VN', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      });
+    } catch {
+      return '—';
+    }
+  };
+
+  const getPageNumbers = (current: number, total: number) => {
+    if (total <= 5) {
+      return Array.from({ length: total }, (_, i) => i + 1);
+    }
+    const pages: (number | string)[] = [];
+    if (current <= 3) {
+      pages.push(1, 2, 3, 4, '...', total);
+    } else if (current >= total - 2) {
+      pages.push(1, '...', total - 3, total - 2, total - 1, total);
+    } else {
+      pages.push(1, '...', current - 1, current, current + 1, '...', total);
+    }
+    return pages;
+  };
 
   // Open Add/Edit User Modal
   const handleOpenUserModal = async (usr?: User) => {
     if (isDemo) {
       toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể thêm hoặc sửa nhân viên.');
+      return;
+    }
+    if (!isMainBranchUser && !isSuperAdmin) {
+      toast.error('Chỉ tài khoản chính của chủ nhà hàng (Trụ sở HQ) mới có quyền thêm nhân viên và phân quyền vai trò.');
       return;
     }
     if (usr) {
@@ -262,7 +416,8 @@ export default function StaffPage() {
       setUserFullName('');
       setUserEmail('');
       setUserPhone('');
-      setUserRole('CASHIER');
+      const defaultRole = assignableRoles.find((r) => r.code?.toLowerCase() === 'cashier')?.code || assignableRoles[0]?.code || 'CASHIER';
+      setUserRole(defaultRole);
       const targetRestId = selectedRestaurantId || (restaurants[0]?._id || restaurants[0]?.id || '');
       setUserRestaurantId(targetRestId);
 
@@ -373,11 +528,16 @@ export default function StaffPage() {
     }
 
     try {
+      const selectedRoleDef = roles.find((r) => r.code === userRole || r.id === userRole);
+      const resolvedRoleId = selectedRoleDef?.id || userRole;
+
       if (editingUser) {
         await apiClient.staff.update(editingUser.id, {
           fullName: userFullName.trim(),
           phone: userPhone.trim(),
-          role: userRole,
+          roleId: resolvedRoleId,
+          role: resolvedRoleId,
+          branchId: userBranchId || undefined,
           status: userStatus,
         });
         toast.success(`Đã cập nhật nhân viên "${userFullName.trim()}" thành công`);
@@ -386,7 +546,8 @@ export default function StaffPage() {
           fullName: userFullName.trim(),
           email: userEmail.trim(),
           phone: userPhone.trim(),
-          role: userRole,
+          roleId: resolvedRoleId,
+          role: resolvedRoleId,
           branchId: userBranchId || undefined,
           password: userPassword || '123456',
         };
@@ -408,6 +569,10 @@ export default function StaffPage() {
   const handleToggleUserStatus = async (userId: string) => {
     if (isDemo) {
       toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể khóa/mở khóa nhân viên.');
+      return;
+    }
+    if (!isMainBranchUser && !isSuperAdmin) {
+      toast.error('Chỉ tài khoản chính của chủ nhà hàng mới có quyền thay đổi trạng thái nhân viên.');
       return;
     }
     try {
@@ -436,6 +601,10 @@ export default function StaffPage() {
       toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể xóa nhân viên.');
       return;
     }
+    if (!isMainBranchUser && !isSuperAdmin) {
+      toast.error('Chỉ tài khoản chính của chủ nhà hàng mới có quyền xóa nhân viên.');
+      return;
+    }
     const targetUser = users.find((u) => u.id === userId);
     if (!confirm(`Bạn có chắc muốn xóa nhân viên "${targetUser?.fullName || 'này'}" khỏi hệ thống? (Thao tác sẽ thực hiện soft delete bảo vệ lịch sử hóa đơn).`)) {
       return;
@@ -443,7 +612,9 @@ export default function StaffPage() {
     try {
       await apiClient.staff.delete(userId);
       setUsers((prev) => prev.filter((u) => u.id !== userId));
+      setTotalItems((prev) => Math.max(0, prev - 1));
       toast.success('Đã xóa nhân viên (Soft Delete) thành công');
+      await loadStaffData();
     } catch (err: any) {
       toast.error(err.message || 'Không thể xóa nhân viên');
     }
@@ -453,6 +624,14 @@ export default function StaffPage() {
   const handleOpenRoleModal = (rl?: RoleDefinition) => {
     if (isDemo) {
       toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể thay đổi vai trò phân quyền.');
+      return;
+    }
+    if (!isMainBranchUser && !isSuperAdmin) {
+      toast.error('Chỉ tài khoản chính của chủ nhà hàng mới có quyền cấu hình vai trò phân quyền.');
+      return;
+    }
+    if (rl && isSuperAdminRole(rl.code) && !isSuperAdmin) {
+      toast.error('Bạn không có quyền truy cập hoặc chỉnh sửa vai trò này.');
       return;
     }
     if (rl) {
@@ -516,6 +695,16 @@ export default function StaffPage() {
       return;
     }
 
+    if (!isMainBranchUser && !isSuperAdmin) {
+      toast.error('Chỉ tài khoản chính của chủ nhà hàng mới có quyền cấu hình vai trò phân quyền.');
+      return;
+    }
+
+    if (isSuperAdminRole(roleCode) && !isSuperAdmin) {
+      toast.error('Không được phép cấu hình vai trò Quản trị viên hệ thống SaaS.');
+      return;
+    }
+
     try {
       if (editingRole) {
         await apiClient.roles.update(editingRole.id, {
@@ -545,6 +734,10 @@ export default function StaffPage() {
   const handleDeleteRole = async (roleId: string) => {
     if (isDemo) {
       toast.error('Tài khoản trải nghiệm (Demo) chỉ có quyền xem, không thể xóa vai trò.');
+      return;
+    }
+    if (!isMainBranchUser && !isSuperAdmin) {
+      toast.error('Chỉ tài khoản chính của chủ nhà hàng mới có quyền xóa vai trò.');
       return;
     }
     const roleToDelete = roles.find((r) => r.id === roleId);
@@ -613,7 +806,9 @@ export default function StaffPage() {
               variant="primary"
               icon={<UserPlus className="w-4 h-4" />}
               onClick={() => handleOpenUserModal()}
-              className="cursor-pointer shadow-md"
+              disabled={!isMainBranchUser}
+              className={`cursor-pointer shadow-md ${!isMainBranchUser ? 'opacity-60 cursor-not-allowed' : ''}`}
+              title={!isMainBranchUser ? 'Chỉ tài khoản chính của chủ nhà hàng mới có quyền thêm nhân viên' : undefined}
             >
               Thêm nhân viên mới
             </Button>
@@ -622,7 +817,9 @@ export default function StaffPage() {
               variant="primary"
               icon={<ShieldCheck className="w-4 h-4" />}
               onClick={() => handleOpenRoleModal()}
-              className="cursor-pointer shadow-md"
+              disabled={!isMainBranchUser}
+              className={`cursor-pointer shadow-md ${!isMainBranchUser ? 'opacity-60 cursor-not-allowed' : ''}`}
+              title={!isMainBranchUser ? 'Chỉ tài khoản chính của chủ nhà hàng mới có quyền tạo vai trò' : undefined}
             >
               + Tạo mới phân quyền
             </Button>
@@ -663,7 +860,7 @@ export default function StaffPage() {
           <Users className="w-4 h-4" />
           <span>Danh Sách Nhân Viên</span>
           <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'users' ? 'bg-emerald-100 text-[#124a36]' : 'bg-slate-100 text-slate-600'}`}>
-            {users.length}
+            {totalItems}
           </span>
         </button>
 
@@ -678,7 +875,7 @@ export default function StaffPage() {
           <Shield className="w-4 h-4" />
           <span>Vai Trò & Phân Quyền (RBAC)</span>
           <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'roles' ? 'bg-emerald-100 text-[#124a36]' : 'bg-slate-100 text-slate-600'}`}>
-            {roles.length}
+            {visibleRoles.length}
           </span>
         </button>
       </div>
@@ -692,22 +889,36 @@ export default function StaffPage() {
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Tìm kiếm theo Tên, Email hoặc SĐT..."
+                placeholder="Tìm kiếm theo Tên, Username, Email hoặc SĐT..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-3.5 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                className="w-full pl-9 pr-9 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-600 transition-all"
               />
+              {searchTerm && (
+                <button
+                  onClick={() => {
+                    setSearchTerm('');
+                    setCurrentPage(1);
+                    loadStaffData({ page: 1, search: '' });
+                  }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
+                  title="Xóa tìm kiếm"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
             <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
               {isSuperAdmin && restaurants.length > 0 && (
-                <div className="w-full sm:w-52">
+                <div className="w-full sm:w-48">
                   <CustomSelect
                     size="sm"
                     value={restaurantFilter}
                     onChange={(val) => {
                       setRestaurantFilter(val);
-                      loadStaffData(branchFilter, val);
+                      setCurrentPage(1);
+                      loadStaffData({ page: 1, restaurantId: val });
                     }}
                     options={[
                       { value: 'all', label: '🌐 Tất cả nhà hàng' },
@@ -720,14 +931,18 @@ export default function StaffPage() {
                 </div>
               )}
 
-              <div className="w-full sm:w-44">
+              <div className="w-full sm:w-40">
                 <CustomSelect
                   size="sm"
                   value={roleFilter}
-                  onChange={(val) => setRoleFilter(val)}
+                  onChange={(val) => {
+                    setRoleFilter(val);
+                    setCurrentPage(1);
+                    loadStaffData({ page: 1, role: val });
+                  }}
                   options={[
                     { value: 'all', label: 'Tất cả vai trò' },
-                    ...roles.map((r) => ({ value: r.code, label: r.name })),
+                    ...visibleRoles.map((r) => ({ value: r.code, label: r.name })),
                   ]}
                 />
               </div>
@@ -736,7 +951,11 @@ export default function StaffPage() {
                 <CustomSelect
                   size="sm"
                   value={statusFilter}
-                  onChange={(val) => setStatusFilter(val)}
+                  onChange={(val) => {
+                    setStatusFilter(val);
+                    setCurrentPage(1);
+                    loadStaffData({ page: 1, status: val });
+                  }}
                   options={[
                     { value: 'all', label: 'Tất cả trạng thái' },
                     { value: 'ACTIVE', label: 'Đang hoạt động' },
@@ -746,13 +965,14 @@ export default function StaffPage() {
               </div>
 
               {isMainBranchUser && branches.length > 0 && (
-                <div className="w-full sm:w-52">
+                <div className="w-full sm:w-48">
                   <CustomSelect
                     size="sm"
                     value={branchFilter}
                     onChange={(val) => {
                       setBranchFilter(val);
-                      loadStaffData(val, restaurantFilter);
+                      setCurrentPage(1);
+                      loadStaffData({ page: 1, branchId: val });
                     }}
                     options={[
                       { value: 'all', label: '🏢 Tất cả chi nhánh' },
@@ -765,120 +985,519 @@ export default function StaffPage() {
                   />
                 </div>
               )}
+
+              {hasActiveFilters && (
+                <button
+                  onClick={handleResetFilters}
+                  className="px-2.5 py-2 rounded-xl text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 border border-slate-200 flex items-center gap-1.5 cursor-pointer transition-colors shrink-0"
+                  title="Đặt lại tất cả bộ lọc"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="hidden sm:inline">Đặt lại</span>
+                </button>
+              )}
+
+              {/* View Mode Toggle */}
+              <div className="flex items-center bg-slate-100 p-0.5 rounded-xl border border-slate-200 shrink-0">
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === 'table'
+                      ? 'bg-white text-[#124a36] shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                  title="Hiển thị dạng bảng (Table view)"
+                >
+                  <List className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode('cards')}
+                  className={`p-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                    viewMode === 'cards'
+                      ? 'bg-white text-[#124a36] shadow-2xs'
+                      : 'text-slate-500 hover:text-slate-900'
+                  }`}
+                  title="Hiển thị dạng thẻ (Cards view)"
+                >
+                  <LayoutGrid className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Staff List Cards */}
-          <div className="space-y-3">
-            {filteredUsers.length === 0 ? (
-              <div className="bg-white p-8 text-center rounded-2xl border border-slate-200 text-slate-400 space-y-2">
-                <Users className="w-8 h-8 mx-auto text-slate-300" />
-                <p className="text-sm font-bold">Không tìm thấy nhân viên phù hợp</p>
-                <p className="text-xs">Vui lòng thử từ khóa tìm kiếm hoặc bộ lọc khác</p>
+          {/* Empty State */}
+          {users.length === 0 && !staffLoading ? (
+            <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 text-slate-400 space-y-3">
+              <Users className="w-10 h-10 mx-auto text-slate-300" />
+              <div>
+                <p className="text-base font-bold text-slate-700">Không tìm thấy nhân viên phù hợp</p>
+                <p className="text-xs text-slate-400 mt-1">Vui lòng thử từ khóa tìm kiếm hoặc bộ lọc khác</p>
               </div>
-            ) : (
-              filteredUsers.map((usr) => {
-                const isActive = usr.status !== 'INACTIVE';
-                return (
-                  <Card
-                    key={usr.id}
-                    className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start sm:items-center gap-3.5">
-                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#09271d] to-[#176044] text-white font-black grid place-items-center text-sm shrink-0 shadow-xs">
-                        {usr.fullName.charAt(0)}
-                      </div>
-                      <div className="space-y-0.5 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <strong className="text-sm font-extrabold text-slate-900 block truncate">
-                            {usr.fullName}
-                          </strong>
-                          {getRoleBadge(usr.role)}
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
-                              isActive
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-red-100 text-red-800'
-                            }`}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                            {isActive ? 'Hoạt động' : 'Tạm khóa'}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
-                          <span className="flex items-center gap-1">
-                            <Mail className="w-3 h-3 text-slate-400" /> {usr.email}
-                          </span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1">
-                            <Phone className="w-3 h-3 text-slate-400" /> {usr.phone}
-                          </span>
-                          <span>•</span>
-                          <span className="flex items-center gap-1 text-slate-600 font-medium">
-                            <Building2 className="w-3 h-3 text-emerald-700" />
-                            {usr.branchName || 'Chi nhánh chính'}
-                          </span>
-                          {isSuperAdmin && usr.restaurantName && (
-                            <>
-                              <span>•</span>
-                              <span className="flex items-center gap-1 text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200 text-[11px]">
-                                <Crown className="w-3 h-3 text-purple-600" />
-                                {usr.restaurantName}
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
+              {hasActiveFilters && (
+                <button
+                  onClick={handleResetFilters}
+                  className="mt-2 px-3 py-1.5 rounded-xl text-xs font-bold text-[#124a36] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 cursor-pointer inline-flex items-center gap-1.5 transition-colors"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Xóa bộ lọc
+                </button>
+              )}
+            </div>
+          ) : viewMode === 'table' ? (
+            /* Table View: Display ONLY relevant columns */
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+              <div className="overflow-x-auto relative min-h-[140px]">
+                {staffLoading && (
+                  <div className="absolute inset-0 bg-white/70 backdrop-blur-2xs z-10 flex items-center justify-center">
+                    <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white shadow-md border border-slate-200 text-xs font-bold text-[#124a36]">
+                      <Loader2 className="w-4 h-4 animate-spin text-emerald-700" />
+                      Đang tải danh sách nhân viên...
                     </div>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-2 self-end md:self-center border-t md:border-t-0 pt-2 md:pt-0 w-full md:w-auto justify-end">
-                      {/* Nút Điều chuyển chi nhánh (Chỉ Trụ sở chính / Admin) */}
-                      {isMainBranchUser && (
-                        <button
-                          onClick={() => handleOpenTransferModal(usr)}
-                          className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 transition-colors cursor-pointer flex items-center gap-1 border border-teal-200"
-                          title="Điều chuyển nhân viên sang chi nhánh khác"
+                  </div>
+                )}
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#f8faf9] border-b border-slate-200 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                      <th className="py-3 px-4">Nhân viên</th>
+                      <th className="py-3 px-4">Vai trò (RBAC)</th>
+                      <th className="py-3 px-4">Chi nhánh làm việc</th>
+                      <th className="py-3 px-4">Trạng thái</th>
+                      <th className="py-3 px-4">Ngày tạo</th>
+                      <th className="py-3 px-4 text-right">Thao tác</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-sm">
+                    {users.map((usr) => {
+                      const isActive = usr.status !== 'INACTIVE';
+                      return (
+                        <tr
+                          key={usr.id}
+                          className="hover:bg-emerald-50/40 transition-colors group"
                         >
-                          <ArrowRightLeft className="w-3.5 h-3.5 text-teal-600" />
-                          <span className="hidden sm:inline">Điều chuyển</span>
+                          {/* 1. Nhân viên */}
+                          <td className="py-3.5 px-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#09271d] to-[#176044] text-white font-extrabold grid place-items-center text-sm shrink-0 shadow-2xs">
+                                {usr.fullName?.charAt(0) || 'U'}
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-extrabold text-slate-900 text-sm group-hover:text-emerald-900 transition-colors">
+                                    {usr.fullName}
+                                  </span>
+                                  {usr.username && (
+                                    <span className="text-[11px] font-mono font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
+                                      @{usr.username}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5 flex-wrap">
+                                  <span className="flex items-center gap-1">
+                                    <Mail className="w-3 h-3 text-slate-400" />
+                                    {usr.email}
+                                  </span>
+                                  {usr.phone && (
+                                    <>
+                                      <span className="text-slate-300">•</span>
+                                      <span className="flex items-center gap-1">
+                                        <Phone className="w-3 h-3 text-slate-400" />
+                                        {usr.phone}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+
+                          {/* 2. Vai trò */}
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            {getRoleBadge(usr.role)}
+                          </td>
+
+                          {/* 3. Chi nhánh làm việc */}
+                          <td className="py-3.5 px-4">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
+                                <Building2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                                <span>{usr.branchName || 'Chi nhánh chính'}</span>
+                                {usr.isMainBranch && (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300">
+                                    HQ
+                                  </span>
+                                )}
+                              </div>
+                              {isSuperAdmin && usr.restaurantName && (
+                                <div className="flex items-center gap-1 text-[11px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200 w-fit">
+                                  <Crown className="w-3 h-3 text-purple-600" />
+                                  <span>{usr.restaurantName}</span>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+
+                          {/* 4. Trạng thái */}
+                          <td className="py-3.5 px-4 whitespace-nowrap">
+                            <span
+                              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
+                                isActive
+                                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                                  : 'bg-red-50 text-red-800 border border-red-200'
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                              {isActive ? 'Đang hoạt động' : 'Tạm khóa'}
+                            </span>
+                          </td>
+
+                          {/* 5. Ngày tạo */}
+                          <td className="py-3.5 px-4 whitespace-nowrap text-xs text-slate-600">
+                            <div className="flex items-center gap-1.5 font-medium">
+                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                              <span>{formatDate(usr.createdAt)}</span>
+                            </div>
+                          </td>
+
+                          {/* 6. Thao tác */}
+                          <td className="py-3.5 px-4 text-right whitespace-nowrap">
+                            <div className="flex items-center justify-end gap-1">
+                              {isMainBranchUser && (
+                                <button
+                                  onClick={() => handleOpenTransferModal(usr)}
+                                  className="p-1.5 rounded-lg text-teal-700 bg-teal-50 hover:bg-teal-100 hover:text-teal-900 border border-teal-200 transition-colors cursor-pointer"
+                                  title="Điều chuyển nhân viên sang chi nhánh khác"
+                                >
+                                  <ArrowRightLeft className="w-4 h-4" />
+                                </button>
+                              )}
+
+                              {isMainBranchUser && (
+                                <>
+                                  <button
+                                    onClick={() => handleToggleUserStatus(usr.id)}
+                                    className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
+                                      isActive
+                                        ? 'text-slate-500 bg-slate-50 hover:text-amber-700 hover:bg-amber-50 border-slate-200'
+                                        : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200'
+                                    }`}
+                                    title={isActive ? 'Tạm khóa tài khoản' : 'Kích hoạt lại tài khoản'}
+                                  >
+                                    {isActive ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleOpenUserModal(usr)}
+                                    className="p-1.5 rounded-lg text-slate-600 bg-slate-50 hover:text-[#176044] hover:bg-emerald-50 border border-slate-200 transition-colors cursor-pointer"
+                                    title="Chỉnh sửa thông tin"
+                                  >
+                                    <Edit2 className="w-4 h-4" />
+                                  </button>
+
+                                  <button
+                                    onClick={() => handleDeleteUser(usr.id)}
+                                    className="p-1.5 rounded-lg text-red-500 bg-red-50 hover:text-red-700 hover:bg-red-100 border border-red-200 transition-colors cursor-pointer"
+                                    title="Xóa nhân viên (Soft Delete)"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Full Pagination Bar */}
+              <div className="p-4 bg-[#fbfdfc] border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+                <div className="flex items-center gap-3">
+                  <span>
+                    Hiển thị <strong className="text-slate-800">{totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1}</strong> - <strong className="text-slate-800">{Math.min(currentPage * pageSize, totalItems)}</strong> trong tổng số <strong className="text-slate-800">{totalItems}</strong> nhân sự
+                  </span>
+                  <div className="flex items-center gap-1.5 ml-2 border-l border-slate-200 pl-3">
+                    <span>Mỗi trang:</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                      className="px-2 py-1 rounded-md border border-slate-200 bg-white font-semibold text-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer"
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handlePageChange(1)}
+                    disabled={currentPage <= 1 || staffLoading}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title="Trang đầu"
+                  >
+                    <ChevronsLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage <= 1 || staffLoading}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title="Trang trước"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <div className="flex items-center gap-1 px-1">
+                    {getPageNumbers(currentPage, totalPages).map((p, idx) => {
+                      if (p === '...') {
+                        return (
+                          <span key={`dots-${idx}`} className="px-2 py-1 text-slate-400 font-bold">
+                            ...
+                          </span>
+                        );
+                      }
+                      const isCurrent = p === currentPage;
+                      return (
+                        <button
+                          key={p}
+                          onClick={() => handlePageChange(Number(p))}
+                          disabled={staffLoading}
+                          className={`min-w-8 h-8 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            isCurrent
+                              ? 'bg-[#124a36] text-white shadow-xs'
+                              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          {p}
                         </button>
-                      )}
+                      );
+                    })}
+                  </div>
 
-                      <button
-                        onClick={() => handleToggleUserStatus(usr.id)}
-                        className={`p-2 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 ${
-                          isActive
-                            ? 'text-slate-500 hover:text-amber-700 hover:bg-amber-50'
-                            : 'text-emerald-700 hover:bg-emerald-50'
-                        }`}
-                        title={isActive ? 'Tạm khóa tài khoản' : 'Kích hoạt lại tài khoản'}
-                      >
-                        {isActive ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-                      </button>
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages || staffLoading}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title="Trang kế tiếp"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={currentPage >= totalPages || staffLoading}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title="Trang cuối"
+                  >
+                    <ChevronsRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Cards View */
+            <div className="space-y-4">
+              <div className="space-y-3">
+                {users.map((usr) => {
+                  const isActive = usr.status !== 'INACTIVE';
+                  return (
+                    <Card
+                      key={usr.id}
+                      className="p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start sm:items-center gap-3.5">
+                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-[#09271d] to-[#176044] text-white font-black grid place-items-center text-sm shrink-0 shadow-xs">
+                          {usr.fullName?.charAt(0) || 'U'}
+                        </div>
+                        <div className="space-y-0.5 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <strong className="text-sm font-extrabold text-slate-900 block truncate">
+                              {usr.fullName}
+                            </strong>
+                            {usr.username && (
+                              <span className="text-[11px] font-mono font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
+                                @{usr.username}
+                              </span>
+                            )}
+                            {getRoleBadge(usr.role)}
+                            <span
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                                isActive
+                                  ? 'bg-emerald-100 text-emerald-800'
+                                  : 'bg-red-100 text-red-800'
+                              }`}
+                            >
+                              <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                              {isActive ? 'Hoạt động' : 'Tạm khóa'}
+                            </span>
+                          </div>
 
-                      <button
-                        onClick={() => handleOpenUserModal(usr)}
-                        className="p-2 rounded-xl text-slate-600 hover:text-[#176044] hover:bg-emerald-50 transition-colors cursor-pointer"
-                        title="Chỉnh sửa thông tin nhân viên"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
+                          <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+                            <span className="flex items-center gap-1">
+                              <Mail className="w-3 h-3 text-slate-400" /> {usr.email}
+                            </span>
+                            {usr.phone && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <Phone className="w-3 h-3 text-slate-400" /> {usr.phone}
+                                </span>
+                              </>
+                            )}
+                            <span>•</span>
+                            <span className="flex items-center gap-1 text-slate-600 font-medium">
+                              <Building2 className="w-3 h-3 text-emerald-700" />
+                              {usr.branchName || 'Chi nhánh chính'}
+                            </span>
+                            {isSuperAdmin && usr.restaurantName && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1 text-purple-700 font-bold bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200 text-[11px]">
+                                  <Crown className="w-3 h-3 text-purple-600" />
+                                  {usr.restaurantName}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
 
-                      <button
-                        onClick={() => handleDeleteUser(usr.id)}
-                        className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
-                        title="Xóa nhân viên"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </Card>
-                );
-              })
-            )}
-          </div>
+                      {/* Actions */}
+                      <div className="flex items-center gap-2 self-end md:self-center border-t md:border-t-0 pt-2 md:pt-0 w-full md:w-auto justify-end">
+                        {isMainBranchUser && (
+                          <button
+                            onClick={() => handleOpenTransferModal(usr)}
+                            className="px-2.5 py-1.5 rounded-xl text-xs font-semibold text-teal-800 bg-teal-50 hover:bg-teal-100 transition-colors cursor-pointer flex items-center gap-1 border border-teal-200"
+                            title="Điều chuyển nhân viên sang chi nhánh khác"
+                          >
+                            <ArrowRightLeft className="w-3.5 h-3.5 text-teal-600" />
+                            <span className="hidden sm:inline">Điều chuyển</span>
+                          </button>
+                        )}
+
+                        {isMainBranchUser && (
+                          <>
+                            <button
+                              onClick={() => handleToggleUserStatus(usr.id)}
+                              className={`p-2 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                                isActive
+                                  ? 'text-slate-500 hover:text-amber-700 hover:bg-amber-50'
+                                  : 'text-emerald-700 hover:bg-emerald-50'
+                              }`}
+                              title={isActive ? 'Tạm khóa tài khoản' : 'Kích hoạt lại tài khoản'}
+                            >
+                              {isActive ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                            </button>
+
+                            <button
+                              onClick={() => handleOpenUserModal(usr)}
+                              className="p-2 rounded-xl text-slate-600 hover:text-[#176044] hover:bg-emerald-50 transition-colors cursor-pointer"
+                              title="Chỉnh sửa thông tin nhân viên"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => handleDeleteUser(usr.id)}
+                              className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                              title="Xóa nhân viên"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Pagination Bar for Cards */}
+              <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-600">
+                <div className="flex items-center gap-3">
+                  <span>
+                    Hiển thị <strong className="text-slate-800">{totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1}</strong> - <strong className="text-slate-800">{Math.min(currentPage * pageSize, totalItems)}</strong> trong tổng số <strong className="text-slate-800">{totalItems}</strong> nhân sự
+                  </span>
+                  <div className="flex items-center gap-1.5 ml-2 border-l border-slate-200 pl-3">
+                    <span>Mỗi trang:</span>
+                    <select
+                      value={pageSize}
+                      onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                      className="px-2 py-1 rounded-md border border-slate-200 bg-white font-semibold text-slate-700 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-600 cursor-pointer"
+                    >
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                      <option value={50}>50</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => handlePageChange(1)}
+                    disabled={currentPage <= 1 || staffLoading}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title="Trang đầu"
+                  >
+                    <ChevronsLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage <= 1 || staffLoading}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title="Trang trước"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+
+                  <div className="flex items-center gap-1 px-1">
+                    {getPageNumbers(currentPage, totalPages).map((p, idx) => {
+                      if (p === '...') {
+                        return (
+                          <span key={`dots-c-${idx}`} className="px-2 py-1 text-slate-400 font-bold">
+                            ...
+                          </span>
+                        );
+                      }
+                      const isCurrent = p === currentPage;
+                      return (
+                        <button
+                          key={`card-p-${p}`}
+                          onClick={() => handlePageChange(Number(p))}
+                          disabled={staffLoading}
+                          className={`min-w-8 h-8 px-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            isCurrent
+                              ? 'bg-[#124a36] text-white shadow-xs'
+                              : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages || staffLoading}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title="Trang kế tiếp"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={currentPage >= totalPages || staffLoading}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                    title="Trang cuối"
+                  >
+                    <ChevronsRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -896,7 +1515,7 @@ export default function StaffPage() {
 
           {/* Roles Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            {roles.map((r) => {
+            {visibleRoles.map((r) => {
               const userCount = users.filter((u) => u.role === r.code).length;
               return (
                 <Card key={r.id} className="p-5 space-y-3.5 border-2 border-slate-200 hover:border-emerald-700/50 transition-all">
@@ -919,14 +1538,16 @@ export default function StaffPage() {
                     </div>
 
                     <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => handleOpenRoleModal(r)}
-                        className="p-1.5 text-slate-500 hover:text-[#176044] hover:bg-emerald-50 rounded-lg cursor-pointer"
-                        title="Chỉnh sửa quyền hạn"
-                      >
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      {!r.isSystem && (
+                      {isMainBranchUser && (
+                        <button
+                          onClick={() => handleOpenRoleModal(r)}
+                          className="p-1.5 text-slate-500 hover:text-[#176044] hover:bg-emerald-50 rounded-lg cursor-pointer"
+                          title="Chỉnh sửa quyền hạn"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                      )}
+                      {!r.isSystem && isMainBranchUser && (
                         <button
                           onClick={() => handleDeleteRole(r.id)}
                           className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"
@@ -985,19 +1606,20 @@ export default function StaffPage() {
         onClose={() => setIsUserModalOpen(false)}
         title={editingUser ? 'Chỉnh Sửa Thông Tin Nhân Viên' : 'Thêm Nhân Viên Mới'}
         subtitle="Thông tin tài khoản đăng nhập và phân quyền chi nhánh làm việc"
-        maxWidth="md"
+        maxWidth="2xl"
       >
-        <form onSubmit={handleSaveUser} className="space-y-4">
+        <form onSubmit={handleSaveUser} className="space-y-5">
           {isSuperAdmin && !editingUser && (
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">
+            <div className="p-4 bg-purple-50/80 border border-purple-200/80 rounded-2xl space-y-2">
+              <label className="text-xs font-black text-purple-900 flex items-center gap-1.5 uppercase tracking-wider">
+                <Crown className="w-3.5 h-3.5 text-purple-600" />
                 Thuộc Nhà Hàng Quản Lý *
               </label>
               <CustomSelect
                 options={restaurants.map((r) => ({
                   value: (r._id || r.id) as string,
                   label: r.name,
-                  sublabel: `${r.branchCount ?? 1} chi nhánh • ${r.staffCount ?? 0} nhân viên`,
+                  sublabel: `${r.branchCount ?? 1} chi nhánh • ${r.staffCount ?? 0} nhân sự`,
                 }))}
                 value={userRestaurantId}
                 onChange={(val) => handleModalRestaurantChange(val)}
@@ -1005,100 +1627,131 @@ export default function StaffPage() {
             </div>
           )}
 
-          <div>
-            <label className="text-xs font-bold text-slate-700 block mb-1">Họ và tên nhân viên *</label>
-            <input
-              type="text"
-              required
-              placeholder="VD: Nguyễn Văn Nam"
-              value={userFullName}
-              onChange={(e) => setUserFullName(e.target.value)}
-              className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Email đăng nhập *</label>
-              <input
-                type="email"
-                required
-                placeholder="nam.nguyen@sample.vn"
-                value={userEmail}
-                onChange={(e) => setUserEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
-              />
-            </div>
+          {/* Block 1: Thông tin định danh */}
+          <div className="p-4 bg-slate-50/70 border border-slate-200/70 rounded-2xl space-y-3.5">
+            <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+              <Users className="w-3.5 h-3.5 text-emerald-700" />
+              1. Thông Tin Nhân Sự
+            </h4>
 
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Số điện thoại *</label>
-              <input
-                type="tel"
-                required
-                placeholder="0901234567"
-                value={userPhone}
-                onChange={(e) => setUserPhone(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Vai trò phân quyền *</label>
-              <CustomSelect
-                options={roles.map((r) => ({
-                  value: r.code,
-                  label: r.name,
-                  sublabel: r.description,
-                }))}
-                value={userRole}
-                onChange={(val) => setUserRole(val)}
-              />
-            </div>
-
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Chi nhánh làm việc *</label>
-              <CustomSelect
-                options={(modalBranches.length > 0 ? modalBranches : branches).map((b) => ({
-                  value: (b._id || b.id) as string,
-                  label: b.name,
-                  sublabel: b.address,
-                  badge: b.isMainBranch ? 'Trụ sở HQ' : undefined,
-                }))}
-                value={userBranchId}
-                onChange={(val) => {
-                  setUserBranchId(val);
-                  const branchPool = modalBranches.length > 0 ? modalBranches : branches;
-                  const selectedB = branchPool.find((b) => (b._id || b.id) === val);
-                  setUserBranch(selectedB?.name || '');
-                }}
-                disabled={!isMainBranchUser && Boolean(currentUser?.branchId)}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Mật khẩu khởi tạo</label>
+              <label className="text-xs font-bold text-slate-700 block mb-1">Họ và tên nhân viên *</label>
               <input
                 type="text"
-                value={userPassword}
-                onChange={(e) => setUserPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600 font-mono text-xs"
+                required
+                placeholder="VD: Trần Quang Thông"
+                value={userFullName}
+                onChange={(e) => setUserFullName(e.target.value)}
+                className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
               />
             </div>
 
-            <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">Trạng thái hoạt động</label>
-              <CustomSelect
-                options={[
-                  { value: 'ACTIVE', label: 'Kích hoạt (Hoạt động)' },
-                  { value: 'INACTIVE', label: 'Tạm khóa (Không thể đăng nhập)' },
-                ]}
-                value={userStatus}
-                onChange={(val) => setUserStatus(val as 'ACTIVE' | 'INACTIVE')}
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Email đăng nhập *</label>
+                <div className="relative">
+                  <Mail className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="email"
+                    required
+                    placeholder="thong.tran@sample.vn"
+                    value={userEmail}
+                    onChange={(e) => setUserEmail(e.target.value)}
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Số điện thoại *</label>
+                <div className="relative">
+                  <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  <input
+                    type="tel"
+                    required
+                    placeholder="0395372415"
+                    value={userPhone}
+                    onChange={(e) => setUserPhone(e.target.value)}
+                    className="w-full pl-9 pr-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Block 2: Phân quyền vai trò & Chi nhánh */}
+          <div className="p-4 bg-emerald-50/40 border border-emerald-200/60 rounded-2xl space-y-3.5">
+            <h4 className="text-xs font-black uppercase tracking-wider text-[#124a36] flex items-center gap-2">
+              <Shield className="w-3.5 h-3.5 text-emerald-700" />
+              2. Phân Quyền Vai Trò & Nơi Làm Việc
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Vai trò phân quyền *</label>
+                <CustomSelect
+                  options={assignableRoles.map((r) => ({
+                    value: r.code,
+                    label: r.name,
+                    sublabel: r.description,
+                  }))}
+                  value={userRole}
+                  onChange={(val) => setUserRole(val)}
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Chi nhánh làm việc *</label>
+                <CustomSelect
+                  options={(modalBranches.length > 0 ? modalBranches : branches).map((b) => ({
+                    value: (b._id || b.id) as string,
+                    label: b.name,
+                    sublabel: b.address,
+                    badge: b.isMainBranch ? 'Trụ sở HQ' : undefined,
+                  }))}
+                  value={userBranchId}
+                  onChange={(val) => {
+                    setUserBranchId(val);
+                    const branchPool = modalBranches.length > 0 ? modalBranches : branches;
+                    const selectedB = branchPool.find((b) => (b._id || b.id) === val);
+                    setUserBranch(selectedB?.name || '');
+                  }}
+                  disabled={!isMainBranchUser && Boolean(currentUser?.branchId)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Block 3: Bảo mật & Trạng thái */}
+          <div className="p-4 bg-slate-50/70 border border-slate-200/70 rounded-2xl space-y-3.5">
+            <h4 className="text-xs font-black uppercase tracking-wider text-slate-700 flex items-center gap-2">
+              <KeyRound className="w-3.5 h-3.5 text-slate-600" />
+              3. Bảo Mật & Trạng Thái
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Mật khẩu khởi tạo</label>
+                <input
+                  type="text"
+                  value={userPassword}
+                  onChange={(e) => setUserPassword(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 font-mono text-xs"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Mặc định ban đầu hoặc đổi mật khẩu mới</p>
+              </div>
+
+              <div>
+                <label className="text-xs font-bold text-slate-700 block mb-1">Trạng thái hoạt động</label>
+                <CustomSelect
+                  options={[
+                    { value: 'ACTIVE', label: 'Kích hoạt (Hoạt động)' },
+                    { value: 'INACTIVE', label: 'Tạm khóa (Không thể đăng nhập)' },
+                  ]}
+                  value={userStatus}
+                  onChange={(val) => setUserStatus(val as 'ACTIVE' | 'INACTIVE')}
+                />
+              </div>
             </div>
           </div>
 

@@ -196,14 +196,6 @@ function LoginForm() {
                   <Store className="w-3.5 h-3.5 text-emerald-600" />
                   Chủ quán: <span className="font-bold text-slate-900">owner@sample.vn</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setSampleAccount('superadmin@imenu.vn', 'SuperAdmin@2026!')}
-                  className="px-3 py-1.5 rounded-xl bg-white hover:bg-teal-50 border border-slate-200 hover:border-teal-300 text-xs font-medium text-slate-700 hover:text-teal-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                >
-                  <UserCheck className="w-3.5 h-3.5 text-teal-600" />
-                  Super Admin: <span className="font-bold text-slate-900">superadmin@imenu.vn</span>
-                </button>
               </div>
             </div>
 
