@@ -72,6 +72,12 @@ The platform provides an end-to-end staff and role-based access control system s
    - 6 default system roles (`SYSTEM_ADMIN`, `RESTAURANT_ADMIN`, `RESTAURANT_MANAGER`, `CASHIER`, `KITCHEN`, `WAITER`). System roles are protected and only editable by Super Admin.
    - Main Branch (HQ) accounts can create and manage custom roles (`POST /roles`), viewing chain-wide staff counts (`{userCount} nhân sự (toàn chuỗi) đang giữ vai trò này`).
    - Sub-branch accounts cannot create, edit, or delete roles, and role card counters reflect staff counts strictly within their own branch (`{userCount} nhân sự (tại chi nhánh này) đang giữ vai trò này`).
+5. **Smart Landing & Role-Based Navigation Routing**:
+   - **Cashier (`cashier`)**: Automatically redirected to POS terminal (`/pos`) on login or visiting `/`. The executive Dashboard overview is cleanly hidden from the sidebar. Accessing protected admin routes like `/staff` displays a 403 Forbidden screen with a one-click button returning to `/pos`.
+   - **Kitchen (`kitchen`)**: Automatically redirected to the Kitchen KDS screen (`/kitchen`).
+   - **Waitstaff (`waiter`)**: Automatically redirected to the Table Map (`/tables`).
+   - **Manager (`restaurant_manager`)**: Lands on Dashboard (`/`); operations, POS, KDS, Menu and Reports are available while `/staff` and `/settings` are protected.
+   - **Restaurant Owner (`restaurant_admin`)**: Lands on Dashboard (`/`) with full access to all modules including Staff & RBAC (`/staff`) and Restaurant Settings (`/settings`).
 
 ---
 

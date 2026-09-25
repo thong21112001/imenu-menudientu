@@ -118,10 +118,26 @@ function LoginForm() {
     isExpired ? 'Phiên làm việc đã hết hạn hoặc chưa đăng nhập. Vui lòng đăng nhập lại để tiếp tục.' : '',
   );
 
-  // Neu da co token hop le thi tu dong chuyen ve dashboard
+  // Neu da co token hop le thi tu dong chuyen ve trang nghiep vu theo role
   useEffect(() => {
     const token = storageService.getAccessToken();
     if (token && !storageService.isTokenExpired(token)) {
+      if (returnUrl === '/' || !returnUrl) {
+        const currentUser = storageService.getCurrentUser();
+        const roleSlug = String(currentUser?.role || '').toLowerCase();
+        if (roleSlug === 'kitchen') {
+          router.replace('/kitchen');
+          return;
+        }
+        if (roleSlug === 'cashier') {
+          router.replace('/pos');
+          return;
+        }
+        if (roleSlug === 'waiter') {
+          router.replace('/tables');
+          return;
+        }
+      }
       router.replace(returnUrl);
     }
   }, [router, returnUrl]);

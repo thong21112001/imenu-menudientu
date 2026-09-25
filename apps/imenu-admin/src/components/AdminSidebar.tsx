@@ -145,7 +145,14 @@ export const AdminSidebar: React.FC = () => {
       return false;
     }
 
-    // 3. Kiem tra permission cua nguoi dung
+    // 3. An menu 'Tổng quan' ('/') doi voi cac vai tro tac nghiep van hanh hien truong
+    // Thu ngan, Bep, Phuc vu deu co man hinh lam viec chuyen trach (POS, KDS, Ban)
+    const operationalRoles = ['cashier', 'kitchen', 'waiter'];
+    if (item.href === '/' && operationalRoles.includes(roleSlug)) {
+      return false;
+    }
+
+    // 4. Kiem tra permission cua nguoi dung
     if (item.permissions && item.permissions.length > 0) {
       const hasPerm = item.permissions.some((p) => permissions.includes(p));
       if (!hasPerm) return false;
