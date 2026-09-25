@@ -1,10 +1,4 @@
-export interface RestaurantBranch {
-  id: string;
-  name: string;
-  address: string;
-  phone: string;
-  isMainBranch?: boolean;
-}
+export type BranchStatus = 'ACTIVE' | 'TEMPORARILY_CLOSED' | 'INACTIVE';
 
 export interface BankAccountConfig {
   bankId: string; // e.g., 'MB', 'VCB', 'TCB'
@@ -12,6 +6,52 @@ export interface BankAccountConfig {
   accountNo: string;
   accountName: string;
   template?: 'compact' | 'qr_only' | 'print';
+}
+
+export interface RestaurantBranch {
+  _id?: string;
+  id: string;
+  name: string;
+  address: string;
+  phone: string;
+  isMainBranch?: boolean;
+  status?: BranchStatus;
+  closedAt?: string | null;
+  closedReason?: string | null;
+  bankAccount?: BankAccountConfig;
+  openingHours?: string;
+  tagline?: string;
+}
+
+export interface CreateBranchDto {
+  name: string;
+  address: string;
+  phone: string;
+  isMainBranch?: boolean;
+  status?: BranchStatus;
+  bankAccount?: BankAccountConfig;
+  openingHours?: string;
+  tagline?: string;
+}
+
+export interface UpdateBranchDto {
+  name?: string;
+  address?: string;
+  phone?: string;
+  isMainBranch?: boolean;
+  status?: BranchStatus;
+  closedReason?: string;
+  bankAccount?: BankAccountConfig;
+  openingHours?: string;
+  tagline?: string;
+}
+
+export interface CloseBranchDto {
+  reason?: string;
+}
+
+export interface DeactivateBranchDto {
+  reason?: string;
 }
 
 export interface Restaurant {
@@ -27,6 +67,21 @@ export interface Restaurant {
   isOpen?: boolean;
   bankAccount?: BankAccountConfig;
   branches: RestaurantBranch[];
-  plan: 'Basic' | 'Standard' | 'Advanced';
-  createdAt: string;
+  plan: 'Basic' | 'Standard' | 'Advanced' | 'Pro' | 'Enterprise';
+  createdAt?: string;
+}
+
+export interface RestaurantSummary {
+  id: string;
+  name: string;
+  slug: string;
+  phone?: string;
+  address?: string;
+  logoUrl?: string;
+  coverUrl?: string;
+  plan?: string;
+  isOpen?: boolean;
+  branchCount: number;
+  staffCount: number;
+  createdAt?: string;
 }

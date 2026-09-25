@@ -93,6 +93,35 @@ Dự án tích hợp sẵn **Mock Storage Engine** và **Realtime Hub (Broadcast
 
 ---
 
+## 👥 Quản Lý Nhân Sự & Phân Quyền (Phase 3: Staff & RBAC)
+
+Hệ thống cung cấp giải pháp quản trị phân quyền nhân sự toàn diện tích hợp chặt chẽ giữa Backend API và Frontend Admin:
+
+1. **Quản Trị Viên Hệ Thống (Super Admin)**:
+   - Được định danh bảo mật thông qua cấu hình `.env` (`SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD`).
+   - Có bộ chọn nhà hàng (**Restaurant Switcher**) trên thanh điều hướng đầu trang (`AdminHeader`) để chuyển đổi nhanh giữa chế độ xem **"Toàn hệ thống"** hoặc từng nhà hàng cụ thể.
+   - Toàn quyền xem, lọc và phụ tạo nhân viên cho bất kỳ nhà hàng/chi nhánh nào trong hệ thống (`restaurantId`).
+2. **Phân Lập Nghiệp Vụ Chi Nhánh Con (Sub-branch Scoping)**:
+   - **Thanh Header & Bộ chuyển Chi nhánh**: Tài khoản thuộc chi nhánh con (kể cả có vai trò `restaurant_admin`) được khóa chặt phạm vi tại chi nhánh của mình; ẩn dropdown đổi chi nhánh và hiển thị huy hiệu tĩnh kèm nhãn "Chi nhánh con".
+   - **Thanh Bên (Sidebar) & Truy Cập /branches**: Tự động ẩn menu "Quản lý Chi nhánh" đối với chi nhánh con; truy cập trực tiếp URL `/branches` sẽ hiển thị màn hình từ chối quyền truy cập (Access Denied).
+   - **Cài Đặt Chi Nhánh Độc Lập**: Menu "Cài đặt Nhà hàng" tự động đổi thành "Cài đặt Chi nhánh", cho phép mỗi chi nhánh con cấu hình số điện thoại hotline, giờ phục vụ và tài khoản ngân hàng nhận tiền VietQR riêng biệt.
+3. **Quản Lý Nhân Viên & Khóa/Mở Khóa**:
+   - Thêm mới, chỉnh sửa thông tin, khóa/mở khóa (`PATCH /users/:id/toggle-status`) và xóa mềm (`DELETE /users/:id`) trong phạm vi chi nhánh của mình.
+   - Chặn chi nhánh con tạo/sửa/xóa nhân sự của chi nhánh khác hoặc gán các vai trò quản trị (`restaurant_admin`, `restaurant_manager`).
+   - Quyền điều chuyển nhân sự giữa các chi nhánh (`POST /users/transfer`) dành riêng cho Trụ sở chính (HQ).
+4. **Phân Quyền Vai Trò & Ma Trận Quyền Hạn (RBAC Matrix)**:
+   - Hỗ trợ 6 vai trò mặc định hệ thống (`SYSTEM_ADMIN`, `RESTAURANT_ADMIN`, `RESTAURANT_MANAGER`, `CASHIER`, `KITCHEN`, `WAITER`). Vai trò mặc định hệ thống được bảo vệ tuyệt đối và chỉ có Super Admin mới có quyền cập nhật.
+   - Trụ sở chính (HQ) có thể tạo và quản lý vai trò tùy chỉnh (`POST /roles`), thống kê nhân sự theo quy mô toàn chuỗi (`{userCount} nhân sự (toàn chuỗi) đang giữ vai trò này`).
+   - Chi nhánh con không được phép tạo/sửa/xóa vai trò; giao diện Tab 2 RBAC hiển thị số lượng nhân sự thuộc phạm vi chi nhánh mình (`{userCount} nhân sự (tại chi nhánh này) đang giữ vai trò này`).
+5. **Điều Hướng Thông Minh & Lọc Menu Theo Vai Trò (Smart Role Landing & Routing)**:
+   - **Thu Ngân (`cashier`)**: Tự động chuyển hướng đến màn hình POS Bán hàng (`/pos`) ngay sau khi đăng nhập hoặc truy cập trang chủ `/`. Menu "Tổng quan" được ẩn khỏi Sidebar để tối ưu không gian làm việc chuyên trách. Khi truy cập các route quản trị như `/staff`, màn hình bảo vệ 403 hiển thị lý do và nút bấm "Quay về trang làm việc chính" đưa người dùng về lại `/pos`.
+   - **Bếp KDS (`kitchen`)**: Tự động chuyển hướng đến màn hình Bếp (`/kitchen`), Sidebar chỉ hiển thị duy nhất chức năng KDS.
+   - **Phục Vụ (`waiter`)**: Tự động chuyển hướng đến Sơ đồ Bàn (`/tables`), phục vụ gọi món tại bàn và theo dõi trạng thái bàn.
+   - **Quản Lý (`restaurant_manager`)**: Đăng nhập vào Dashboard (`/`), quản lý toàn bộ vận hành, bàn, bếp, thực đơn và báo cáo doanh thu; bảo vệ chặn truy cập các trang nhạy cảm `/staff` và `/settings` (403 Forbidden).
+   - **Chủ Quán (`restaurant_admin`)**: Toàn quyền truy cập mọi phân hệ bao gồm Quản lý nhân viên & Phân quyền ma trận (`/staff`) và Cài đặt Nhà hàng (`/settings`).
+
+---
+
 ## 📦 Build & Kiểm Tra Chất Lượng Mã (Build & Quality)
 
 ```bash
@@ -112,7 +141,8 @@ npm run typecheck
 
 ```bash
 git add .
-git commit -m "feat: complete initial iMenu monorepo architecture with client, admin and customer menu"
+git commit -m "feat(phase-03): implement staff management, RBAC, and super admin platform switcher"
 git branch -M main
 git push -u origin main
 ```
+

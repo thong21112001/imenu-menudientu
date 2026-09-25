@@ -9,4 +9,5 @@ export * from './components/Modal';
 export * from './components/Drawer';
 export * from './components/StatusChip';
 export * from './components/Toast';
+export * from './components/CustomSelect';
 export * from './components/QrCodeRenderer';

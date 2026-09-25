@@ -4,3 +4,4 @@ export * from './vietqr';
 export * from './sound';
 export * from './storage';
 export * from './realtime-hub';
+export * from './api-client';

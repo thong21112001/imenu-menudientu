@@ -1,9 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Logo } from '@imenu/ui';
+import { storageService } from '@imenu/utils';
 import { useSidebar } from './AdminLayoutShell';
 import {
   LayoutDashboard,
@@ -15,6 +16,7 @@ import {
   Receipt,
   BarChart3,
   Users,
+  Building2,
   Settings,
   Store,
   ExternalLink,
@@ -23,22 +25,163 @@ import {
   X,
 } from 'lucide-react';
 
-const NAV_ITEMS = [
-  { name: 'Tổng quan', href: '/', icon: LayoutDashboard },
-  { name: 'Sơ đồ Bàn', href: '/tables', icon: Grid3X3 },
-  { name: 'POS Bán hàng', href: '/pos', icon: Smartphone },
-  { name: 'Màn hình Bếp KDS', href: '/kitchen', icon: ChefHat },
-  { name: 'Quản lý Thực đơn', href: '/menu', icon: UtensilsCrossed },
-  { name: 'Tạo mã QR Bàn', href: '/qr-codes', icon: QrCode },
-  { name: 'Hóa đơn & In Bill', href: '/bills', icon: Receipt },
-  { name: 'Báo cáo & Doanh thu', href: '/reports', icon: BarChart3 },
-  { name: 'Nhân viên & Phân quyền', href: '/staff', icon: Users },
-  { name: 'Cài đặt Nhà hàng', href: '/settings', icon: Settings },
+interface NavItemConfig {
+  name: string;
+  href: string;
+  icon: any;
+  permissions?: string[];
+  requireMainBranch?: boolean;
+}
+
+const NAV_ITEMS_CONFIG: NavItemConfig[] = [
+  {
+    name: 'Tổng quan',
+    href: '/',
+    icon: LayoutDashboard,
+    permissions: ['perm-rep-view'],
+  },
+  {
+    name: 'Sơ đồ Bàn',
+    href: '/tables',
+    icon: Grid3X3,
+    permissions: ['perm-pos-view'],
+  },
+  {
+    name: 'POS Bán hàng',
+    href: '/pos',
+    icon: Smartphone,
+    permissions: ['perm-pos-order', 'perm-pos-view'],
+  },
+  {
+    name: 'Màn hình Bếp KDS',
+    href: '/kitchen',
+    icon: ChefHat,
+    permissions: ['perm-kds-view', 'perm-kds-cook'],
+  },
+  {
+    name: 'Quản lý Thực đơn',
+    href: '/menu',
+    icon: UtensilsCrossed,
+    permissions: ['perm-menu-view'],
+  },
+  {
+    name: 'Tạo mã QR Bàn',
+    href: '/qr-codes',
+    icon: QrCode,
+    permissions: ['perm-qr-print', 'perm-pos-table'],
+  },
+  {
+    name: 'Hóa đơn & In Bill',
+    href: '/bills',
+    icon: Receipt,
+    permissions: ['perm-pos-pay'],
+  },
+  {
+    name: 'Báo cáo & Doanh thu',
+    href: '/reports',
+    icon: BarChart3,
+    permissions: ['perm-rep-view'],
+  },
+  {
+    name: 'Nhân viên & Phân quyền',
+    href: '/staff',
+    icon: Users,
+    permissions: ['perm-staff-manage', 'perm-role-manage'],
+  },
+  {
+    name: 'Quản lý Chi nhánh',
+    href: '/branches',
+    icon: Building2,
+    requireMainBranch: true,
+    permissions: ['perm-settings', 'perm-staff-manage'],
+  },
+  {
+    name: 'Cài đặt Nhà hàng',
+    href: '/settings',
+    icon: Settings,
+    permissions: ['perm-settings'],
+  },
 ];
 
 export const AdminSidebar: React.FC = () => {
   const pathname = usePathname();
   const { isMobile, isSidebarOpen, isCollapsed, toggleCollapsed, closeSidebar } = useSidebar();
+  const [restaurant, setRestaurant] = useState<any>(storageService.getRestaurant());
+  const [user, setUser] = useState<any>(storageService.getCurrentUser());
+  const [permissions, setPermissions] = useState<string[]>([]);
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(storageService.getSelectedRestaurantId());
+
+  useEffect(() => {
+    setRestaurant(storageService.getRestaurant());
+    setUser(storageService.getCurrentUser());
+    setSelectedRestaurantId(storageService.getSelectedRestaurantId());
+    setPermissions(storageService.getPermissions() || []);
+
+    const handleRestaurantChanged = (e: any) => {
+      setSelectedRestaurantId(e.detail?.restaurantId ?? null);
+      setRestaurant(storageService.getRestaurant());
+    };
+
+    window.addEventListener('imenu:restaurant_changed', handleRestaurantChanged);
+    return () => {
+      window.removeEventListener('imenu:restaurant_changed', handleRestaurantChanged);
+    };
+  }, []);
+
+  const roleSlug = String(user?.role || '').toLowerCase();
+  const isSuperAdmin = roleSlug === 'system_admin' || roleSlug === 'super_admin';
+  const isOwner = roleSlug === 'restaurant_admin';
+  const isMainBranchUser = isSuperAdmin || Boolean(user?.isMainBranch);
+
+  const navItems = NAV_ITEMS_CONFIG.filter((item) => {
+    // 1. Super Admin và Chủ Nhà Hàng (HQ) có toàn quyền
+    if (isSuperAdmin || isOwner) {
+      if (item.requireMainBranch && !isMainBranchUser) return false;
+      return true;
+    }
+
+    // 2. Kiem tra dieu kien Chi nhanh chinh
+    if (item.requireMainBranch && !isMainBranchUser) {
+      return false;
+    }
+
+    // 3. An menu 'Tổng quan' ('/') doi voi cac vai tro tac nghiep van hanh hien truong
+    // Thu ngan, Bep, Phuc vu deu co man hinh lam viec chuyen trach (POS, KDS, Ban)
+    const operationalRoles = ['cashier', 'kitchen', 'waiter'];
+    if (item.href === '/' && operationalRoles.includes(roleSlug)) {
+      return false;
+    }
+
+    // 4. Kiem tra permission cua nguoi dung
+    if (item.permissions && item.permissions.length > 0) {
+      const hasPerm = item.permissions.some((p) => permissions.includes(p));
+      if (!hasPerm) return false;
+    }
+
+    return true;
+  }).map((item) => {
+    if (item.href === '/settings' && !isMainBranchUser) {
+      return { ...item, name: 'Cài đặt Chi nhánh' };
+    }
+    return item;
+  });
+
+  const restaurantName = isSuperAdmin && !selectedRestaurantId
+    ? 'iMenu Platform'
+    : restaurant?.name || 'Bếp Nhà';
+
+  const restaurantInitials = isSuperAdmin && !selectedRestaurantId
+    ? 'SA'
+    : restaurantName
+        .split(' ')
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((w: string) => w[0].toUpperCase())
+        .join('') || 'IM';
+
+  const branchName = isSuperAdmin && !selectedRestaurantId
+    ? 'Toàn bộ hệ thống'
+    : user?.branchName || restaurant?.branches?.[0]?.name || 'Chi nhánh chính';
 
   const sidebarWidthClass = isMobile
     ? 'w-72'
@@ -83,11 +226,11 @@ export const AdminSidebar: React.FC = () => {
         <div className="px-3.5 py-3">
           <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-[#eab867] text-[#09271d] grid place-items-center font-bold text-xs shrink-0">
-              BN
+              {restaurantInitials}
             </div>
             <div className="min-w-0 flex-1">
-              <strong className="text-xs text-white block truncate">Bếp Nhà - Q.1</strong>
-              <small className="text-[10px] text-emerald-400 block truncate">Chi nhánh chính</small>
+              <strong className="text-xs text-white block truncate">{restaurantName}</strong>
+              <small className="text-[10px] text-emerald-400 block truncate">{branchName}</small>
             </div>
           </div>
         </div>
@@ -95,7 +238,7 @@ export const AdminSidebar: React.FC = () => {
 
       {/* Navigation Links */}
       <nav className="flex-1 px-2.5 py-2 space-y-1 overflow-y-auto overflow-x-hidden">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
           return (

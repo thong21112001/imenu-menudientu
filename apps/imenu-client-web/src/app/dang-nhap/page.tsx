@@ -3,17 +3,40 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Logo, Button } from '@imenu/ui';
-import { CheckCircle2, ArrowRight } from 'lucide-react';
+import { CheckCircle2, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
+import { apiClient } from '@imenu/utils';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('owner@sample.vn');
   const [password, setPassword] = useState('Demo@123');
   const [rememberMe, setRememberMe] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Redirect to Admin App on port 3003
-    window.location.href = 'http://localhost:3003';
+    setLoading(true);
+    setError('');
+
+    try {
+      const res = await apiClient.auth.login({
+        email,
+        password,
+        rememberMe,
+      });
+
+      const token = res.data?.accessToken;
+      const refreshToken = res.data?.refreshToken;
+      const redirectUrl = token
+        ? `http://localhost:3003?token=${encodeURIComponent(token)}&refreshToken=${encodeURIComponent(refreshToken || '')}`
+        : 'http://localhost:3003';
+
+      window.location.href = redirectUrl;
+    } catch (err: any) {
+      setError(err.message || 'Email hoặc mật khẩu không chính xác');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -61,10 +84,17 @@ export default function LoginPage() {
             </p>
 
             {/* Demo Credentials Hint */}
-            <div className="p-3.5 bg-emerald-50 border border-dashed border-emerald-200 rounded-xl text-xs text-emerald-800 mb-6">
+            <div className="p-3.5 bg-emerald-50 border border-dashed border-emerald-200 rounded-xl text-xs text-emerald-800 mb-4">
               <strong>Tài khoản trải nghiệm sẵn có:</strong>
               <div className="font-mono mt-1 font-semibold">owner@sample.vn · Demo@123</div>
             </div>
+
+            {error && (
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2.5 text-xs text-rose-700 font-medium">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+                <span>{error}</span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
@@ -110,8 +140,21 @@ export default function LoginPage() {
                 </a>
               </div>
 
-              <Button type="submit" variant="primary" className="w-full py-3 mt-4">
-                Đăng nhập vào hệ thống <ArrowRight className="w-4 h-4 ml-2" />
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={loading}
+                className="w-full py-3 mt-4 flex items-center justify-center gap-2"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" /> Đang đăng nhập...
+                  </>
+                ) : (
+                  <>
+                    Đăng nhập vào hệ thống <ArrowRight className="w-4 h-4 ml-1" />
+                  </>
+                )}
               </Button>
             </form>
 

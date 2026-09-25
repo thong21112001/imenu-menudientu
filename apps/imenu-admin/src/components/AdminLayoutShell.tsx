@@ -2,8 +2,12 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
+import { storageService, apiClient } from '@imenu/utils';
 import { AdminSidebar } from './AdminSidebar';
 import { AdminHeader } from './AdminHeader';
+import { AuthGuard } from './AuthGuard';
+import { ToastProvider } from '@imenu/ui';
+import { RouteAccessGuard } from './RouteAccessGuard';
 
 interface SidebarContextType {
   isMobile: boolean;
@@ -30,6 +34,51 @@ export const AdminLayoutShell: React.FC<{ children: React.ReactNode }> = ({ chil
   const [isMobile, setIsMobile] = useState<boolean>(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+
+  // Auto-detect and sync cross-origin tokens (e.g., from login on port 3004)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const refreshToken = urlParams.get('refreshToken');
+
+      if (token) {
+        storageService.setAccessToken(token);
+        if (refreshToken) {
+          storageService.setRefreshToken(refreshToken);
+        }
+
+        // Clean query parameters from URL without page reload
+        urlParams.delete('token');
+        urlParams.delete('refreshToken');
+        const searchStr = urlParams.toString();
+        const cleanUrl = window.location.pathname + (searchStr ? `?${searchStr}` : '');
+        window.history.replaceState({}, '', cleanUrl);
+
+        // Fetch fresh profile and restaurant info
+        apiClient.auth
+          .getMe()
+          .then((res) => {
+            if (res.data?.user) {
+              storageService.setCurrentUser(res.data.user);
+            }
+          })
+          .catch(() => {});
+
+        apiClient.restaurant
+          .getCurrent()
+          .then((res) => {
+            if (res.data) {
+              storageService.saveRestaurant(res.data);
+            }
+          })
+          .catch(() => {});
+      }
+    } catch {
+      // Ignored
+    }
+  }, []);
 
   // Auto-detect viewport size & handle auto-responsive behavior
   useEffect(() => {
@@ -69,40 +118,51 @@ export const AdminLayoutShell: React.FC<{ children: React.ReactNode }> = ({ chil
     setIsSidebarOpen(false);
   };
 
+  // Trang Login hien thi toan man hinh rieng biet (khong sidebar, khong header)
+  if (pathname === '/login') {
+    return <ToastProvider>{children}</ToastProvider>;
+  }
+
   return (
-    <SidebarContext.Provider
-      value={{
-        isMobile,
-        isSidebarOpen,
-        isCollapsed,
-        toggleSidebar,
-        toggleCollapsed,
-        closeSidebar,
-      }}
-    >
-      <div className="min-h-screen bg-[#f4f6f4] antialiased text-[#1e2924] flex w-full max-w-full overflow-x-hidden">
-        {/* Mobile Backdrop Overlay */}
-        {isMobile && isSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 transition-opacity duration-300"
-            onClick={closeSidebar}
-            aria-label="Đóng thanh điều hướng"
-          />
-        )}
-
-        {/* Dynamic Sidebar */}
-        <AdminSidebar />
-
-        {/* Main Content Area */}
-        <div
-          className={`flex-1 min-w-0 w-full max-w-full flex flex-col min-h-screen transition-[margin] duration-300 ease-in-out ${
-            isMobile ? 'ml-0' : isCollapsed ? 'ml-20' : 'ml-64'
-          }`}
+    <ToastProvider>
+      <AuthGuard>
+        <SidebarContext.Provider
+          value={{
+            isMobile,
+            isSidebarOpen,
+            isCollapsed,
+            toggleSidebar,
+            toggleCollapsed,
+            closeSidebar,
+          }}
         >
-          <AdminHeader />
-          <main className="p-3 sm:p-6 lg:p-8 flex-1 min-w-0 w-full max-w-full overflow-x-hidden">{children}</main>
-        </div>
-      </div>
-    </SidebarContext.Provider>
+          <div className="min-h-screen bg-[#f4f6f4] antialiased text-[#1e2924] flex w-full max-w-full overflow-x-hidden">
+            {/* Mobile Backdrop Overlay */}
+            {isMobile && isSidebarOpen && (
+              <div
+                className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 transition-opacity duration-300"
+                onClick={closeSidebar}
+                aria-label="Đóng thanh điều hướng"
+              />
+            )}
+
+            {/* Dynamic Sidebar */}
+            <AdminSidebar />
+
+            {/* Main Content Area */}
+            <div
+              className={`flex-1 min-w-0 w-full max-w-full flex flex-col min-h-screen transition-[margin] duration-300 ease-in-out ${
+                isMobile ? 'ml-0' : isCollapsed ? 'ml-20' : 'ml-64'
+              }`}
+            >
+              <AdminHeader />
+              <main className="p-3 sm:p-6 lg:p-8 flex-1 min-w-0 w-full max-w-full overflow-x-hidden">
+                <RouteAccessGuard>{children}</RouteAccessGuard>
+              </main>
+            </div>
+          </div>
+        </SidebarContext.Provider>
+      </AuthGuard>
+    </ToastProvider>
   );
 };

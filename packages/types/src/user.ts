@@ -9,20 +9,31 @@ export type UserRole =
   | 'STAFF'               // Nhân viên chung
   | string;               // Cho phép vai trò tùy chỉnh
 
-export type UserStatus = 'ACTIVE' | 'INACTIVE';
+export type UserStatus = 'ACTIVE' | 'INACTIVE' | 'DELETED';
 
 export interface User {
   id: string;
+  username?: string;
   email: string;
   fullName: string;
   phone: string;
   role: UserRole;
   restaurantId?: string;
+  restaurantName?: string;
   branchId?: string;
   branchName?: string;
+  isMainBranch?: boolean;
   avatarUrl?: string;
   status?: UserStatus;
+  isDeleted?: boolean;
+  deletedAt?: string;
+  isSuperAdmin?: boolean;
+  isDemo?: boolean;
   createdAt?: string;
+}
+
+export interface TransferStaffDto {
+  targetBranchId: string;
 }
 
 export interface PermissionItem {
