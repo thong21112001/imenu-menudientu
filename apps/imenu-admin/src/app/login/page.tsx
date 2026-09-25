@@ -20,7 +20,87 @@ import {
   ChefHat,
   Smartphone,
   BarChart3,
+  Crown,
+  Briefcase,
+  CreditCard,
+  UtensilsCrossed,
 } from 'lucide-react';
+
+interface DemoAccountItem {
+  key: string;
+  role: string;
+  email: string;
+  pass: string;
+  name: string;
+  desc: string;
+  icon: any;
+  badgeColor: string;
+  iconColor: string;
+  targetRoute: string;
+}
+
+const DEMO_ACCOUNTS: DemoAccountItem[] = [
+  {
+    key: 'owner',
+    role: 'Chủ Quán (HQ)',
+    email: 'owner@sample.vn',
+    pass: 'Demo@123',
+    name: 'Nguyễn Minh An',
+    desc: 'Toàn quyền quản trị chi nhánh chính & toàn chuỗi',
+    icon: Store,
+    badgeColor: 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:border-emerald-400 hover:bg-emerald-100/70',
+    iconColor: 'text-emerald-600',
+    targetRoute: '/',
+  },
+  {
+    key: 'manager',
+    role: 'Quản Lý Ca',
+    email: 'manager@sample.vn',
+    pass: 'Demo@123',
+    name: 'Trần Quốc Bảo',
+    desc: 'Quản lý vận hành ca, sơ đồ bàn, KDS và nhân sự',
+    icon: Briefcase,
+    badgeColor: 'bg-blue-50 text-blue-800 border-blue-200 hover:border-blue-400 hover:bg-blue-100/70',
+    iconColor: 'text-blue-600',
+    targetRoute: '/',
+  },
+  {
+    key: 'cashier',
+    role: 'Thu Ngân POS',
+    email: 'cashier@sample.vn',
+    pass: 'Demo@123',
+    name: 'Lê Thu Thảo',
+    desc: 'Order bàn, thu tiền VietQR/tiền mặt & in bill 80mm',
+    icon: CreditCard,
+    badgeColor: 'bg-teal-50 text-teal-800 border-teal-200 hover:border-teal-400 hover:bg-teal-100/70',
+    iconColor: 'text-teal-600',
+    targetRoute: '/pos',
+  },
+  {
+    key: 'kitchen',
+    role: 'Bếp KDS',
+    email: 'kitchen@sample.vn',
+    pass: 'Demo@123',
+    name: 'Hoàng Văn Bếp',
+    desc: 'Màn hình KDS nhận vé chế biến & báo hết món tức thì',
+    icon: ChefHat,
+    badgeColor: 'bg-orange-50 text-orange-800 border-orange-200 hover:border-orange-400 hover:bg-orange-100/70',
+    iconColor: 'text-orange-600',
+    targetRoute: '/kitchen',
+  },
+  {
+    key: 'waiter',
+    role: 'Phục Vụ',
+    email: 'waiter@sample.vn',
+    pass: 'Demo@123',
+    name: 'Phạm Văn Phục',
+    desc: 'Hỗ trợ khách tại bàn, mở bàn, kiểm tra món và gọi đồ',
+    icon: UtensilsCrossed,
+    badgeColor: 'bg-amber-50 text-amber-800 border-amber-200 hover:border-amber-400 hover:bg-amber-100/70',
+    iconColor: 'text-amber-600',
+    targetRoute: '/tables',
+  },
+];
 
 function LoginForm() {
   const router = useRouter();
@@ -30,6 +110,7 @@ function LoginForm() {
 
   const [email, setEmail] = useState('owner@sample.vn');
   const [password, setPassword] = useState('Demo@123');
+  const [selectedAccountKey, setSelectedAccountKey] = useState<string>('owner');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
@@ -73,8 +154,20 @@ function LoginForm() {
           }
         }
 
-        // Chuyen huong ve trang dich
-        const targetUrl = returnUrl.startsWith('/') ? returnUrl : `/${returnUrl}`;
+        // Chuyen huong thong minh dua tren role neu nguoi dung vao goc '/'
+        let targetUrl = returnUrl.startsWith('/') ? returnUrl : `/${returnUrl}`;
+        if (targetUrl === '/' || targetUrl === '') {
+          const roleSlug = String(userRole || '').toLowerCase();
+          if (roleSlug === 'kitchen') {
+            targetUrl = '/kitchen';
+          } else if (roleSlug === 'cashier') {
+            targetUrl = '/pos';
+          } else if (roleSlug === 'waiter') {
+            targetUrl = '/tables';
+          } else {
+            targetUrl = '/';
+          }
+        }
         window.location.href = targetUrl;
       } else {
         throw new Error('Đăng nhập không thành công, vui lòng thử lại');
@@ -89,9 +182,10 @@ function LoginForm() {
     }
   };
 
-  const setSampleAccount = (sampleEmail: string, samplePass: string) => {
-    setEmail(sampleEmail);
-    setPassword(samplePass);
+  const handleSelectAccount = (acc: DemoAccountItem) => {
+    setEmail(acc.email);
+    setPassword(acc.pass);
+    setSelectedAccountKey(acc.key);
     setError('');
   };
 
@@ -181,22 +275,62 @@ function LoginForm() {
             )}
 
             {/* Quick Demo Accounts Selection */}
-            <div className="mb-6 p-3 rounded-2xl bg-slate-50 border border-slate-200/70">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Tài khoản mẫu (Bấm để điền):
+            <div className="mb-6 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
+              <div className="flex items-center justify-between mb-2.5">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Tài khoản mẫu 5 Roles Vận Hành (Bấm để thử):
                 </span>
+                <span className="text-[10px] text-slate-400 font-medium">Tự động điền mật khẩu</span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSampleAccount('owner@sample.vn', 'Demo@123')}
-                  className="px-3 py-1.5 rounded-xl bg-white hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 text-xs font-medium text-slate-700 hover:text-emerald-700 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                >
-                  <Store className="w-3.5 h-3.5 text-emerald-600" />
-                  Chủ quán: <span className="font-bold text-slate-900">owner@sample.vn</span>
-                </button>
+
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {DEMO_ACCOUNTS.map((acc) => {
+                  const Icon = acc.icon;
+                  const isSelected = selectedAccountKey === acc.key;
+                  return (
+                    <button
+                      key={acc.key}
+                      type="button"
+                      onClick={() => handleSelectAccount(acc)}
+                      className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                        isSelected
+                          ? 'bg-white shadow-xs border-slate-400 ring-2 ring-emerald-500/40'
+                          : 'bg-white/80 hover:bg-white border-slate-200/90 hover:border-slate-300'
+                      }`}
+                      title={`${acc.name} - ${acc.desc}`}
+                    >
+                      <div className="flex items-center justify-between w-full mb-1">
+                        <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1 truncate">
+                          <Icon className={`w-3.5 h-3.5 shrink-0 ${acc.iconColor}`} />
+                          <span className="truncate">{acc.role}</span>
+                        </span>
+                        {isSelected && (
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                        )}
+                      </div>
+                      <span className="text-[10px] text-slate-500 font-mono truncate block">
+                        {acc.email}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
+
+              {/* Active Account Info Banner */}
+              {(() => {
+                const currentAcc = DEMO_ACCOUNTS.find((a) => a.key === selectedAccountKey);
+                if (!currentAcc) return null;
+                const Icon = currentAcc.icon;
+                return (
+                  <div className="mt-2.5 pt-2 border-t border-slate-200/70 flex items-center gap-2 text-[11px] text-slate-600">
+                    <span className="font-semibold text-slate-800 flex items-center gap-1 shrink-0">
+                      <Icon className={`w-3.5 h-3.5 ${currentAcc.iconColor}`} />
+                      {currentAcc.name}:
+                    </span>
+                    <span className="text-slate-500 truncate">{currentAcc.desc}</span>
+                  </div>
+                );
+              })()}
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">

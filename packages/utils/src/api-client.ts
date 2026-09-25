@@ -421,6 +421,12 @@ export const apiClient = {
     },
   },
 
+  permissions: {
+    async list() {
+      return request<any>('/permissions');
+    },
+  },
+
   dashboard: {
     async getOverview(branchId?: string | null) {
       const q = branchId ? `?branchId=${encodeURIComponent(branchId)}` : '';

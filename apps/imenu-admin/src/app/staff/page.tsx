@@ -65,11 +65,16 @@ export default function StaffPage() {
 
   const isDemo = Boolean(currentUser?.isDemo || currentUser?.email === 'owner@sample.vn');
   const isMainBranchUser = isSuperAdmin || Boolean(currentUser?.isMainBranch);
+  const isOwner = currentUser?.role === 'RESTAURANT_ADMIN' || currentUser?.role === 'restaurant_admin';
+  const userPerms = storageService.getPermissions() || [];
   const canManageStaff =
     isSuperAdmin ||
-    isMainBranchUser ||
-    currentUser?.role === 'RESTAURANT_ADMIN' ||
-    currentUser?.role === 'restaurant_admin';
+    isOwner ||
+    userPerms.includes('perm-staff-manage');
+  const canManageRoles =
+    isSuperAdmin ||
+    isOwner ||
+    userPerms.includes('perm-role-manage');
 
   // Lọc vai trò: system_admin CHỈ hiển thị duy nhất cho Super Admin
   const isSuperAdminRole = (slugOrCode: string) => {
@@ -645,6 +650,10 @@ export default function StaffPage() {
       toast.error('Bạn không có quyền truy cập hoặc chỉnh sửa vai trò này.');
       return;
     }
+    if (rl && rl.isSystem && !isSuperAdmin) {
+      toast.info(`Vai trò "${rl.name}" là vai trò mặc định chuẩn của hệ thống. Bạn có thể tạo thêm vai trò tùy chỉnh mới để phân quyền.`);
+      return;
+    }
     if (rl) {
       setEditingRole(rl);
       setRoleName(rl.name);
@@ -875,20 +884,22 @@ export default function StaffPage() {
           </span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('roles')}
-          className={`px-4 py-3 text-sm font-black transition-all border-b-2 cursor-pointer flex items-center gap-2 ${
-            activeTab === 'roles'
-              ? 'border-[#124a36] text-[#124a36]'
-              : 'border-transparent text-slate-500 hover:text-slate-900'
-          }`}
-        >
-          <Shield className="w-4 h-4" />
-          <span>Vai Trò & Phân Quyền (RBAC)</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'roles' ? 'bg-emerald-100 text-[#124a36]' : 'bg-slate-100 text-slate-600'}`}>
-            {visibleRoles.length}
-          </span>
-        </button>
+        {canManageRoles && (
+          <button
+            onClick={() => setActiveTab('roles')}
+            className={`px-4 py-3 text-sm font-black transition-all border-b-2 cursor-pointer flex items-center gap-2 ${
+              activeTab === 'roles'
+                ? 'border-[#124a36] text-[#124a36]'
+                : 'border-transparent text-slate-500 hover:text-slate-900'
+            }`}
+          >
+            <Shield className="w-4 h-4" />
+            <span>Vai Trò & Phân Quyền (RBAC)</span>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'roles' ? 'bg-emerald-100 text-[#124a36]' : 'bg-slate-100 text-slate-600'}`}>
+              {visibleRoles.length}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* ================= TAB 1: DANH SÁCH NHÂN VIÊN ================= */}
@@ -1557,6 +1568,15 @@ export default function StaffPage() {
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
+                      )}
+                      {r.isSystem && !isSuperAdmin && (
+                        <span
+                          className="px-2 py-1 text-slate-400 bg-slate-100 rounded-lg cursor-not-allowed flex items-center gap-1 text-[11px] font-medium"
+                          title="Vai trò mặc định của hệ thống được bảo vệ và không thể chỉnh sửa bởi tài khoản nhà hàng"
+                        >
+                          <Lock className="w-3 h-3 text-slate-400" />
+                          <span>Hệ thống</span>
+                        </span>
                       )}
                       {!r.isSystem && isMainBranchUser && (
                         <button

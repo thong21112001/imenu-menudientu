@@ -25,18 +25,82 @@ import {
   X,
 } from 'lucide-react';
 
-const NAV_ITEMS = [
-  { name: 'Tổng quan', href: '/', icon: LayoutDashboard },
-  { name: 'Sơ đồ Bàn', href: '/tables', icon: Grid3X3 },
-  { name: 'POS Bán hàng', href: '/pos', icon: Smartphone },
-  { name: 'Màn hình Bếp KDS', href: '/kitchen', icon: ChefHat },
-  { name: 'Quản lý Thực đơn', href: '/menu', icon: UtensilsCrossed },
-  { name: 'Tạo mã QR Bàn', href: '/qr-codes', icon: QrCode },
-  { name: 'Hóa đơn & In Bill', href: '/bills', icon: Receipt },
-  { name: 'Báo cáo & Doanh thu', href: '/reports', icon: BarChart3 },
-  { name: 'Nhân viên & Phân quyền', href: '/staff', icon: Users },
-  { name: 'Quản lý Chi nhánh', href: '/branches', icon: Building2 },
-  { name: 'Cài đặt Nhà hàng', href: '/settings', icon: Settings },
+interface NavItemConfig {
+  name: string;
+  href: string;
+  icon: any;
+  permissions?: string[];
+  requireMainBranch?: boolean;
+}
+
+const NAV_ITEMS_CONFIG: NavItemConfig[] = [
+  {
+    name: 'Tổng quan',
+    href: '/',
+    icon: LayoutDashboard,
+    permissions: ['perm-rep-view'],
+  },
+  {
+    name: 'Sơ đồ Bàn',
+    href: '/tables',
+    icon: Grid3X3,
+    permissions: ['perm-pos-view'],
+  },
+  {
+    name: 'POS Bán hàng',
+    href: '/pos',
+    icon: Smartphone,
+    permissions: ['perm-pos-order', 'perm-pos-view'],
+  },
+  {
+    name: 'Màn hình Bếp KDS',
+    href: '/kitchen',
+    icon: ChefHat,
+    permissions: ['perm-kds-view', 'perm-kds-cook'],
+  },
+  {
+    name: 'Quản lý Thực đơn',
+    href: '/menu',
+    icon: UtensilsCrossed,
+    permissions: ['perm-menu-view'],
+  },
+  {
+    name: 'Tạo mã QR Bàn',
+    href: '/qr-codes',
+    icon: QrCode,
+    permissions: ['perm-qr-print', 'perm-pos-table'],
+  },
+  {
+    name: 'Hóa đơn & In Bill',
+    href: '/bills',
+    icon: Receipt,
+    permissions: ['perm-pos-pay'],
+  },
+  {
+    name: 'Báo cáo & Doanh thu',
+    href: '/reports',
+    icon: BarChart3,
+    permissions: ['perm-rep-view'],
+  },
+  {
+    name: 'Nhân viên & Phân quyền',
+    href: '/staff',
+    icon: Users,
+    permissions: ['perm-staff-manage', 'perm-role-manage'],
+  },
+  {
+    name: 'Quản lý Chi nhánh',
+    href: '/branches',
+    icon: Building2,
+    requireMainBranch: true,
+    permissions: ['perm-settings', 'perm-staff-manage'],
+  },
+  {
+    name: 'Cài đặt Nhà hàng',
+    href: '/settings',
+    icon: Settings,
+    permissions: ['perm-settings'],
+  },
 ];
 
 export const AdminSidebar: React.FC = () => {
@@ -44,12 +108,14 @@ export const AdminSidebar: React.FC = () => {
   const { isMobile, isSidebarOpen, isCollapsed, toggleCollapsed, closeSidebar } = useSidebar();
   const [restaurant, setRestaurant] = useState<any>(storageService.getRestaurant());
   const [user, setUser] = useState<any>(storageService.getCurrentUser());
+  const [permissions, setPermissions] = useState<string[]>([]);
   const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(storageService.getSelectedRestaurantId());
 
   useEffect(() => {
     setRestaurant(storageService.getRestaurant());
     setUser(storageService.getCurrentUser());
     setSelectedRestaurantId(storageService.getSelectedRestaurantId());
+    setPermissions(storageService.getPermissions() || []);
 
     const handleRestaurantChanged = (e: any) => {
       setSelectedRestaurantId(e.detail?.restaurantId ?? null);
@@ -62,13 +128,29 @@ export const AdminSidebar: React.FC = () => {
     };
   }, []);
 
-  const isSuperAdmin = user?.role === 'SYSTEM_ADMIN' || user?.role === 'system_admin' || user?.role === 'super_admin';
+  const roleSlug = String(user?.role || '').toLowerCase();
+  const isSuperAdmin = roleSlug === 'system_admin' || roleSlug === 'super_admin';
+  const isOwner = roleSlug === 'restaurant_admin';
   const isMainBranchUser = isSuperAdmin || Boolean(user?.isMainBranch);
 
-  const navItems = NAV_ITEMS.filter((item) => {
-    if (item.href === '/branches' && !isMainBranchUser) {
+  const navItems = NAV_ITEMS_CONFIG.filter((item) => {
+    // 1. Super Admin và Chủ Nhà Hàng (HQ) có toàn quyền
+    if (isSuperAdmin || isOwner) {
+      if (item.requireMainBranch && !isMainBranchUser) return false;
+      return true;
+    }
+
+    // 2. Kiem tra dieu kien Chi nhanh chinh
+    if (item.requireMainBranch && !isMainBranchUser) {
       return false;
     }
+
+    // 3. Kiem tra permission cua nguoi dung
+    if (item.permissions && item.permissions.length > 0) {
+      const hasPerm = item.permissions.some((p) => permissions.includes(p));
+      if (!hasPerm) return false;
+    }
+
     return true;
   }).map((item) => {
     if (item.href === '/settings' && !isMainBranchUser) {

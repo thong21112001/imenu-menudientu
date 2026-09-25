@@ -7,6 +7,7 @@ import { AdminSidebar } from './AdminSidebar';
 import { AdminHeader } from './AdminHeader';
 import { AuthGuard } from './AuthGuard';
 import { ToastProvider } from '@imenu/ui';
+import { RouteAccessGuard } from './RouteAccessGuard';
 
 interface SidebarContextType {
   isMobile: boolean;
@@ -155,7 +156,9 @@ export const AdminLayoutShell: React.FC<{ children: React.ReactNode }> = ({ chil
               }`}
             >
               <AdminHeader />
-              <main className="p-3 sm:p-6 lg:p-8 flex-1 min-w-0 w-full max-w-full overflow-x-hidden">{children}</main>
+              <main className="p-3 sm:p-6 lg:p-8 flex-1 min-w-0 w-full max-w-full overflow-x-hidden">
+                <RouteAccessGuard>{children}</RouteAccessGuard>
+              </main>
             </div>
           </div>
         </SidebarContext.Provider>
