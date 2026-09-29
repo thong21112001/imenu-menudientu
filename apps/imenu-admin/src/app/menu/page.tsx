@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { storageService, formatCurrencyVND, realtimeHub, apiClient } from '@imenu/utils';
+import { storageService, formatCurrencyVND, realtimeHub, apiClient, matchVietnameseSearch } from '@imenu/utils';
 import { MenuItem, MenuCategory, MenuItemOptionGroup } from '@imenu/types';
 import { Card, Button, Modal, CustomSelect, useToast } from '@imenu/ui';
 import {
@@ -19,6 +19,7 @@ import {
   Loader2,
   RefreshCw,
   Sparkles,
+  Store,
 } from 'lucide-react';
 
 const EMOJI_SUGGESTIONS = ['🍲', '🥗', '🧋', '🍨', '🥩', '🍺', '☕', '🍱', '🍕', '🍜', '🥘', '🥤', '🍣', '🍰', '🍔', '🍙'];
@@ -33,6 +34,8 @@ export default function MenuManagementPage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSeeding, setIsSeeding] = useState<boolean>(false);
+  const [activeBranchId, setActiveBranchId] = useState<string | null>(null);
+  const [activeBranchName, setActiveBranchName] = useState<string>('');
 
   // Modal 1: Add Item
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
@@ -71,15 +74,16 @@ export default function MenuManagementPage() {
   };
 
   // Fetch full menu data from API with storage fallback
-  const fetchMenuData = async () => {
+  const fetchMenuData = async (branchIdToUse?: string | null) => {
     setIsLoading(true);
+    const branchId = branchIdToUse !== undefined ? branchIdToUse : activeBranchId;
     try {
       const [catsRes, itemsRes] = await Promise.all([
-        apiClient.categories.list().catch((err) => {
+        apiClient.categories.list({ branchId: branchId || undefined }).catch((err) => {
           console.warn('Cannot fetch categories from API:', err.message);
           return null;
         }),
-        apiClient.menuItems.list({ limit: 200 }).catch((err) => {
+        apiClient.menuItems.list({ branchId: branchId || undefined, limit: 200 }).catch((err) => {
           console.warn('Cannot fetch menu items from API:', err.message);
           return null;
         }),
@@ -117,7 +121,7 @@ export default function MenuManagementPage() {
     try {
       await apiClient.categories.seedDefault();
       showToast('Đã khởi tạo bộ thực đơn mẫu chuẩn nhà hàng Việt thành công!', 'success');
-      await fetchMenuData();
+      await fetchMenuData(activeBranchId);
     } catch (err: any) {
       showToast(err.message || 'Không thể khởi tạo thực đơn mẫu', 'error');
     } finally {
@@ -126,7 +130,44 @@ export default function MenuManagementPage() {
   };
 
   useEffect(() => {
-    fetchMenuData();
+    const user = storageService.getCurrentUser();
+    let initialBranchId = storageService.getActiveBranchId();
+    if (!user?.isSuperAdmin && !user?.isMainBranch && user?.branchId) {
+      initialBranchId = user.branchId;
+    }
+    setActiveBranchId(initialBranchId);
+
+    if (initialBranchId) {
+      apiClient.branches
+        .get(initialBranchId)
+        .then((res) => {
+          if (res.data?.name) setActiveBranchName(res.data.name);
+        })
+        .catch(() => {});
+    }
+
+    fetchMenuData(initialBranchId);
+
+    const handleBranchChange = (e: any) => {
+      const newBranchId = e.detail?.branchId ?? null;
+      setActiveBranchId(newBranchId);
+      if (newBranchId) {
+        apiClient.branches
+          .get(newBranchId)
+          .then((res) => {
+            if (res.data?.name) setActiveBranchName(res.data.name);
+          })
+          .catch(() => {});
+      } else {
+        setActiveBranchName('');
+      }
+      fetchMenuData(newBranchId);
+    };
+
+    window.addEventListener('imenu:branch_changed', handleBranchChange);
+    return () => {
+      window.removeEventListener('imenu:branch_changed', handleBranchChange);
+    };
   }, []);
 
   useEffect(() => {
@@ -137,42 +178,54 @@ export default function MenuManagementPage() {
 
   // Quick stats
   const totalItemsCount = menuItems.length;
-  const availableItemsCount = menuItems.filter((i) => i.isAvailable).length;
-  const unavailableItemsCount = menuItems.filter((i) => !i.isAvailable).length;
+  const availableItemsCount = menuItems.filter((i) => (i.effectiveIsAvailable !== undefined ? i.effectiveIsAvailable : i.isAvailable)).length;
+  const unavailableItemsCount = menuItems.filter((i) => !(i.effectiveIsAvailable !== undefined ? i.effectiveIsAvailable : i.isAvailable)).length;
 
-  // Filtered Menu Items
+  // Filtered Menu Items with smart Vietnamese regex search
   const filteredItems = menuItems.filter((item) => {
     const itemCatId = item.categoryId || (item as any).category?._id || (item as any).category?.id || (typeof (item as any).category === 'string' ? (item as any).category : '');
     const matchesCategory = selectedCatId === 'all' || itemCatId === selectedCatId;
     const matchesSearch =
-      item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description?.toLowerCase().includes(searchQuery.toLowerCase());
+      !searchQuery.trim() ||
+      matchVietnameseSearch(`${item.name} ${item.description || ''}`, searchQuery);
+    const isAvail = item.effectiveIsAvailable !== undefined ? item.effectiveIsAvailable : item.isAvailable;
     const matchesStatus =
       statusFilter === 'all' ||
-      (statusFilter === 'available' && item.isAvailable) ||
-      (statusFilter === 'unavailable' && !item.isAvailable);
+      (statusFilter === 'available' && isAvail) ||
+      (statusFilter === 'unavailable' && !isAvail);
 
     return matchesCategory && matchesSearch && matchesStatus;
   });
 
-  // Fast toggle item availability with API call & optimistic update
+  // Fast toggle item availability with branch scoping API call & optimistic update
   const handleToggleAvailable = async (itemId: string) => {
     const target = menuItems.find((i) => i.id === itemId);
     if (!target) return;
-    const nextAvailable = !target.isAvailable;
+    const currentAvail = target.effectiveIsAvailable !== undefined ? target.effectiveIsAvailable : target.isAvailable;
+    const nextAvailable = !currentAvail;
 
     const previous = [...menuItems];
     const updated = menuItems.map((item) =>
-      item.id === itemId ? { ...item, isAvailable: nextAvailable } : item
+      item.id === itemId
+        ? {
+            ...item,
+            isAvailable: nextAvailable,
+            effectiveIsAvailable: nextAvailable,
+          }
+        : item
     );
     setMenuItems(updated);
     storageService.saveMenuItems(updated);
 
     try {
-      await apiClient.menuItems.toggleStatus(itemId, nextAvailable);
-      realtimeHub.publish('MENU_AVAILABILITY_CHANGED', { itemId, isAvailable: nextAvailable }, 'rest-bep-nha');
+      await apiClient.menuItems.toggleStatus(itemId, nextAvailable, activeBranchId || undefined);
+      realtimeHub.publish(
+        'MENU_AVAILABILITY_CHANGED',
+        { itemId, isAvailable: nextAvailable, branchId: activeBranchId },
+        'rest-bep-nha'
+      );
       showToast(
-        `Đã ${nextAvailable ? 'bật bán lại' : 'tạm hết món'} "${target.name}"!`,
+        `Đã ${nextAvailable ? 'bật bán lại' : 'tạm hết món'} "${target.name}"${activeBranchId ? ' tại chi nhánh' : ''}!`,
         nextAvailable ? 'success' : 'info'
       );
     } catch (err: any) {
@@ -491,7 +544,7 @@ export default function MenuManagementPage() {
     const item = menuItems.find((i) => i.id === itemId);
     if (!item) return;
 
-    if (!confirm(`Bạn có chắc chắn muốn xóa món "${item.name}" khỏi thực đơn?`)) {
+    if (!confirm(`Bạn có chắc chắn muốn xóa món "${item.name}" khỏi thực đơn? (Món sẽ được lưu trữ an toàn trong hệ thống để bảo toàn lịch sử các đơn hàng trước đó)`)) {
       return;
     }
 
@@ -500,7 +553,7 @@ export default function MenuManagementPage() {
       const updated = menuItems.filter((i) => i.id !== itemId);
       setMenuItems(updated);
       storageService.saveMenuItems(updated);
-      showToast(`Đã xóa món "${item.name}" khỏi thực đơn!`, 'info');
+      showToast(`Đã xóa mềm và lưu trữ món "${item.name}" an toàn!`, 'info');
     } catch (err: any) {
       showToast(err.message || 'Không thể xóa món ăn', 'error');
     }
@@ -624,16 +677,24 @@ export default function MenuManagementPage() {
             <UtensilsCrossed className="w-6 h-6 sm:w-7 sm:h-7 text-[#176044] shrink-0" />
             <span className="truncate">Quản Lý Thực Đơn & Danh Mục</span>
           </h1>
-          <p className="text-xs text-[#66736d] mt-0.5 line-clamp-1 sm:line-clamp-none">
-            Cập nhật món ăn, hình ảnh, giá bán, topping và cấu hình hiển thị trên mã QR của khách
-          </p>
+          <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+            <p className="text-xs text-[#66736d] line-clamp-1 sm:line-clamp-none">
+              Cập nhật món ăn, hình ảnh, giá bán, topping và cấu hình hiển thị trên mã QR của khách
+            </p>
+            {activeBranchId && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-[#176044] border border-emerald-200">
+                <Store className="w-3 h-3" />
+                Chi nhánh: {activeBranchName || activeBranchId}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto shrink-0">
           <Button
             variant="outline"
             icon={<RefreshCw className={`w-4 h-4 text-[#176044] ${isLoading ? 'animate-spin' : ''}`} />}
-            onClick={() => fetchMenuData()}
+            onClick={() => fetchMenuData(activeBranchId)}
             className="cursor-pointer bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-2xs w-full sm:w-auto text-xs py-2 px-2.5 justify-center"
             title="Tải lại dữ liệu từ máy chủ"
           >
@@ -937,20 +998,25 @@ export default function MenuManagementPage() {
                         </span>
                       )}
 
-                      <span
-                        className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                          item.isAvailable
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            item.isAvailable ? 'bg-emerald-500' : 'bg-red-500'
-                          }`}
-                        />
-                        {item.isAvailable ? 'Còn món' : 'Hết món'}
-                      </span>
+                      {(() => {
+                        const isAvail = item.effectiveIsAvailable !== undefined ? item.effectiveIsAvailable : item.isAvailable;
+                        return (
+                          <span
+                            className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              isAvail
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            <span
+                              className={`w-1.5 h-1.5 rounded-full ${
+                                isAvail ? 'bg-emerald-500' : 'bg-red-500'
+                              }`}
+                            />
+                            {isAvail ? 'Còn món' : 'Hết món'}
+                          </span>
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -961,7 +1027,7 @@ export default function MenuManagementPage() {
                         src={item.imageUrl}
                         alt={item.name}
                         className={`w-full h-full object-cover transition-transform group-hover:scale-105 ${
-                          !item.isAvailable ? 'grayscale opacity-70' : ''
+                          !(item.effectiveIsAvailable !== undefined ? item.effectiveIsAvailable : item.isAvailable) ? 'grayscale opacity-70' : ''
                         }`}
                         loading="lazy"
                         onError={(e) => {
@@ -976,16 +1042,28 @@ export default function MenuManagementPage() {
                         {item.name}
                       </strong>
 
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-black text-[#176044] block">
-                          {formatCurrencyVND(item.price)}
-                        </span>
-                        {item.originalPrice && item.originalPrice > item.price && (
-                          <span className="text-xs text-slate-400 line-through">
-                            {formatCurrencyVND(item.originalPrice)}
-                          </span>
-                        )}
-                      </div>
+                      {(() => {
+                        const effPrice = item.effectivePrice ?? item.price;
+                        const effOrigPrice = item.effectiveOriginalPrice ?? item.originalPrice;
+                        const hasDeal = effOrigPrice && effOrigPrice > effPrice;
+                        return (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-black text-[#176044] block">
+                              {formatCurrencyVND(effPrice)}
+                            </span>
+                            {hasDeal && (
+                              <span className="text-xs text-slate-400 line-through">
+                                {formatCurrencyVND(effOrigPrice)}
+                              </span>
+                            )}
+                            {hasDeal && (
+                              <span className="text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200 px-1 py-0.2 rounded">
+                                Deal -{Math.round(((effOrigPrice - effPrice) / effOrigPrice) * 100)}%
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
                         {item.description || 'Chưa có mô tả chi tiết cho món ăn này'}
@@ -997,27 +1075,32 @@ export default function MenuManagementPage() {
                 {/* Action Buttons Toolbar */}
                 <div className="pt-3 mt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                   {/* Availability Toggle */}
-                  <button
-                    onClick={() => handleToggleAvailable(item.id)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 ${
-                      item.isAvailable
-                        ? 'bg-red-50 text-red-700 hover:bg-red-100'
-                        : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
-                    }`}
-                    title={item.isAvailable ? 'Chuyển sang trạng thái hết món' : 'Bật phục vụ lại'}
-                  >
-                    {item.isAvailable ? (
-                      <>
-                        <EyeOff className="w-3.5 h-3.5" />
-                        <span>Tắt món</span>
-                      </>
-                    ) : (
-                      <>
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>Bật món</span>
-                      </>
-                    )}
-                  </button>
+                  {(() => {
+                    const isAvail = item.effectiveIsAvailable !== undefined ? item.effectiveIsAvailable : item.isAvailable;
+                    return (
+                      <button
+                        onClick={() => handleToggleAvailable(item.id)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                          isAvail
+                            ? 'bg-red-50 text-red-700 hover:bg-red-100'
+                            : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                        }`}
+                        title={isAvail ? 'Chuyển sang trạng thái hết món tại chi nhánh' : 'Bật phục vụ lại tại chi nhánh'}
+                      >
+                        {isAvail ? (
+                          <>
+                            <EyeOff className="w-3.5 h-3.5" />
+                            <span>Tắt món</span>
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Bật món</span>
+                          </>
+                        )}
+                      </button>
+                    );
+                  })()}
 
                   {/* Edit & Delete Action Buttons */}
                   <div className="flex items-center gap-1.5">

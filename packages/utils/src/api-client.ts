@@ -456,10 +456,15 @@ export const apiClient = {
   },
 
   categories: {
-    async list(params?: { restaurantId?: string; isActive?: boolean }) {
+    async list(params?: string | { restaurantId?: string; branchId?: string; isActive?: boolean }) {
       const q = new URLSearchParams();
-      if (params?.restaurantId) q.append('restaurantId', params.restaurantId);
-      if (params?.isActive !== undefined) q.append('isActive', String(params.isActive));
+      if (typeof params === 'string') {
+        if (params) q.append('branchId', params);
+      } else if (params) {
+        if (params.restaurantId) q.append('restaurantId', params.restaurantId);
+        if (params.branchId) q.append('branchId', params.branchId);
+        if (params.isActive !== undefined) q.append('isActive', String(params.isActive));
+      }
       const qs = q.toString();
       return request<any[]>(`/categories${qs ? `?${qs}` : ''}`);
     },
@@ -468,14 +473,14 @@ export const apiClient = {
       return request<any>(`/categories/${id}`);
     },
 
-    async create(payload: { name: string; slug?: string; icon?: string; order?: number; isActive?: boolean }) {
+    async create(payload: { name: string; slug?: string; icon?: string; order?: number; isActive?: boolean; branchIds?: string[] }) {
       return request<any>('/categories', {
         method: 'POST',
         body: JSON.stringify(payload),
       });
     },
 
-    async update(id: string, payload: { name?: string; slug?: string; icon?: string; order?: number; isActive?: boolean }) {
+    async update(id: string, payload: { name?: string; slug?: string; icon?: string; order?: number; isActive?: boolean; branchIds?: string[] }) {
       return request<any>(`/categories/${id}`, {
         method: 'PUT',
         body: JSON.stringify(payload),
@@ -488,9 +493,10 @@ export const apiClient = {
       });
     },
 
-    async listPublic(params?: { restaurantId?: string; slug?: string }) {
+    async listPublic(params?: { restaurantId?: string; branchId?: string; slug?: string }) {
       const q = new URLSearchParams();
       if (params?.restaurantId) q.append('restaurantId', params.restaurantId);
+      if (params?.branchId) q.append('branchId', params.branchId);
       if (params?.slug) q.append('slug', params.slug);
       const qs = q.toString();
       return request<any[]>(`/categories/public${qs ? `?${qs}` : ''}`);
@@ -507,6 +513,7 @@ export const apiClient = {
   menuItems: {
     async list(params?: {
       restaurantId?: string;
+      branchId?: string;
       categoryId?: string;
       isAvailable?: boolean;
       isPopular?: boolean;
@@ -516,6 +523,7 @@ export const apiClient = {
     }) {
       const q = new URLSearchParams();
       if (params?.restaurantId) q.append('restaurantId', params.restaurantId);
+      if (params?.branchId) q.append('branchId', params.branchId);
       if (params?.categoryId && params.categoryId !== 'all') q.append('categoryId', params.categoryId);
       if (params?.isAvailable !== undefined) q.append('isAvailable', String(params.isAvailable));
       if (params?.isPopular !== undefined) q.append('isPopular', String(params.isPopular));
@@ -544,10 +552,13 @@ export const apiClient = {
       });
     },
 
-    async toggleStatus(id: string, isAvailable?: boolean) {
+    async toggleStatus(id: string, isAvailable?: boolean, branchId?: string) {
       return request<any>(`/menu-items/${id}/status`, {
         method: 'PATCH',
-        body: JSON.stringify(isAvailable !== undefined ? { isAvailable } : {}),
+        body: JSON.stringify({
+          ...(isAvailable !== undefined ? { isAvailable } : {}),
+          ...(branchId ? { branchId } : {}),
+        }),
       });
     },
 
@@ -559,12 +570,14 @@ export const apiClient = {
 
     async listPublic(params?: {
       restaurantId?: string;
+      branchId?: string;
       slug?: string;
       categoryId?: string;
       search?: string;
     }) {
       const q = new URLSearchParams();
       if (params?.restaurantId) q.append('restaurantId', params.restaurantId);
+      if (params?.branchId) q.append('branchId', params.branchId);
       if (params?.slug) q.append('slug', params.slug);
       if (params?.categoryId) q.append('categoryId', params.categoryId);
       if (params?.search) q.append('search', params.search);
