@@ -575,6 +575,9 @@ export const storageService = {
     if (typeof window === 'undefined') return SEED_CATEGORIES;
     const data = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
     if (!data) {
+      if (this.getAccessToken()) {
+        return [];
+      }
       localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(SEED_CATEGORIES));
       return SEED_CATEGORIES;
     }
@@ -590,6 +593,9 @@ export const storageService = {
     if (typeof window === 'undefined') return SEED_MENU_ITEMS;
     const data = localStorage.getItem(STORAGE_KEYS.MENU_ITEMS);
     if (!data) {
+      if (this.getAccessToken()) {
+        return [];
+      }
       localStorage.setItem(STORAGE_KEYS.MENU_ITEMS, JSON.stringify(SEED_MENU_ITEMS));
       return SEED_MENU_ITEMS;
     }

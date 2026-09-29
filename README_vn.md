@@ -122,6 +122,25 @@ Hệ thống cung cấp giải pháp quản trị phân quyền nhân sự toàn
 
 ---
 
+## 🍜 Quản Lý Thực Đơn, Danh Mục & Topping (Phase 4: Menu & Options)
+
+Hệ thống quản lý thực đơn được kết nối trực tiếp với Backend API (`imenu-api`) và đồng bộ thời gian thực:
+
+1. **Quản Lý Danh Mục Món Ăn (Categories)**:
+   - Thêm mới, chỉnh sửa icon emoji, tên danh mục, mã định danh (slug tự động sinh không dấu chuẩn SEO) và thứ tự hiển thị (`order`).
+   - Ràng buộc an toàn: Chặn xóa danh mục khi vẫn còn món ăn đang thuộc danh mục đó để bảo vệ dữ liệu nhà hàng.
+2. **Quản Lý Món Ăn & Nhóm Tùy Chọn / Topping (Menu Items & Option Groups)**:
+   - Thêm mới và cập nhật món ăn với hình ảnh trực quan, giá bán, giá gốc khuyến mãi, mô tả và cờ món bán chạy (Best Seller).
+   - Hỗ trợ xây dựng các nhóm tùy chọn (Option Groups) linh hoạt: Kích cỡ (Size), Mức đá, Lượng đường, Độ cay, Topping thêm... với cấu hình `required` (Bắt buộc chọn) và `multiple` (Chọn nhiều).
+   - Mỗi giá trị lựa chọn hỗ trợ cấu hình giá phụ thu (`priceDelta`).
+3. **Thao Tác Nhanh Trạng Thái Còn/Hết Món (Fast Availability Toggle)**:
+   - Hỗ trợ Thu ngân (`cashier`) và Bếp (`kitchen`) bật/tắt nhanh trạng thái Còn món / Tạm hết món chỉ với một cú click (`PATCH /api/menu-items/:id/status`).
+   - Cập nhật giao diện tức thì (Optimistic UI) và phát sự kiện BroadcastChannel (`MENU_AVAILABILITY_CHANGED`) đồng bộ ngay lập tức tới mã QR của khách và màn hình POS.
+4. **Truy Cập Thực Đơn Công Khai Qua Mã QR (Public QR Menu)**:
+   - Khách hàng tại bàn quét mã QR xem thực đơn và gọi món mà không cần đăng nhập (`@Public()` endpoints `/api/categories/public` và `/api/menu-items/public`).
+
+---
+
 ## 📦 Build & Kiểm Tra Chất Lượng Mã (Build & Quality)
 
 ```bash
@@ -141,8 +160,7 @@ npm run typecheck
 
 ```bash
 git add .
-git commit -m "feat(phase-03): implement staff management, RBAC, and super admin platform switcher"
+git commit -m "feat(phase-04): implement categories, menu items, option groups and public QR endpoints"
 git branch -M main
 git push -u origin main
 ```
-

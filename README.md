@@ -81,6 +81,24 @@ The platform provides an end-to-end staff and role-based access control system s
 
 ---
 
+## 🍜 Menu Management & Option Groups / Toppings (Phase 4)
+
+Complete menu administration integrated directly with the backend REST API (`imenu-api`):
+
+1. **Category Management (`/categories`)**:
+   - Create, edit, and order categories with custom emoji icons and automatic Vietnamese slugification.
+   - Safe delete constraint: prevents accidental deletion of categories when dishes are still assigned to them.
+2. **Dishes & Dynamic Option Groups (Toppings)**:
+   - Full dish catalog with visual previews, prices, promo prices, descriptions, and Best Seller badges.
+   - Nested option groups builder: allows defining multiple groups per dish (e.g. Size, Sweetness, Ice, Toppings) with `required` and `multiple` configurations and item-level price deltas (`priceDelta`).
+3. **Instant Stock Availability Toggle (Còn/Hết Món)**:
+   - Cashiers and kitchen staff can flip dish availability with one click (`PATCH /api/menu-items/:id/status`).
+   - Optimistic UI state with instant `BroadcastChannel` real-time notification (`MENU_AVAILABILITY_CHANGED`) synced across customer QR menus and POS stations.
+4. **Public QR Menu Access**:
+   - Contactless customer ordering without authentication barriers via `@Public()` endpoints (`/api/categories/public` and `/api/menu-items/public`).
+
+---
+
 ## 📦 Build & Verification
 
 ```bash
@@ -90,4 +108,3 @@ npm run build
 # Run type checks
 npm run typecheck
 ```
-
