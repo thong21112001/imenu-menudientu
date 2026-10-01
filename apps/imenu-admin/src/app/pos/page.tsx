@@ -87,10 +87,6 @@ export default function PosTerminalPage() {
     }
     setActiveBranchId(branchId);
 
-    const tbls = storageService.getTables();
-    setTables(tbls);
-    if (tbls.length > 0) setSelectedTableId(tbls[0].id);
-
     fetchBranchAndMenuData(branchId);
 
     const handleBranchChange = (e: any) => {
@@ -160,17 +156,15 @@ export default function PosTerminalPage() {
         setTables(tblList);
         setSelectedTableId((curr) => curr || tblList[0].id);
       } else {
-        const fallbackTbls = storageService.getTables();
-        setTables(fallbackTbls);
-        if (fallbackTbls.length > 0) setSelectedTableId((curr) => curr || fallbackTbls[0].id);
+        setTables([]);
+        setSelectedTableId('');
       }
     } catch (err) {
-      console.warn('POS data fallback to local storage:', err);
+      console.warn('POS data error:', err);
       setCategories(storageService.getCategories());
       setMenuItems(storageService.getMenuItems());
-      const fallbackTbls = storageService.getTables();
-      setTables(fallbackTbls);
-      if (fallbackTbls.length > 0) setSelectedTableId((curr) => curr || fallbackTbls[0].id);
+      setTables([]);
+      setSelectedTableId('');
     } finally {
       setIsLoading(false);
     }
@@ -487,13 +481,7 @@ export default function PosTerminalPage() {
       storageService.saveOrders(allOrders);
     }
 
-    // Update table status to Occupied
-    const allTables = storageService.getTables();
-    const tIdx = allTables.findIndex((t) => t.id === table.id);
-    if (tIdx > -1) {
-      allTables[tIdx].status = 'Occupied';
-      storageService.saveTables(allTables);
-    }
+    // Update table status to Occupied in memory
     setTables((prev) =>
       prev.map((t) => (t.id === table.id ? { ...t, status: 'Occupied' } : t))
     );
@@ -772,15 +760,24 @@ export default function PosTerminalPage() {
                 <label className="text-[11px] font-bold text-slate-600 block mb-1">
                   Chọn Bàn phục vụ:
                 </label>
-                <CustomSelect
-                  value={selectedTableId}
-                  onChange={(val) => setSelectedTableId(val)}
-                  options={tables.map((t) => ({
-                    value: t.id,
-                    label: `${t.name} • ${t.zoneName} (${t.status === 'Available' ? 'Trống' : 'Có khách'})`,
-                  }))}
-                  placeholder="Chọn bàn..."
-                />
+                {tables.length === 0 ? (
+                  <div className="p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 flex items-center justify-between">
+                    <span className="font-medium text-[11px]">Chưa có bàn ăn nào</span>
+                    <a href="/tables" className="text-emerald-700 underline font-bold text-[11px]">
+                      Thêm bàn ngay &rarr;
+                    </a>
+                  </div>
+                ) : (
+                  <CustomSelect
+                    value={selectedTableId}
+                    onChange={(val) => setSelectedTableId(val)}
+                    options={tables.map((t) => ({
+                      value: t.id,
+                      label: `${t.name} • ${t.zoneName} (${t.status === 'Available' ? 'Trống' : 'Có khách'})`,
+                    }))}
+                    placeholder="Chọn bàn..."
+                  />
+                )}
               </div>
             </div>
 
