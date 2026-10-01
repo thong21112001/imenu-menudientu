@@ -1,21 +1,26 @@
 export type TableStatus = 'Available' | 'Occupied' | 'PaymentRequested' | 'Reserved' | 'Cleaning';
 
 export interface TableZone {
+  _id?: string;
   id: string;
   name: string;
   description?: string;
   tableCount?: number;
+  restaurantId?: string;
+  branchId?: string;
 }
 
 export interface Table {
+  _id?: string;
   id: string;
-  code: string; // e.g. "ban-01"
+  code: string; // e.g. "B01"
   name: string; // e.g. "Bàn 01"
+  zone?: TableZone | string;
   zoneId: string; // e.g. "tang-1"
   zoneName: string; // e.g. "Tầng 1"
   capacity: number; // e.g. 4
   status: TableStatus;
-  currentOrderId?: string;
+  currentOrderId?: any;
   totalGuests?: number;
   qrCodeUrl?: string;
   activeSince?: string;
@@ -25,5 +30,7 @@ export interface Table {
   wifiSsid?: string;
   wifiPassword?: string;
   customUrl?: string;
+  restaurantId?: string;
+  branchId?: string;
+  isDeleted?: boolean;
 }
-

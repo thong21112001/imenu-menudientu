@@ -6,3 +6,4 @@ export * from './storage';
 export * from './realtime-hub';
 export * from './api-client';
 export * from './search';
+export * from './socket-client';

@@ -124,11 +124,14 @@ export default function PosTerminalPage() {
         setActiveBranchName('Toàn hệ thống (Chi nhánh chính)');
       }
 
-      // Fetch categories & items with branch context
-      const [catsRes, itemsRes] = await Promise.all([
+      // Fetch categories, items & tables with branch context
+      const [catsRes, itemsRes, tablesRes] = await Promise.all([
         apiClient.categories.list({ branchId: branchId || undefined }).catch(() => null),
         apiClient.menuItems
           .list({ branchId: branchId || undefined, limit: 300 })
+          .catch(() => null),
+        apiClient.tables
+          .list({ branchId: branchId || undefined })
           .catch(() => null),
       ]);
 
@@ -146,10 +149,28 @@ export default function PosTerminalPage() {
       } else {
         setMenuItems(storageService.getMenuItems());
       }
+
+      if (tablesRes && Array.isArray(tablesRes.data) && tablesRes.data.length > 0) {
+        const tblList: Table[] = tablesRes.data.map((t: any) => ({
+          ...t,
+          id: t._id || t.id,
+          zoneId: t.zone?._id || t.zone || t.zoneId || 'default-zone',
+          zoneName: t.zone?.name || t.zoneName || 'Khu vực chung',
+        }));
+        setTables(tblList);
+        setSelectedTableId((curr) => curr || tblList[0].id);
+      } else {
+        const fallbackTbls = storageService.getTables();
+        setTables(fallbackTbls);
+        if (fallbackTbls.length > 0) setSelectedTableId((curr) => curr || fallbackTbls[0].id);
+      }
     } catch (err) {
       console.warn('POS data fallback to local storage:', err);
       setCategories(storageService.getCategories());
       setMenuItems(storageService.getMenuItems());
+      const fallbackTbls = storageService.getTables();
+      setTables(fallbackTbls);
+      if (fallbackTbls.length > 0) setSelectedTableId((curr) => curr || fallbackTbls[0].id);
     } finally {
       setIsLoading(false);
     }
@@ -388,7 +409,7 @@ export default function PosTerminalPage() {
   }, [posCart]);
 
   // Send Order to Kitchen
-  const handleSendOrder = () => {
+  const handleSendOrder = async () => {
     if (posCart.length === 0) {
       toast.error('Vui lòng chọn ít nhất 1 món vào đơn hàng!');
       return;
@@ -399,43 +420,72 @@ export default function PosTerminalPage() {
     }
 
     soundEngine.playNewOrderChime();
-    const table = tables.find((t) => t.id === selectedTableId);
+    const table = tables.find((t) => t.id === selectedTableId || t._id === selectedTableId);
     if (!table) return;
-
-    const newOrderItems: OrderItem[] = posCart.map((c, i) => ({
-      id: `pos-${Date.now()}-${i}`,
-      menuItemId: c.item.id,
-      name: c.item.name,
-      price: c.unitPrice,
-      quantity: c.quantity,
-      selectedOptions: c.selectedOptions,
-      note: c.note,
-      status: 'Cooking',
-      itemTotal: c.itemTotal,
-    }));
 
     const restId = currentUser?.restaurantId || 'rest-bep-nha';
 
-    const newOrder: Order = {
-      id: `ord-${Date.now()}`,
-      orderCode: `POS-${Math.floor(1000 + Math.random() * 9000)}`,
-      tableId: table.id,
-      tableName: table.name,
-      restaurantId: restId,
-      items: newOrderItems,
-      subTotal: totalCartAmount,
-      totalAmount: totalCartAmount,
-      status: 'Preparing',
-      isPaid: false,
+    const orderPayload = {
+      tableId: table._id || table.id,
+      branchId: activeBranchId || undefined,
       orderSource: 'STAFF_POS',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      items: posCart.map((c) => ({
+        menuItemId: c.item._id || c.item.id,
+        quantity: c.quantity,
+        selectedOptions: c.selectedOptions,
+        note: c.note,
+      })),
     };
 
-    // Save order into storage
-    const allOrders = storageService.getOrders();
-    allOrders.unshift(newOrder);
-    storageService.saveOrders(allOrders);
+    let createdOrder: Order | null = null;
+    try {
+      const res = await apiClient.orders.create(orderPayload);
+      if (res.data) {
+        createdOrder = {
+          ...res.data,
+          id: res.data._id || res.data.id,
+          createdAt: res.data.createdAt || new Date().toISOString(),
+          updatedAt: res.data.updatedAt || new Date().toISOString(),
+        };
+      }
+    } catch (err: any) {
+      console.warn('API create order failed, saving locally:', err);
+    }
+
+    if (!createdOrder) {
+      const newOrderItems: OrderItem[] = posCart.map((c, i) => ({
+        id: `pos-${Date.now()}-${i}`,
+        menuItemId: c.item.id,
+        name: c.item.name,
+        price: c.unitPrice,
+        quantity: c.quantity,
+        selectedOptions: c.selectedOptions,
+        note: c.note,
+        status: 'Cooking',
+        itemTotal: c.itemTotal,
+      }));
+
+      createdOrder = {
+        id: `ord-${Date.now()}`,
+        orderCode: `POS-${Math.floor(1000 + Math.random() * 9000)}`,
+        tableId: table.id,
+        tableName: table.name,
+        restaurantId: restId,
+        items: newOrderItems,
+        subTotal: totalCartAmount,
+        totalAmount: totalCartAmount,
+        status: 'Preparing',
+        isPaid: false,
+        orderSource: 'STAFF_POS',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Save order into storage
+      const allOrders = storageService.getOrders();
+      allOrders.unshift(createdOrder);
+      storageService.saveOrders(allOrders);
+    }
 
     // Update table status to Occupied
     const allTables = storageService.getTables();
@@ -444,13 +494,16 @@ export default function PosTerminalPage() {
       allTables[tIdx].status = 'Occupied';
       storageService.saveTables(allTables);
     }
+    setTables((prev) =>
+      prev.map((t) => (t.id === table.id ? { ...t, status: 'Occupied' } : t))
+    );
 
     // Publish realtime event to Kitchen & Dashboard
-    realtimeHub.publish('NEW_ORDER', newOrder, restId);
+    realtimeHub.publish('NEW_ORDER', createdOrder, restId, activeBranchId || undefined);
 
-    setLastSubmittedOrder(newOrder);
+    setLastSubmittedOrder(createdOrder);
     setPosCart([]);
-    toast.success(`Đã gửi đơn POS #${newOrder.orderCode} cho ${table.name}!`);
+    toast.success(`Đã gửi đơn POS #${createdOrder.orderCode} cho ${table.name}!`);
   };
 
   return (

@@ -20,6 +20,7 @@ export interface BranchPriceOverride {
 }
 
 export interface MenuItem {
+  _id?: string;
   id: string;
   categoryId: string;
   name: string;
@@ -44,6 +45,7 @@ export interface MenuItem {
 }
 
 export interface MenuCategory {
+  _id?: string;
   id: string;
   name: string;
   slug: string;

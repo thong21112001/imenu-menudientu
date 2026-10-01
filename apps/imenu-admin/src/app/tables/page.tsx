@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { storageService, formatCurrencyVND, realtimeHub, soundEngine } from '@imenu/utils';
+import React, { useState, useEffect, useCallback } from 'react';
+import { storageService, formatCurrencyVND, realtimeHub, soundEngine, apiClient } from '@imenu/utils';
 import { Table, Order, TableStatus } from '@imenu/types';
 import { Card, Button, StatusChip, Drawer, Modal, useToast } from '@imenu/ui';
 import {
@@ -16,36 +16,95 @@ import {
   Clock,
   X,
   ExternalLink,
+  RefreshCw,
+  Sparkles,
 } from 'lucide-react';
 
 export default function TablesMapPage() {
   const { toast } = useToast();
   const [tables, setTables] = useState<Table[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  const [zones, setZones] = useState<Array<{ id: string; name: string }>>([
+    { id: 'all', name: 'Tất cả khu vực' },
+  ]);
   const [activeZone, setActiveZone] = useState<string>('all');
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const loadData = () => {
-    setTables(storageService.getTables());
-    setOrders(storageService.getOrders());
-  };
+  // Transfer table modal state
+  const [isTransferModalOpen, setIsTransferModalOpen] = useState<boolean>(false);
+  const [transferTargetTableId, setTransferTargetTableId] = useState<string>('');
+
+  const loadData = useCallback(async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    try {
+      const activeBranchId = storageService.getActiveBranchId();
+
+      const [tblRes, zoneRes, ordRes] = await Promise.all([
+        apiClient.tables.list({ branchId: activeBranchId || undefined }).catch(() => null),
+        apiClient.tableZones.list({ branchId: activeBranchId || undefined }).catch(() => null),
+        apiClient.orders.list({ isPaid: false, branchId: activeBranchId || undefined, limit: 100 }).catch(() => null),
+      ]);
+
+      // 1. Process zones
+      if (zoneRes && Array.isArray(zoneRes.data) && zoneRes.data.length > 0) {
+        const loadedZones = zoneRes.data.map((z: any) => ({
+          id: z._id || z.id,
+          name: z.name,
+        }));
+        setZones([{ id: 'all', name: 'Tất cả khu vực' }, ...loadedZones]);
+      } else {
+        setZones([
+          { id: 'all', name: 'Tất cả khu vực' },
+          { id: 'zone-1', name: 'Tầng 1' },
+          { id: 'zone-2', name: 'Tầng 2 (Máy Lạnh)' },
+          { id: 'zone-3', name: 'Sân Vườn' },
+          { id: 'zone-vip', name: 'Phòng VIP' },
+        ]);
+      }
+
+      // 2. Process tables
+      if (tblRes && Array.isArray(tblRes.data) && tblRes.data.length > 0) {
+        const normalizedTables: Table[] = tblRes.data.map((t: any) => ({
+          ...t,
+          id: t._id || t.id,
+          zoneId: t.zone?._id || t.zone || t.zoneId || 'default-zone',
+          zoneName: t.zone?.name || t.zoneName || 'Khu vực chung',
+        }));
+        setTables(normalizedTables);
+      } else {
+        setTables(storageService.getTables());
+      }
+
+      // 3. Process active orders
+      if (ordRes && ordRes.data) {
+        const rawOrders = Array.isArray(ordRes.data) ? ordRes.data : ordRes.data.data || [];
+        const normalizedOrders: Order[] = rawOrders.map((o: any) => ({
+          ...o,
+          id: o._id || o.id,
+          tableId: o.tableId?._id ? o.tableId._id.toString() : (o.tableId ? o.tableId.toString() : ''),
+        }));
+        setOrders(normalizedOrders);
+      } else {
+        setOrders(storageService.getOrders());
+      }
+    } catch (err) {
+      console.warn('Load tables fallback to local storage:', err);
+      setTables(storageService.getTables());
+      setOrders(storageService.getOrders());
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadData();
 
-    const unsub = realtimeHub.subscribe('*', () => {
-      loadData();
+    const unsub = realtimeHub.subscribe('*', (payload) => {
+      loadData(true);
     });
     return () => unsub();
-  }, []);
-
-  const zones = [
-    { id: 'all', name: 'Tất cả khu vực' },
-    { id: 'zone-1', name: 'Tầng 1' },
-    { id: 'zone-2', name: 'Tầng 2 (Máy Lạnh)' },
-    { id: 'zone-3', name: 'Sân Vườn' },
-    { id: 'zone-vip', name: 'Phòng VIP' },
-  ];
+  }, [loadData]);
 
   const filteredTables = tables.filter(
     (t) => activeZone === 'all' || t.zoneId === activeZone
@@ -53,25 +112,45 @@ export default function TablesMapPage() {
 
   // Find active order for selected table
   const selectedTableOrder = selectedTable
-    ? orders.find((o) => o.tableId === selectedTable.id && o.status !== 'Paid' && o.status !== 'Cancelled')
+    ? orders.find(
+        (o) =>
+          (o.tableId === selectedTable.id || o.tableId === (selectedTable as any)._id) &&
+          o.status !== 'Paid' &&
+          o.status !== 'Cancelled',
+      )
     : null;
 
   // Complete Payment for table
-  const handleCompletePayment = () => {
-    if (!selectedTable || !selectedTableOrder) return;
+  const handleCompletePayment = async () => {
+    if (!selectedTable) return;
 
     soundEngine.playReadyChime();
 
-    // Mark order as Paid
-    const allOrders = storageService.getOrders();
-    const oIdx = allOrders.findIndex((o) => o.id === selectedTableOrder.id);
-    if (oIdx > -1) {
-      allOrders[oIdx].status = 'Paid';
-      allOrders[oIdx].isPaid = true;
-      storageService.saveOrders(allOrders);
+    // 1. Gửi API thanh toán nếu có đơn hàng
+    if (selectedTableOrder) {
+      try {
+        await apiClient.orders.pay(selectedTableOrder.id, { paymentMethod: 'Cash' });
+      } catch (err) {
+        console.warn('API pay error, fallback to local storage:', err);
+      }
+
+      // Mark order as Paid in storage
+      const allOrders = storageService.getOrders();
+      const oIdx = allOrders.findIndex((o) => o.id === selectedTableOrder.id);
+      if (oIdx > -1) {
+        allOrders[oIdx].status = 'Paid';
+        allOrders[oIdx].isPaid = true;
+        storageService.saveOrders(allOrders);
+      }
     }
 
-    // Set table to Available
+    // 2. Set table to Available
+    try {
+      await apiClient.tables.updateStatus(selectedTable.id, 'Available');
+    } catch (err) {
+      console.warn('API update table status error:', err);
+    }
+
     const allTables = storageService.getTables();
     const tIdx = allTables.findIndex((t) => t.id === selectedTable.id);
     if (tIdx > -1) {
@@ -84,8 +163,41 @@ export default function TablesMapPage() {
 
     realtimeHub.publish('PAYMENT_COMPLETED', { tableId: selectedTable.id }, 'rest-bep-nha');
     setSelectedTable(null);
-    loadData();
-    toast.success(`Đã hoàn tất thanh toán cho ${selectedTable.name}!`);
+    loadData(true);
+    toast.success(`Đã hoàn tất thanh toán & trả bàn ${selectedTable.name}!`);
+  };
+
+  // Transfer table
+  const handleTransferTable = async () => {
+    if (!selectedTable || !transferTargetTableId) {
+      toast.error('Vui lòng chọn bàn đích!');
+      return;
+    }
+
+    try {
+      await apiClient.tables.transfer({
+        fromTableId: selectedTable.id,
+        toTableId: transferTargetTableId,
+      });
+      toast.success('Chuyển bàn thành công!');
+      setIsTransferModalOpen(false);
+      setTransferTargetTableId('');
+      setSelectedTable(null);
+      loadData(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi chuyển bàn');
+    }
+  };
+
+  // Seed default tables for current restaurant
+  const handleSeedDefaultTables = async () => {
+    try {
+      await apiClient.tables.seedDefault();
+      toast.success('Đã khởi tạo sơ đồ 12 bàn mẫu thành công!');
+      loadData();
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi khởi tạo bàn');
+    }
   };
 
   return (
@@ -94,26 +206,39 @@ export default function TablesMapPage() {
         <div>
           <h1 className="text-2xl font-extrabold text-[#09271d]">Sơ Đồ Quản Lý Bàn</h1>
           <p className="text-xs text-[#66736d] mt-0.5">
-            Trực quan hóa trạng thái bàn, mở bàn, gọi món và đối soát hóa đơn
+            Trực quan hóa trạng thái bàn, mở bàn, gọi món và đối soát hóa đơn theo thời gian thực
           </p>
         </div>
 
-        {/* Legend status indicators */}
-        <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
-          <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Bàn trống</div>
-          <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Đang dùng</div>
-          <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" /> Chờ thanh toán</div>
-          <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Đã đặt</div>
+        <div className="flex items-center gap-2">
+          {tables.length === 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSeedDefaultTables}
+              icon={<Sparkles className="w-4 h-4 text-emerald-600" />}
+            >
+              Tạo sơ đồ mẫu
+            </Button>
+          )}
+
+          {/* Legend status indicators */}
+          <div className="flex flex-wrap items-center gap-3 text-xs font-semibold bg-white p-2.5 rounded-xl border border-slate-200">
+            <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Bàn trống</div>
+            <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500" /> Đang dùng</div>
+            <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" /> Chờ thanh toán</div>
+            <div className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Đã đặt</div>
+          </div>
         </div>
       </div>
 
       {/* Zone Filters */}
-      <div className="flex gap-2 border-b border-slate-200 pb-3">
+      <div className="flex gap-2 border-b border-slate-200 pb-3 overflow-x-auto">
         {zones.map((z) => (
           <button
             key={z.id}
             onClick={() => setActiveZone(z.id)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
               activeZone === z.id
                 ? 'bg-[#124a36] text-white shadow-sm'
                 : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
@@ -199,13 +324,21 @@ export default function TablesMapPage() {
                 </div>
 
                 <div className="grid grid-cols-2 gap-3 pt-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsTransferModalOpen(true)}
+                    className="col-span-1"
+                    icon={<ArrowRightLeft className="w-4 h-4" />}
+                  >
+                    Đổi bàn
+                  </Button>
+
                   <a
-                    href={`http://localhost:3005/menu/bep-nha/${selectedTable.code}`}
-                    target="_blank"
-                    className="col-span-2 block"
+                    href={`/pos`}
+                    className="col-span-1 block"
                   >
                     <Button variant="outline" className="w-full">
-                      <ExternalLink className="w-4 h-4 mr-2" /> Mở QR Menu Khách Hàng
+                      <Plus className="w-4 h-4 mr-1" /> Thêm món
                     </Button>
                   </a>
 
@@ -221,20 +354,58 @@ export default function TablesMapPage() {
             ) : (
               <div className="text-center py-12 text-slate-400 space-y-3">
                 <p className="text-xs">Bàn đang trống, chưa có đơn hàng nào.</p>
-                <a
-                  href={`http://localhost:3005/menu/bep-nha/${selectedTable.code}`}
-                  target="_blank"
-                  className="block"
-                >
-                  <Button variant="primary" size="sm">
-                    Mở QR gọi món cho bàn này
-                  </Button>
-                </a>
+                <div className="flex gap-2 justify-center">
+                  <a href="/pos">
+                    <Button variant="primary" size="sm">
+                      Mở bán tại quầy POS
+                    </Button>
+                  </a>
+                </div>
               </div>
             )}
           </div>
         )}
       </Drawer>
+
+      {/* Transfer Table Modal */}
+      <Modal
+        isOpen={isTransferModalOpen}
+        onClose={() => setIsTransferModalOpen(false)}
+        title="Chuyển Bàn Gọi Món"
+      >
+        <div className="space-y-4">
+          <p className="text-xs text-slate-600">
+            Chuyển toàn bộ món ăn và hóa đơn từ <strong>{selectedTable?.name}</strong> sang bàn trống khác:
+          </p>
+
+          <div>
+            <label className="text-xs font-bold text-slate-700 block mb-1">Chọn bàn trống muốn chuyển sang:</label>
+            <select
+              value={transferTargetTableId}
+              onChange={(e) => setTransferTargetTableId(e.target.value)}
+              className="w-full px-3 py-2 text-sm border rounded-xl bg-white"
+            >
+              <option value="">-- Chọn bàn đích --</option>
+              {tables
+                .filter((t) => t.id !== selectedTable?.id && t.status === 'Available')
+                .map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.zoneName})
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3">
+            <Button variant="outline" size="sm" onClick={() => setIsTransferModalOpen(false)}>
+              Hủy
+            </Button>
+            <Button variant="primary" size="sm" onClick={handleTransferTable}>
+              Xác nhận chuyển
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-export type OrderStatus = 
+export type OrderStatus =
   | 'WaitingConfirmation'  // Khách mới gửi QR, chờ nhân viên/bếp nhận
   | 'Confirmed'            // Nhân viên đã xác nhận
   | 'Preparing'            // Bếp đang chế biến
@@ -19,6 +19,7 @@ export interface SelectedOption {
 }
 
 export interface OrderItem {
+  _id?: string;
   id: string;
   menuItemId: string;
   name: string;
@@ -31,11 +32,13 @@ export interface OrderItem {
 }
 
 export interface Order {
+  _id?: string;
   id: string;
-  orderCode: string; // e.g. "IM-240902-001"
+  orderCode: string; // e.g. "ORD-261001-001"
   tableId: string;
   tableName: string;
   restaurantId: string;
+  branchId?: string;
   items: OrderItem[];
   subTotal: number;
   discountAmount?: number;
@@ -45,7 +48,7 @@ export interface Order {
   status: OrderStatus;
   paymentMethod?: PaymentMethod;
   isPaid: boolean;
-  orderSource: 'QR_CUSTOMER' | 'STAFF_POS';
+  orderSource?: 'QR_CUSTOMER' | 'STAFF_POS' | string;
   customerNote?: string;
   createdAt: string;
   updatedAt: string;
