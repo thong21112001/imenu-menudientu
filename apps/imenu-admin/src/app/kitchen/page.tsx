@@ -49,6 +49,11 @@ export default function KitchenDisplaySystemPage() {
   useEffect(() => {
     loadOrders();
 
+    const handleBranchChange = () => {
+      loadOrders(true);
+    };
+    window.addEventListener('imenu:branch_changed', handleBranchChange);
+
     const unsub = realtimeHub.subscribe('*', (payload) => {
       if (
         payload.type === 'NEW_ORDER' ||
@@ -59,7 +64,10 @@ export default function KitchenDisplaySystemPage() {
       loadOrders(true);
     });
 
-    return () => unsub();
+    return () => {
+      window.removeEventListener('imenu:branch_changed', handleBranchChange);
+      unsub();
+    };
   }, [loadOrders]);
 
   // Move dish item status

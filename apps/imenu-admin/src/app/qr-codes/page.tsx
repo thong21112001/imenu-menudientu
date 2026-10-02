@@ -134,6 +134,12 @@ export default function QrCodesGeneratorPage() {
 
   useEffect(() => {
     loadData();
+
+    const handleBranchChange = () => {
+      loadData(true);
+    };
+    window.addEventListener('imenu:branch_changed', handleBranchChange);
+    return () => window.removeEventListener('imenu:branch_changed', handleBranchChange);
   }, []);
 
   const showToast = (text: string, type: 'success' | 'info' | 'error' = 'success') => {
@@ -152,7 +158,11 @@ export default function QrCodesGeneratorPage() {
   const getTableUrl = (tbl: Table): string => {
     if (tbl.customUrl) return tbl.customUrl;
     const slug = restaurant?.slug || 'bep-nha';
-    const tokenPart = tbl.qrToken ? `?t=${tbl.qrToken}` : '';
+    const params = new URLSearchParams();
+    if (tbl.qrToken) params.set('t', tbl.qrToken);
+    if (tbl.branchId) params.set('branch', tbl.branchId);
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+
     let host = 'http://localhost:3005';
     if (typeof window !== 'undefined') {
       const hostname = window.location.hostname;
@@ -164,7 +174,7 @@ export default function QrCodesGeneratorPage() {
         host = `${protocol}//menu.${hostname.replace('admin.', '')}`;
       }
     }
-    return `${host}/menu/${slug}/${tbl.code.toLowerCase()}${tokenPart}`;
+    return `${host}/menu/${slug}/${tbl.code.toLowerCase()}${queryString}`;
   };
 
   // Filtered Tables
@@ -464,7 +474,8 @@ export default function QrCodesGeneratorPage() {
   // 11. Seed Default Tables
   const handleSeedDefaultTables = async () => {
     try {
-      await apiClient.tables.seedDefault();
+      const activeBranchId = storageService.getActiveBranchId();
+      await apiClient.tables.seedDefault(activeBranchId || undefined);
       toast.success('Đã khởi tạo sơ đồ 12 bàn mẫu thành công!');
       loadData(true);
     } catch (err: any) {

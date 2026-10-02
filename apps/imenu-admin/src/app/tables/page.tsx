@@ -95,10 +95,18 @@ export default function TablesMapPage() {
   useEffect(() => {
     loadData();
 
+    const handleBranchChange = () => {
+      loadData(true);
+    };
+    window.addEventListener('imenu:branch_changed', handleBranchChange);
+
     const unsub = realtimeHub.subscribe('*', (payload) => {
       loadData(true);
     });
-    return () => unsub();
+    return () => {
+      window.removeEventListener('imenu:branch_changed', handleBranchChange);
+      unsub();
+    };
   }, [loadData]);
 
   const filteredTables = tables.filter(
@@ -164,10 +172,11 @@ export default function TablesMapPage() {
     }
   };
 
-  // Seed default tables for current restaurant
+  // Seed default tables for current restaurant & active branch
   const handleSeedDefaultTables = async () => {
     try {
-      await apiClient.tables.seedDefault();
+      const activeBranchId = storageService.getActiveBranchId();
+      await apiClient.tables.seedDefault(activeBranchId || undefined);
       toast.success('Đã khởi tạo sơ đồ 12 bàn mẫu thành công!');
       loadData();
     } catch (err: any) {
