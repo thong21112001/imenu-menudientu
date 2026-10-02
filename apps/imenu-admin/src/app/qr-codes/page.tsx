@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { storageService } from '@imenu/utils';
+import { storageService, apiClient } from '@imenu/utils';
 import { Table, Restaurant, TableZone } from '@imenu/types';
 import { Card, Button, QrCodeRenderer, Badge, Modal, CustomSelect, useToast } from '@imenu/ui';
 import {
@@ -28,6 +28,7 @@ import {
   Lock,
   Layers,
   MapPin,
+  RefreshCw,
 } from 'lucide-react';
 
 export default function QrCodesGeneratorPage() {
@@ -39,6 +40,7 @@ export default function QrCodesGeneratorPage() {
   const [selectedZone, setSelectedZone] = useState<string>('all');
   const [selectedQrStatus, setSelectedQrStatus] = useState<'all' | 'active' | 'revoked'>('all');
   const [printSize, setPrintSize] = useState<'A6' | 'STICKER'>('A6');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Printing state
   const [printingTableId, setPrintingTableId] = useState<string | null>(null);
@@ -50,10 +52,10 @@ export default function QrCodesGeneratorPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [newTableName, setNewTableName] = useState<string>('');
   const [newTableCode, setNewTableCode] = useState<string>('');
-  const [newTableZoneId, setNewTableZoneId] = useState<string>('zone-1');
+  const [newTableZoneId, setNewTableZoneId] = useState<string>('');
   const [newTableCapacity, setNewTableCapacity] = useState<number>(4);
-  const [newWifiSsid, setNewWifiSsid] = useState<string>('BepNha_Free');
-  const [newWifiPassword, setNewWifiPassword] = useState<string>('bepnha88');
+  const [newWifiSsid, setNewWifiSsid] = useState<string>('');
+  const [newWifiPassword, setNewWifiPassword] = useState<string>('');
   // Custom Zone inline in Add modal
   const [isCustomZoneInAdd, setIsCustomZoneInAdd] = useState<boolean>(false);
   const [customZoneNameInAdd, setCustomZoneNameInAdd] = useState<string>('');
@@ -63,7 +65,7 @@ export default function QrCodesGeneratorPage() {
   const [editingTable, setEditingTable] = useState<Table | null>(null);
   const [editTableName, setEditTableName] = useState<string>('');
   const [editTableCode, setEditTableCode] = useState<string>('');
-  const [editTableZoneId, setEditTableZoneId] = useState<string>('zone-1');
+  const [editTableZoneId, setEditTableZoneId] = useState<string>('');
   const [editTableCapacity, setEditTableCapacity] = useState<number>(4);
   const [editWifiSsid, setEditWifiSsid] = useState<string>('');
   const [editWifiPassword, setEditWifiPassword] = useState<string>('');
@@ -81,10 +83,63 @@ export default function QrCodesGeneratorPage() {
   const [zoneInputName, setZoneInputName] = useState<string>('');
   const [editingZone, setEditingZone] = useState<TableZone | null>(null);
 
+  const loadData = async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    try {
+      const activeBranchId = storageService.getActiveBranchId();
+      const [restRes, tblRes, zoneRes] = await Promise.all([
+        apiClient.restaurant.getCurrent().catch(() => null),
+        apiClient.tables.list({ branchId: activeBranchId || undefined }).catch(() => null),
+        apiClient.tableZones.list({ branchId: activeBranchId || undefined }).catch(() => null),
+      ]);
+
+      if (restRes?.data) {
+        setRestaurant(restRes.data);
+      } else {
+        setRestaurant(storageService.getRestaurant());
+      }
+
+      if (zoneRes && Array.isArray(zoneRes.data)) {
+        const loadedZones: TableZone[] = zoneRes.data.map((z: any) => ({
+          id: z._id || z.id,
+          _id: z._id || z.id,
+          name: z.name,
+          description: z.description,
+        }));
+        setZones(loadedZones);
+      } else {
+        setZones([]);
+      }
+
+      if (tblRes && Array.isArray(tblRes.data)) {
+        const loadedTables: Table[] = tblRes.data.map((t: any) => ({
+          ...t,
+          id: t._id || t.id,
+          _id: t._id || t.id,
+          zoneId: t.zone?._id || t.zone || t.zoneId || 'default-zone',
+          zoneName: t.zone?.name || t.zoneName || 'Khu vực chung',
+        }));
+        setTables(loadedTables);
+      } else {
+        setTables([]);
+      }
+    } catch (err) {
+      console.warn('Load QR code data error:', err);
+      setTables([]);
+      setZones([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    setRestaurant(storageService.getRestaurant());
-    setTables(storageService.getTables());
-    setZones(storageService.getZones());
+    loadData();
+
+    const handleBranchChange = () => {
+      loadData(true);
+    };
+    window.addEventListener('imenu:branch_changed', handleBranchChange);
+    return () => window.removeEventListener('imenu:branch_changed', handleBranchChange);
   }, []);
 
   const showToast = (text: string, type: 'success' | 'info' | 'error' = 'success') => {
@@ -95,15 +150,31 @@ export default function QrCodesGeneratorPage() {
 
   // Helper: Get zone name
   const getZoneName = (zoneId: string): string => {
-    const found = zones.find((z) => z.id === zoneId);
-    return found ? found.name : 'Tầng 1';
+    const found = zones.find((z) => z.id === zoneId || z._id === zoneId);
+    return found ? found.name : 'Khu vực chung';
   };
 
   // Helper: Build QR Table URL
   const getTableUrl = (tbl: Table): string => {
     if (tbl.customUrl) return tbl.customUrl;
-    const tokenPart = tbl.qrToken ? `?t=${tbl.qrToken}` : '';
-    return `http://localhost:3005/menu/bep-nha/${tbl.code}${tokenPart}`;
+    const slug = restaurant?.slug || 'bep-nha';
+    const params = new URLSearchParams();
+    if (tbl.qrToken) params.set('t', tbl.qrToken);
+    if (tbl.branchId) params.set('branch', tbl.branchId);
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+
+    let host = 'http://localhost:3005';
+    if (typeof window !== 'undefined') {
+      const hostname = window.location.hostname;
+      const port = '3005';
+      const protocol = window.location.protocol;
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        host = `${protocol}//${hostname}:${port}`;
+      } else {
+        host = `${protocol}//menu.${hostname.replace('admin.', '')}`;
+      }
+    }
+    return `${host}/menu/${slug}/${tbl.code.toLowerCase()}${queryString}`;
   };
 
   // Filtered Tables
@@ -113,7 +184,8 @@ export default function QrCodesGeneratorPage() {
       tbl.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
       tbl.zoneName.toLowerCase().includes(searchQuery.toLowerCase());
 
-    const matchesZone = selectedZone === 'all' || tbl.zoneId === selectedZone;
+    const matchesZone =
+      selectedZone === 'all' || tbl.zoneId === selectedZone || (tbl.zone as any)?._id === selectedZone;
 
     const isRevoked = tbl.qrStatus === 'revoked';
     const matchesStatus =
@@ -142,45 +214,39 @@ export default function QrCodesGeneratorPage() {
     setIsZoneModalOpen(true);
   };
 
-  const handleSaveZone = (e: React.FormEvent) => {
+  const handleSaveZone = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!zoneInputName.trim()) return;
 
-    if (editingZone) {
-      // Update zone
-      const updatedZones = zones.map((z) =>
-        z.id === editingZone.id ? { ...z, name: zoneInputName.trim() } : z
-      );
-      setZones(updatedZones);
-      storageService.saveZones(updatedZones);
+    try {
+      if (editingZone) {
+        // Update zone
+        await apiClient.tableZones.update(editingZone.id || (editingZone as any)._id, {
+          name: zoneInputName.trim(),
+        });
+        showToast(`Đã đổi tên khu vực thành "${zoneInputName.trim()}"!`, 'success');
+      } else {
+        // Create new zone
+        const activeBranchId = storageService.getActiveBranchId();
+        await apiClient.tableZones.create({
+          name: zoneInputName.trim(),
+          branchId: activeBranchId || undefined,
+        });
+        showToast(`Đã tạo mới khu vực "${zoneInputName.trim()}"!`, 'success');
+      }
 
-      // Update table zoneName in tables as well
-      const updatedTables = tables.map((t) =>
-        t.zoneId === editingZone.id ? { ...t, zoneName: zoneInputName.trim() } : t
-      );
-      setTables(updatedTables);
-      storageService.saveTables(updatedTables);
-
-      showToast(`Đã đổi tên khu vực thành "${zoneInputName.trim()}"!`, 'success');
-    } else {
-      // Create new zone
-      const newZoneId = `zone-${Date.now().toString().slice(-4)}`;
-      const newZone: TableZone = {
-        id: newZoneId,
-        name: zoneInputName.trim(),
-      };
-      const updatedZones = [...zones, newZone];
-      setZones(updatedZones);
-      storageService.saveZones(updatedZones);
-      showToast(`Đã tạo mới khu vực "${newZone.name}"!`, 'success');
+      setIsZoneModalOpen(false);
+      setZoneInputName('');
+      loadData(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi lưu khu vực');
     }
-
-    setIsZoneModalOpen(false);
-    setZoneInputName('');
   };
 
-  const handleDeleteZone = (zoneId: string) => {
-    const tablesInZone = tables.filter((t) => t.zoneId === zoneId);
+  const handleDeleteZone = async (zoneId: string) => {
+    const tablesInZone = tables.filter(
+      (t) => t.zoneId === zoneId || (t.zone as any)?._id === zoneId
+    );
     if (tablesInZone.length > 0) {
       toast.error(
         `Không thể xóa khu vực này vì đang có ${tablesInZone.length} bàn ăn thuộc khu vực này. Vui lòng chuyển các bàn sang khu vực khác trước.`
@@ -189,11 +255,14 @@ export default function QrCodesGeneratorPage() {
     }
 
     if (confirm('Bạn có chắc chắn muốn xóa khu vực này?')) {
-      const updatedZones = zones.filter((z) => z.id !== zoneId);
-      setZones(updatedZones);
-      storageService.saveZones(updatedZones);
-      if (selectedZone === zoneId) setSelectedZone('all');
-      showToast('Đã xóa khu vực!', 'info');
+      try {
+        await apiClient.tableZones.delete(zoneId);
+        if (selectedZone === zoneId) setSelectedZone('all');
+        showToast('Đã xóa khu vực!', 'info');
+        loadData(true);
+      } catch (err: any) {
+        toast.error(err.message || 'Lỗi khi xóa khu vực');
+      }
     }
   };
 
@@ -202,15 +271,15 @@ export default function QrCodesGeneratorPage() {
   // 1. Open Add Table Modal
   const handleOpenAddModal = () => {
     const nextIndex = tables.length + 1;
-    const code = nextIndex < 10 ? `ban-0${nextIndex}` : `ban-${nextIndex}`;
+    const code = nextIndex < 10 ? `B0${nextIndex}` : `B${nextIndex}`;
     const name = nextIndex < 10 ? `Bàn 0${nextIndex}` : `Bàn ${nextIndex}`;
 
     setNewTableName(name);
     setNewTableCode(code);
-    setNewTableZoneId(zones[0]?.id || 'zone-1');
+    setNewTableZoneId(zones[0]?.id || (zones[0] as any)?._id || '');
     setNewTableCapacity(4);
-    setNewWifiSsid('BepNha_Free');
-    setNewWifiPassword('bepnha88');
+    setNewWifiSsid(restaurant?.name ? `${restaurant.name}_Free` : 'iMenu_Free');
+    setNewWifiPassword('');
     setIsCustomZoneInAdd(false);
     setCustomZoneNameInAdd('');
     setIsAddModalOpen(true);
@@ -227,58 +296,53 @@ export default function QrCodesGeneratorPage() {
       .replace(/[^a-z0-9\s-]/g, '')
       .trim()
       .replace(/\s+/g, '-');
-    setNewTableCode(code || `ban-${Date.now().toString().slice(-4)}`);
+    setNewTableCode(code.toUpperCase() || `B${Date.now().toString().slice(-3)}`);
   };
 
   // 3. Submit Add Table & QR
-  const handleCreateNewTable = (e: React.FormEvent) => {
+  const handleCreateNewTable = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTableName.trim() || !newTableCode.trim()) return;
 
-    // Check duplicate code
+    // Check duplicate code in local list
     if (tables.some((t) => t.code.toLowerCase() === newTableCode.trim().toLowerCase())) {
       toast.error('Mã bàn này đã tồn tại! Vui lòng chọn mã khác.');
       return;
     }
 
-    // Determine final zoneId & zoneName
-    let finalZoneId = newTableZoneId;
-    let finalZoneName = getZoneName(newTableZoneId);
+    try {
+      let finalZoneId = newTableZoneId;
+      if (isCustomZoneInAdd && customZoneNameInAdd.trim()) {
+        const activeBranchId = storageService.getActiveBranchId();
+        const createZoneRes = await apiClient.tableZones.create({
+          name: customZoneNameInAdd.trim(),
+          branchId: activeBranchId || undefined,
+        });
+        finalZoneId = createZoneRes.data?._id || createZoneRes.data?.id;
+      }
 
-    if (isCustomZoneInAdd && customZoneNameInAdd.trim()) {
-      const newZoneId = `zone-${Date.now().toString().slice(-4)}`;
-      const newZone: TableZone = {
-        id: newZoneId,
-        name: customZoneNameInAdd.trim(),
-      };
-      const updatedZones = [...zones, newZone];
-      setZones(updatedZones);
-      storageService.saveZones(updatedZones);
-      finalZoneId = newZoneId;
-      finalZoneName = newZone.name;
+      if (!finalZoneId) {
+        toast.error('Vui lòng chọn hoặc tạo khu vực bàn!');
+        return;
+      }
+
+      const activeBranchId = storageService.getActiveBranchId();
+      await apiClient.tables.create({
+        code: newTableCode.trim().toUpperCase(),
+        name: newTableName.trim(),
+        zoneId: finalZoneId,
+        capacity: newTableCapacity,
+        wifiSsid: newWifiSsid.trim(),
+        wifiPassword: newWifiPassword.trim(),
+        branchId: activeBranchId || undefined,
+      });
+
+      setIsAddModalOpen(false);
+      showToast(`Đã tạo thành công ${newTableName.trim()}!`, 'success');
+      loadData(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi tạo bàn ăn');
     }
-
-    const randomToken = Math.random().toString(36).substring(2, 8);
-    const newTable: Table = {
-      id: `tbl-${Date.now()}`,
-      code: newTableCode.trim().toLowerCase(),
-      name: newTableName.trim(),
-      zoneId: finalZoneId,
-      zoneName: finalZoneName,
-      capacity: newTableCapacity,
-      status: 'Available',
-      qrStatus: 'active',
-      qrToken: randomToken,
-      qrGeneratedAt: new Date().toISOString(),
-      wifiSsid: newWifiSsid.trim() || 'BepNha_Free',
-      wifiPassword: newWifiPassword.trim() || 'bepnha88',
-    };
-
-    const updated = [...tables, newTable];
-    setTables(updated);
-    storageService.saveTables(updated);
-    setIsAddModalOpen(false);
-    showToast(`Đã tạo thành công ${newTable.name} thuộc khu vực ${finalZoneName}!`, 'success');
   };
 
   // 4. Open Edit Table Modal
@@ -286,10 +350,10 @@ export default function QrCodesGeneratorPage() {
     setEditingTable(tbl);
     setEditTableName(tbl.name);
     setEditTableCode(tbl.code);
-    setEditTableZoneId(tbl.zoneId);
+    setEditTableZoneId(tbl.zoneId || (tbl.zone as any)?._id || '');
     setEditTableCapacity(tbl.capacity || 4);
-    setEditWifiSsid(tbl.wifiSsid || 'BepNha_Free');
-    setEditWifiPassword(tbl.wifiPassword || 'bepnha88');
+    setEditWifiSsid(tbl.wifiSsid || '');
+    setEditWifiPassword(tbl.wifiPassword || '');
     setEditQrStatus(tbl.qrStatus === 'revoked' ? 'revoked' : 'active');
     setIsCustomZoneInEdit(false);
     setCustomZoneNameInEdit('');
@@ -297,60 +361,43 @@ export default function QrCodesGeneratorPage() {
   };
 
   // 5. Submit Update Table & QR
-  const handleSaveEditTable = (e: React.FormEvent) => {
+  const handleSaveEditTable = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingTable || !editTableName.trim() || !editTableCode.trim()) return;
 
-    if (
-      tables.some(
-        (t) => t.id !== editingTable.id && t.code.toLowerCase() === editTableCode.trim().toLowerCase()
-      )
-    ) {
-      toast.error('Mã bàn này đã trùng với một bàn khác! Vui lòng chọn mã khác.');
-      return;
+    try {
+      let finalZoneId = editTableZoneId;
+      if (isCustomZoneInEdit && customZoneNameInEdit.trim()) {
+        const activeBranchId = storageService.getActiveBranchId();
+        const createZoneRes = await apiClient.tableZones.create({
+          name: customZoneNameInEdit.trim(),
+          branchId: activeBranchId || undefined,
+        });
+        finalZoneId = createZoneRes.data?._id || createZoneRes.data?.id;
+      }
+
+      const tableId = editingTable.id || (editingTable as any)._id;
+      await apiClient.tables.update(tableId, {
+        name: editTableName.trim(),
+        code: editTableCode.trim().toUpperCase(),
+        zoneId: finalZoneId,
+        capacity: editTableCapacity,
+        wifiSsid: editWifiSsid.trim(),
+        wifiPassword: editWifiPassword.trim(),
+        qrStatus: editQrStatus,
+      });
+
+      setIsEditModalOpen(false);
+      showToast(`Đã cập nhật thông tin mã QR cho ${editTableName.trim()}!`, 'success');
+      loadData(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi cập nhật bàn ăn');
     }
-
-    let finalZoneId = editTableZoneId;
-    let finalZoneName = getZoneName(editTableZoneId);
-
-    if (isCustomZoneInEdit && customZoneNameInEdit.trim()) {
-      const newZoneId = `zone-${Date.now().toString().slice(-4)}`;
-      const newZone: TableZone = {
-        id: newZoneId,
-        name: customZoneNameInEdit.trim(),
-      };
-      const updatedZones = [...zones, newZone];
-      setZones(updatedZones);
-      storageService.saveZones(updatedZones);
-      finalZoneId = newZoneId;
-      finalZoneName = newZone.name;
-    }
-
-    const updated = tables.map((t) =>
-      t.id === editingTable.id
-        ? {
-            ...t,
-            name: editTableName.trim(),
-            code: editTableCode.trim().toLowerCase(),
-            zoneId: finalZoneId,
-            zoneName: finalZoneName,
-            capacity: editTableCapacity,
-            wifiSsid: editWifiSsid.trim() || 'BepNha_Free',
-            wifiPassword: editWifiPassword.trim() || 'bepnha88',
-            qrStatus: editQrStatus,
-          }
-        : t
-    );
-
-    setTables(updated);
-    storageService.saveTables(updated);
-    setIsEditModalOpen(false);
-    showToast(`Đã cập nhật thông tin mã QR cho ${editTableName.trim()}!`, 'success');
   };
 
   // 6. Regenerate QR Code for Single Table (Refresh Token)
-  const handleRegenerateQR = (tableId: string) => {
-    const tbl = tables.find((t) => t.id === tableId);
+  const handleRegenerateQR = async (tableId: string) => {
+    const tbl = tables.find((t) => t.id === tableId || (t as any)._id === tableId);
     if (!tbl) return;
 
     if (
@@ -358,21 +405,17 @@ export default function QrCodesGeneratorPage() {
         `Bạn có chắc chắn muốn cấp lại mã QR mới cho "${tbl.name}"?\nMã QR cũ sẽ hết hiệu lực, khách hàng quét mã cũ sẽ không thể đặt món.`
       )
     ) {
-      const newToken = Math.random().toString(36).substring(2, 8);
-      const updated = tables.map((t) =>
-        t.id === tableId
-          ? {
-              ...t,
-              qrToken: newToken,
-              qrStatus: 'active' as const,
-              qrGeneratedAt: new Date().toISOString(),
-            }
-          : t
-      );
-
-      setTables(updated);
-      storageService.saveTables(updated);
-      showToast(`Đã tạo mới mã QR bảo mật cho "${tbl.name}" thành công!`, 'success');
+      try {
+        const newToken = Math.random().toString(36).substring(2, 10);
+        await apiClient.tables.update(tableId, {
+          qrToken: newToken,
+          qrStatus: 'active',
+        });
+        showToast(`Đã tạo mới mã QR bảo mật cho "${tbl.name}" thành công!`, 'success');
+        loadData(true);
+      } catch (err: any) {
+        toast.error(err.message || 'Lỗi khi cấp lại mã QR');
+      }
     }
   };
 
@@ -383,53 +426,64 @@ export default function QrCodesGeneratorPage() {
   };
 
   // 8. Revoke QR (Disable QR but keep Table)
-  const handleRevokeQR = () => {
+  const handleRevokeQR = async () => {
     if (!targetTable) return;
-
-    const updated = tables.map((t) =>
-      t.id === targetTable.id ? { ...t, qrStatus: 'revoked' as const } : t
-    );
-
-    setTables(updated);
-    storageService.saveTables(updated);
-    setIsConfirmModalOpen(false);
-    showToast(`Đã thu hồi mã QR của "${targetTable.name}". Mã quét hiện đã bị vô hiệu hóa!`, 'info');
+    const tableId = targetTable.id || (targetTable as any)._id;
+    try {
+      await apiClient.tables.update(tableId, { qrStatus: 'revoked' });
+      setIsConfirmModalOpen(false);
+      showToast(`Đã thu hồi mã QR của "${targetTable.name}". Mã quét hiện đã bị vô hiệu hóa!`, 'info');
+      loadData(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi thu hồi mã QR');
+    }
   };
 
   // 9. Reactivate QR (Re-enable revoked QR)
-  const handleReactivateQR = (tableId: string) => {
-    const tbl = tables.find((t) => t.id === tableId);
+  const handleReactivateQR = async (tableId: string) => {
+    const tbl = tables.find((t) => t.id === tableId || (t as any)._id === tableId);
     if (!tbl) return;
 
-    const newToken = Math.random().toString(36).substring(2, 8);
-    const updated = tables.map((t) =>
-      t.id === tableId
-        ? {
-            ...t,
-            qrStatus: 'active' as const,
-            qrToken: newToken,
-            qrGeneratedAt: new Date().toISOString(),
-          }
-        : t
-    );
-
-    setTables(updated);
-    storageService.saveTables(updated);
-    showToast(`Đã kích hoạt lại mã QR cho "${tbl.name}"!`, 'success');
+    try {
+      const newToken = Math.random().toString(36).substring(2, 10);
+      await apiClient.tables.update(tableId, {
+        qrStatus: 'active',
+        qrToken: newToken,
+      });
+      showToast(`Đã kích hoạt lại mã QR cho "${tbl.name}"!`, 'success');
+      loadData(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi kích hoạt mã QR');
+    }
   };
 
   // 10. Completely Delete Table & QR
-  const handleDeleteTable = () => {
+  const handleDeleteTable = async () => {
     if (!targetTable) return;
-
-    const updated = tables.filter((t) => t.id !== targetTable.id);
-    setTables(updated);
-    storageService.saveTables(updated);
-    setIsConfirmModalOpen(false);
-    showToast(`Đã xóa hoàn toàn "${targetTable.name}" và mã QR khỏi hệ thống!`, 'success');
+    const tableId = targetTable.id || (targetTable as any)._id;
+    try {
+      await apiClient.tables.delete(tableId);
+      setIsConfirmModalOpen(false);
+      showToast(`Đã xóa hoàn toàn "${targetTable.name}" khỏi hệ thống!`, 'success');
+      loadData(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi xóa bàn');
+    }
   };
 
-  // 11. Copy URL
+  // 11. Seed Default Tables
+  const handleSeedDefaultTables = async () => {
+    try {
+      const activeBranchId = storageService.getActiveBranchId();
+      await apiClient.tables.seedDefault(activeBranchId || undefined);
+      toast.success('Đã khởi tạo sơ đồ 12 bàn mẫu thành công!');
+      loadData(true);
+    } catch (err: any) {
+      toast.error(err.message || 'Lỗi khi khởi tạo bàn');
+    }
+  };
+
+  // 12. Copy URL
   const handleCopyUrl = (tbl: Table) => {
     const url = getTableUrl(tbl);
     if (navigator.clipboard) {
@@ -440,7 +494,7 @@ export default function QrCodesGeneratorPage() {
     }
   };
 
-  // 12. Download QR Image
+  // 13. Download QR Image
   const handleDownloadQR = (tbl: Table) => {
     const url = getTableUrl(tbl);
     const qrImgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(url)}&margin=2`;
@@ -490,11 +544,23 @@ export default function QrCodesGeneratorPage() {
         </div>
 
         <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 w-full sm:w-auto shrink-0">
+          {tables.length === 0 && (
+            <Button
+              variant="outline"
+              onClick={handleSeedDefaultTables}
+              icon={<Sparkles className="w-4 h-4 text-emerald-600" />}
+              className="cursor-pointer bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-800 shadow-2xs w-full sm:w-auto text-xs py-2 px-2.5 justify-center font-bold"
+            >
+              Khởi tạo sơ đồ mẫu (12 bàn)
+            </Button>
+          )}
+
           <Button
             variant="outline"
             onClick={() => handlePrint()}
+            disabled={filteredTables.length === 0}
             icon={<Printer className="w-4 h-4 text-slate-600" />}
-            className="cursor-pointer bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-2xs w-full sm:w-auto text-xs py-2 px-2.5 justify-center"
+            className="cursor-pointer bg-white hover:bg-slate-50 border-slate-200 text-slate-700 shadow-2xs w-full sm:w-auto text-xs py-2 px-2.5 justify-center disabled:opacity-50"
           >
             In toàn bộ ({filteredTables.length})
           </Button>
@@ -685,21 +751,56 @@ export default function QrCodesGeneratorPage() {
 
       {/* ================= EMPTY STATE ================= */}
       {filteredTables.length === 0 && (
-        <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 text-slate-400 space-y-3 w-full min-w-0">
-          <QrCode className="w-12 h-12 mx-auto text-slate-300" />
-          <h3 className="text-base font-extrabold text-slate-700">Không tìm thấy mã QR bàn phù hợp</h3>
-          <p className="text-xs text-slate-500 max-w-sm mx-auto">
-            Thử tìm kiếm với từ khóa khác hoặc bấm nút bên dưới để tạo mới mã QR bàn ăn
-          </p>
-          <Button
-            variant="primary"
-            onClick={handleOpenAddModal}
-            icon={<Plus className="w-4 h-4" />}
-            className="cursor-pointer mx-auto"
-          >
-            Tạo mã QR bàn mới
-          </Button>
-        </div>
+        tables.length === 0 ? (
+          <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 text-slate-400 space-y-4 w-full min-w-0 shadow-xs">
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-emerald-50 text-[#124a36] grid place-items-center">
+              <QrCode className="w-8 h-8" />
+            </div>
+            <div>
+              <h3 className="text-lg font-black text-[#09271d]">Chưa có mã QR bàn ăn nào</h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto mt-1">
+                Nhà hàng của bạn chưa có danh sách bàn và mã QR. Bạn có thể tự tạo từng bàn hoặc khởi tạo nhanh sơ đồ 12 bàn mẫu tiêu chuẩn.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={handleSeedDefaultTables}
+                icon={<Sparkles className="w-4 h-4 text-emerald-600" />}
+                className="cursor-pointer border-emerald-300 text-[#124a36] bg-emerald-50/60 hover:bg-emerald-100/80 font-bold"
+              >
+                Khởi tạo sơ đồ mẫu (12 bàn)
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleOpenAddModal}
+                icon={<Plus className="w-4 h-4" />}
+                className="cursor-pointer bg-[#124a36] hover:bg-[#09271d] font-bold shadow-md"
+              >
+                Thêm bàn & Tạo mã QR thủ công
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 text-slate-400 space-y-3 w-full min-w-0">
+            <QrCode className="w-12 h-12 mx-auto text-slate-300" />
+            <h3 className="text-base font-extrabold text-slate-700">Không tìm thấy mã QR bàn phù hợp</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              Thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc khu vực / trạng thái
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchQuery('');
+                setSelectedZone('all');
+                setSelectedQrStatus('all');
+              }}
+              className="cursor-pointer mx-auto text-xs"
+            >
+              Xóa bộ lọc
+            </Button>
+          </div>
+        )
       )}
 
       {/* ================= PRINTABLE & PREVIEW CONTAINER ================= */}

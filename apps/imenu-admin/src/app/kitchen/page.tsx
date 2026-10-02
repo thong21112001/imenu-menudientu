@@ -1,42 +1,109 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { storageService, formatTime, realtimeHub, soundEngine } from '@imenu/utils';
+import React, { useState, useEffect, useCallback } from 'react';
+import { storageService, formatTime, realtimeHub, soundEngine, apiClient } from '@imenu/utils';
 import { Order, OrderItem } from '@imenu/types';
 import { Card, Button, StatusChip } from '@imenu/ui';
-import { ChefHat, Check, Flame, Clock, Volume2 } from 'lucide-react';
+import { ChefHat, Check, Flame, Clock, Volume2, RefreshCw } from 'lucide-react';
 
 export default function KitchenDisplaySystemPage() {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const loadOrders = () => {
-    const all = storageService.getOrders();
-    // Filter active orders that need cooking
-    setOrders(all.filter((o) => o.status !== 'Paid' && o.status !== 'Cancelled'));
-  };
+  const loadOrders = useCallback(async (silent = false) => {
+    if (!silent) setIsLoading(true);
+    try {
+      const activeBranchId = storageService.getActiveBranchId();
+      const res = await apiClient.orders.list({
+        branchId: activeBranchId || undefined,
+        isPaid: false,
+        limit: 100,
+      }).catch(() => null);
+
+      if (res && res.data) {
+        const rawList = Array.isArray(res.data) ? res.data : res.data.data || [];
+        const normalized: Order[] = rawList
+          .filter((o: any) => o.status !== 'Paid' && o.status !== 'Cancelled')
+          .map((o: any) => ({
+            ...o,
+            id: o._id || o.id,
+            items: (o.items || []).map((it: any) => ({
+              ...it,
+              id: it._id || it.id,
+            })),
+          }));
+        setOrders(normalized);
+      } else {
+        const all = storageService.getOrders();
+        setOrders(all.filter((o) => o.status !== 'Paid' && o.status !== 'Cancelled'));
+      }
+    } catch (err) {
+      console.warn('Load orders fallback to storage:', err);
+      const all = storageService.getOrders();
+      setOrders(all.filter((o) => o.status !== 'Paid' && o.status !== 'Cancelled'));
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     loadOrders();
 
+    const handleBranchChange = () => {
+      loadOrders(true);
+    };
+    window.addEventListener('imenu:branch_changed', handleBranchChange);
+
     const unsub = realtimeHub.subscribe('*', (payload) => {
-      loadOrders();
+      if (
+        payload.type === 'NEW_ORDER' ||
+        payload.type === 'order:created'
+      ) {
+        soundEngine.playNewOrderChime();
+      }
+      loadOrders(true);
     });
-    return () => unsub();
-  }, []);
+
+    return () => {
+      window.removeEventListener('imenu:branch_changed', handleBranchChange);
+      unsub();
+    };
+  }, [loadOrders]);
 
   // Move dish item status
-  const handleUpdateItemStatus = (orderId: string, itemId: string, nextStatus: 'Cooking' | 'Ready' | 'Served') => {
+  const handleUpdateItemStatus = async (orderId: string, itemId: string, nextStatus: 'Cooking' | 'Ready' | 'Served') => {
+    if (nextStatus === 'Ready') {
+      soundEngine.playReadyChime();
+    }
+
+    // 1. Cập nhật state lạc quan (Optimistic Update)
+    setOrders((prev) =>
+      prev.map((ord) => {
+        if (ord.id === orderId) {
+          return {
+            ...ord,
+            items: ord.items.map((it) => (it.id === itemId ? { ...it, status: nextStatus } : it)),
+          };
+        }
+        return ord;
+      }),
+    );
+
+    // 2. Gửi API cập nhật trạng thái món
+    try {
+      await apiClient.orders.updateItemStatus(orderId, itemId, nextStatus);
+    } catch (err) {
+      console.warn('API update item status error, fallback to local storage:', err);
+    }
+
+    // 3. Cập nhật storage & phát sự kiện realtime
     const all = storageService.getOrders();
     const oIdx = all.findIndex((o) => o.id === orderId);
     if (oIdx > -1) {
       const itIdx = all[oIdx].items.findIndex((i) => i.id === itemId);
       if (itIdx > -1) {
         all[oIdx].items[itIdx].status = nextStatus;
-        if (nextStatus === 'Ready') {
-          soundEngine.playReadyChime();
-        }
         storageService.saveOrders(all);
-        setOrders([...all.filter((o) => o.status !== 'Paid' && o.status !== 'Cancelled')]);
         realtimeHub.publish('ORDER_STATUS_UPDATED', all[oIdx], 'rest-bep-nha');
       }
     }

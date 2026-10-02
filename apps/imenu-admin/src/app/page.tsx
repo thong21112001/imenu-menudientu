@@ -43,12 +43,12 @@ export default function DashboardOverviewPage() {
       setLoading(false);
     }
 
-    // Fallback tính toán từ local storage
-    const tables = storageService.getTables();
-    const orders = storageService.getOrders();
-    const totalRev = orders.reduce((sum, o) => sum + o.totalAmount, 0);
-    const occupied = tables.filter((t) => t.status === 'Occupied' || t.status === 'PaymentRequested').length;
-    const pendingKitchen = orders.filter((o) => o.status === 'Preparing' || o.status === 'WaitingConfirmation').length;
+    // Fallback mặc định khi chưa phát sinh dữ liệu
+    const tables: any[] = [];
+    const orders: any[] = [];
+    const totalRev = 0;
+    const occupied = 0;
+    const pendingKitchen = 0;
 
     setOverview({
       branchId: branchId,

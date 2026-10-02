@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, useSearchParams } from 'next/navigation';
 import {
   storageService,
   formatCurrencyVND,
@@ -48,8 +48,11 @@ import {
 
 export default function CustomerTableMenuPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const restaurantSlug = (params?.restaurantSlug as string) || 'bep-nha';
   const tableCode = (params?.tableCode as string) || 'ban-08';
+  const branchId = searchParams.get('branch') || undefined;
+  const qrToken = searchParams.get('t') || undefined;
 
   const [restaurant, setRestaurant] = useState<Restaurant>(storageService.getRestaurant());
   const [table, setTable] = useState<Table | null>(null);

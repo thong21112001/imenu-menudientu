@@ -454,5 +454,326 @@ export const apiClient = {
       return request<any>(`/reports/top-items${queryStr ? `?${queryStr}` : ''}`);
     },
   },
+
+  categories: {
+    async list(params?: string | { restaurantId?: string; branchId?: string; isActive?: boolean }) {
+      const q = new URLSearchParams();
+      if (typeof params === 'string') {
+        if (params) q.append('branchId', params);
+      } else if (params) {
+        if (params.restaurantId) q.append('restaurantId', params.restaurantId);
+        if (params.branchId) q.append('branchId', params.branchId);
+        if (params.isActive !== undefined) q.append('isActive', String(params.isActive));
+      }
+      const qs = q.toString();
+      return request<any[]>(`/categories${qs ? `?${qs}` : ''}`);
+    },
+
+    async get(id: string) {
+      return request<any>(`/categories/${id}`);
+    },
+
+    async create(payload: { name: string; slug?: string; icon?: string; order?: number; isActive?: boolean; branchIds?: string[] }) {
+      return request<any>('/categories', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async update(id: string, payload: { name?: string; slug?: string; icon?: string; order?: number; isActive?: boolean; branchIds?: string[] }) {
+      return request<any>(`/categories/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async delete(id: string) {
+      return request<any>(`/categories/${id}`, {
+        method: 'DELETE',
+      });
+    },
+
+    async listPublic(params?: { restaurantId?: string; branchId?: string; slug?: string }) {
+      const q = new URLSearchParams();
+      if (params?.restaurantId) q.append('restaurantId', params.restaurantId);
+      if (params?.branchId) q.append('branchId', params.branchId);
+      if (params?.slug) q.append('slug', params.slug);
+      const qs = q.toString();
+      return request<any[]>(`/categories/public${qs ? `?${qs}` : ''}`);
+    },
+
+    async seedDefault(restaurantId?: string) {
+      const q = restaurantId ? `?restaurantId=${encodeURIComponent(restaurantId)}` : '';
+      return request<any>(`/categories/seed-default${q}`, {
+        method: 'POST',
+      });
+    },
+  },
+
+  menuItems: {
+    async list(params?: {
+      restaurantId?: string;
+      branchId?: string;
+      categoryId?: string;
+      isAvailable?: boolean;
+      isPopular?: boolean;
+      search?: string;
+      page?: number;
+      limit?: number;
+    }) {
+      const q = new URLSearchParams();
+      if (params?.restaurantId) q.append('restaurantId', params.restaurantId);
+      if (params?.branchId) q.append('branchId', params.branchId);
+      if (params?.categoryId && params.categoryId !== 'all') q.append('categoryId', params.categoryId);
+      if (params?.isAvailable !== undefined) q.append('isAvailable', String(params.isAvailable));
+      if (params?.isPopular !== undefined) q.append('isPopular', String(params.isPopular));
+      if (params?.search) q.append('search', params.search);
+      if (params?.page) q.append('page', String(params.page));
+      if (params?.limit) q.append('limit', String(params.limit));
+      const qs = q.toString();
+      return request<any>(`/menu-items${qs ? `?${qs}` : ''}`);
+    },
+
+    async get(id: string) {
+      return request<any>(`/menu-items/${id}`);
+    },
+
+    async create(payload: any) {
+      return request<any>('/menu-items', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async update(id: string, payload: any) {
+      return request<any>(`/menu-items/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async toggleStatus(id: string, isAvailable?: boolean, branchId?: string) {
+      return request<any>(`/menu-items/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          ...(isAvailable !== undefined ? { isAvailable } : {}),
+          ...(branchId ? { branchId } : {}),
+        }),
+      });
+    },
+
+    async delete(id: string) {
+      return request<any>(`/menu-items/${id}`, {
+        method: 'DELETE',
+      });
+    },
+
+    async listPublic(params?: {
+      restaurantId?: string;
+      branchId?: string;
+      slug?: string;
+      categoryId?: string;
+      search?: string;
+    }) {
+      const q = new URLSearchParams();
+      if (params?.restaurantId) q.append('restaurantId', params.restaurantId);
+      if (params?.branchId) q.append('branchId', params.branchId);
+      if (params?.slug) q.append('slug', params.slug);
+      if (params?.categoryId) q.append('categoryId', params.categoryId);
+      if (params?.search) q.append('search', params.search);
+      const qs = q.toString();
+      return request<any[]>(`/menu-items/public${qs ? `?${qs}` : ''}`);
+    },
+  },
+
+  tables: {
+    async list(params?: {
+      restaurantId?: string;
+      branchId?: string;
+      zoneId?: string;
+      status?: string;
+      search?: string;
+    }) {
+      const q = new URLSearchParams();
+      if (params?.branchId) q.append('branchId', params.branchId);
+      if (params?.zoneId && params.zoneId !== 'all') q.append('zoneId', params.zoneId);
+      if (params?.status && params.status !== 'all') q.append('status', params.status);
+      if (params?.search) q.append('search', params.search);
+      const qs = q.toString();
+      return request<any[]>(`/tables${qs ? `?${qs}` : ''}`);
+    },
+
+    async get(id: string) {
+      return request<any>(`/tables/${id}`);
+    },
+
+    async create(payload: any) {
+      return request<any>('/tables', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async update(id: string, payload: any) {
+      return request<any>(`/tables/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async updateStatus(id: string, status: string, totalGuests?: number) {
+      return request<any>(`/tables/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status, ...(totalGuests !== undefined ? { totalGuests } : {}) }),
+      });
+    },
+
+    async transfer(payload: { fromTableId: string; toTableId: string; reason?: string }) {
+      return request<any>('/tables/transfer', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async merge(payload: { fromTableIds: string[]; targetTableId: string; note?: string }) {
+      return request<any>('/tables/merge', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async delete(id: string) {
+      return request<any>(`/tables/${id}`, {
+        method: 'DELETE',
+      });
+    },
+
+    async seedDefault(branchId?: string) {
+      const q = branchId ? `?branchId=${encodeURIComponent(branchId)}` : '';
+      return request<any>(`/tables/seed-default${q}`, {
+        method: 'POST',
+      });
+    },
+  },
+
+  tableZones: {
+    async list(params?: { branchId?: string }) {
+      const q = new URLSearchParams();
+      if (params?.branchId) q.append('branchId', params.branchId);
+      const qs = q.toString();
+      return request<any[]>(`/table-zones${qs ? `?${qs}` : ''}`);
+    },
+
+    async get(id: string) {
+      return request<any>(`/table-zones/${id}`);
+    },
+
+    async create(payload: { name: string; description?: string; branchId?: string }) {
+      return request<any>('/table-zones', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async update(id: string, payload: { name?: string; description?: string }) {
+      return request<any>(`/table-zones/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async delete(id: string) {
+      return request<any>(`/table-zones/${id}`, {
+        method: 'DELETE',
+      });
+    },
+  },
+
+  orders: {
+    async list(params?: {
+      branchId?: string;
+      tableId?: string;
+      status?: string;
+      isPaid?: boolean;
+      page?: number;
+      limit?: number;
+    }) {
+      const q = new URLSearchParams();
+      if (params?.branchId) q.append('branchId', params.branchId);
+      if (params?.tableId) q.append('tableId', params.tableId);
+      if (params?.status && params.status !== 'all') q.append('status', params.status);
+      if (params?.isPaid !== undefined) q.append('isPaid', String(params.isPaid));
+      if (params?.page) q.append('page', String(params.page));
+      if (params?.limit) q.append('limit', String(params.limit));
+      const qs = q.toString();
+      return request<any>(`/orders${qs ? `?${qs}` : ''}`);
+    },
+
+    async get(id: string) {
+      return request<any>(`/orders/${id}`);
+    },
+
+    async create(payload: {
+      tableId: string;
+      items: any[];
+      orderSource?: string;
+      branchId?: string;
+      customerNote?: string;
+    }) {
+      return request<any>('/orders', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async addItems(id: string, payload: { items: any[]; note?: string }) {
+      return request<any>(`/orders/${id}/items`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async updateItemStatus(
+      orderId: string,
+      itemId: string,
+      status: 'Waiting' | 'Cooking' | 'Ready' | 'Served' | 'Cancelled',
+    ) {
+      return request<any>(`/orders/${orderId}/items/${itemId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+    },
+
+    async updateStatus(id: string, status: string, reason?: string) {
+      return request<any>(`/orders/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status, ...(reason ? { reason } : {}) }),
+      });
+    },
+
+    async pay(
+      id: string,
+      payload?: {
+        paymentMethod?: string;
+        discountAmount?: number;
+        serviceFee?: number;
+        vatAmount?: number;
+        note?: string;
+      },
+    ) {
+      return request<any>(`/orders/${id}/pay`, {
+        method: 'POST',
+        body: JSON.stringify(payload || {}),
+      });
+    },
+
+    async cancel(id: string, reason?: string) {
+      return request<any>(`/orders/${id}/cancel`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: reason || 'Hủy đơn hàng' }),
+      });
+    },
+  },
 };
+
 
