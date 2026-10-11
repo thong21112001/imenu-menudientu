@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import {
+  apiClient,
   storageService,
   formatCurrencyVND,
   generateVietQRUrl,
@@ -17,6 +18,7 @@ import {
   Order,
   OrderItem,
   SelectedOption,
+  CustomerCreateOrderItemPayload,
 } from '@imenu/types';
 import {
   Logo,
@@ -44,17 +46,26 @@ import {
   CreditCard,
   QrCode,
   Flame,
+  AlertCircle,
+  RefreshCw,
+  Loader2,
+  Hourglass,
 } from 'lucide-react';
 
 export default function CustomerTableMenuPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const restaurantSlug = (params?.restaurantSlug as string) || 'bep-nha';
-  const tableCode = (params?.tableCode as string) || 'ban-08';
+  const restaurantSlug = (params?.restaurantSlug as string) || '';
+  const tableCode = (params?.tableCode as string) || '';
   const branchId = searchParams.get('branch') || undefined;
   const qrToken = searchParams.get('t') || undefined;
 
-  const [restaurant, setRestaurant] = useState<Restaurant>(storageService.getRestaurant());
+  // Context loading & error state
+  const [isLoadingContext, setIsLoadingContext] = useState<boolean>(true);
+  const [contextError, setContextError] = useState<string | null>(null);
+
+  // Entities
+  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [table, setTable] = useState<Table | null>(null);
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -88,53 +99,152 @@ export default function CustomerTableMenuPage() {
 
   // Active orders for this table
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isRequestingPayment, setIsRequestingPayment] = useState<boolean>(false);
 
-  // Load initial data
-  useEffect(() => {
-    const restData = storageService.getRestaurant();
-    setRestaurant(restData);
+  // Logical idempotency key: maintained across retries of the same cart submission attempt
+  const [currentIdempotencyKey, setCurrentIdempotencyKey] = useState<string | null>(null);
 
-    const tbls = storageService.getTables();
-    const foundTbl = tbls.find((t) => t.code === tableCode) || tbls[0];
-    setTable(foundTbl);
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
 
-    setCategories(storageService.getCategories());
-    setMenuItems(storageService.getMenuItems());
-
-    // Load active order for this table
-    const orders = storageService.getOrders();
-    const curOrder = orders.find(
-      (o) => o.tableId === foundTbl.id && o.status !== 'Paid' && o.status !== 'Cancelled'
-    );
-    if (curOrder) {
-      setActiveOrder(curOrder);
+  // Load verified context from backend API
+  const loadData = useCallback(async () => {
+    if (!restaurantSlug || !tableCode) {
+      setContextError('Thiếu mã định danh nhà hàng hoặc bàn.');
+      setIsLoadingContext(false);
+      return;
     }
-  }, [tableCode]);
 
-  // Subscribe to Real-time updates
+    try {
+      setIsLoadingContext(true);
+      setContextError(null);
+
+      const ctxRes = await apiClient.customerOrders.getTableContext({
+        restaurantSlug,
+        tableCode,
+        qrToken,
+      });
+
+      if (!ctxRes?.data?.restaurant || !ctxRes?.data?.table) {
+        setContextError('Không tìm thấy thông tin bàn hoặc nhà hàng từ mã QR.');
+        setIsLoadingContext(false);
+        return;
+      }
+
+      const ctx = ctxRes.data;
+      setRestaurant(ctx.restaurant as any);
+      setTable(ctx.table as any);
+      if (ctx.activeOrder) {
+        setActiveOrder(ctx.activeOrder);
+      } else {
+        setActiveOrder(null);
+      }
+
+      // Fetch public categories and menu items using real restaurant ID
+      const restId = (ctx.restaurant as any).id || (ctx.restaurant as any)._id;
+      const targetBranchId = ctx.table.branchId || branchId;
+
+      const [catRes, itemRes] = await Promise.all([
+        apiClient.categories.listPublic({
+          restaurantId: restId,
+          branchId: targetBranchId,
+        }),
+        apiClient.menuItems.listPublic({
+          restaurantId: restId,
+          branchId: targetBranchId,
+        }),
+      ]);
+
+      setCategories(catRes.data || []);
+      setMenuItems(itemRes.data || []);
+    } catch (err: any) {
+      console.error('Lỗi tải dữ liệu QR bàn:', err);
+      setContextError(
+        err.message || 'Mã QR không hợp lệ hoặc đã hết hạn. Vui lòng quét lại mã QR tại bàn.'
+      );
+    } finally {
+      setIsLoadingContext(false);
+    }
+  }, [restaurantSlug, tableCode, qrToken, branchId]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  // Subscribe to Realtime Hub
   useEffect(() => {
     const unsub = realtimeHub.subscribe('*', (payload) => {
-      // Reload orders when there's an update
-      const orders = storageService.getOrders();
-      if (table) {
-        const curOrder = orders.find(
-          (o) => o.tableId === table.id && o.status !== 'Paid' && o.status !== 'Cancelled'
-        );
-        setActiveOrder(curOrder || null);
+      if (!table) return;
+
+      const relevantTypes = [
+        'ROUND_ADDED',
+        'ROUND_CONFIRMED',
+        'ROUND_CANCELLED',
+        'ORDER_STATUS_UPDATED',
+        'PAYMENT_REQUESTED',
+        'PAYMENT_COMPLETED',
+        'order:round_added',
+        'order:round_confirmed',
+        'order:round_cancelled',
+        'order:item_status_updated',
+        'order:updated',
+        'order:payment_completed',
+      ];
+
+      if (relevantTypes.includes(payload.type as string)) {
+        if (activeOrder?.id) {
+          apiClient.customerOrders
+            .getActiveOrder(activeOrder.id)
+            .then((res) => {
+              if (res.data) setActiveOrder(res.data);
+            })
+            .catch(() => {});
+        } else if (table.id) {
+          apiClient.orders
+            .getByTable(table.id)
+            .then((res) => {
+              if (res.data) setActiveOrder(res.data);
+            })
+            .catch(() => {});
+        }
       }
-      // Reload menu items if availability changed
-      if (payload.type === 'MENU_AVAILABILITY_CHANGED') {
-        setMenuItems(storageService.getMenuItems());
+
+      if (payload.type === 'MENU_AVAILABILITY_CHANGED' && restaurant) {
+        const restId = (restaurant as any).id || (restaurant as any)._id;
+        apiClient.menuItems
+          .listPublic({ restaurantId: restId, branchId: table.branchId })
+          .then((res) => {
+            if (res.data) setMenuItems(res.data);
+          })
+          .catch(() => {});
       }
     });
 
     return () => unsub();
-  }, [table]);
+  }, [table, activeOrder?.id, restaurant]);
 
-  const showToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
+  // 8-second Polling Fallback if activeOrder is pending/cooking
+  useEffect(() => {
+    if (!activeOrder?.id) return;
+    const isPending = activeOrder.status !== 'Paid' && activeOrder.status !== 'Cancelled';
+    if (!isPending) return;
+
+    const interval = setInterval(() => {
+      apiClient.customerOrders
+        .getActiveOrder(activeOrder.id)
+        .then((res) => {
+          if (res.data) {
+            setActiveOrder(res.data);
+          }
+        })
+        .catch(() => {});
+    }, 8000);
+
+    return () => clearInterval(interval);
+  }, [activeOrder?.id, activeOrder?.status]);
 
   // Filter items
   const filteredItems = menuItems.filter((item) => {
@@ -142,7 +252,7 @@ export default function CustomerTableMenuPage() {
     const matchesSearch =
       !searchQuery.trim() ||
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase());
+      (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
 
@@ -244,86 +354,73 @@ export default function CustomerTableMenuPage() {
   const totalCartCount = cart.reduce((sum, c) => sum + c.quantity, 0);
   const totalCartAmount = cart.reduce((sum, c) => sum + c.itemTotal, 0);
 
-  // Submit Order to Kitchen/POS
-  const handleSubmitOrder = () => {
-    if (cart.length === 0 || !table) return;
+  // Submit Order via Backend API with Idempotency Key
+  const handleSubmitOrder = async () => {
+    if (cart.length === 0 || !table || !restaurant) return;
+    setIsSubmitting(true);
 
-    soundEngine.playNewOrderChime();
+    // Reuse key on retry, or generate new logical key for a fresh submission
+    const idempotencyKey =
+      currentIdempotencyKey ||
+      `idem-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+    setCurrentIdempotencyKey(idempotencyKey);
 
-    const newOrderItems: OrderItem[] = cart.map((c, idx) => ({
-      id: `item-${Date.now()}-${idx}`,
+    const itemsPayload: CustomerCreateOrderItemPayload[] = cart.map((c) => ({
       menuItemId: c.menuItemId,
-      name: c.item.name,
-      price: c.item.price + c.selectedOptions.reduce((s, o) => s + o.priceDelta, 0),
       quantity: c.quantity,
       selectedOptions: c.selectedOptions,
       note: c.note,
-      status: 'Cooking',
-      itemTotal: c.itemTotal,
     }));
 
-    const allOrders = storageService.getOrders();
-    let updatedOrder: Order;
+    try {
+      soundEngine.playNewOrderChime();
+      let resOrder: Order;
 
-    if (activeOrder) {
-      // Append to existing active order
-      updatedOrder = {
-        ...activeOrder,
-        items: [...activeOrder.items, ...newOrderItems],
-        subTotal: activeOrder.subTotal + totalCartAmount,
-        totalAmount: activeOrder.totalAmount + totalCartAmount,
-        updatedAt: new Date().toISOString(),
-      };
-      const idx = allOrders.findIndex((o) => o.id === activeOrder.id);
-      if (idx > -1) allOrders[idx] = updatedOrder;
-    } else {
-      // Create fresh new order
-      updatedOrder = {
-        id: `ord-${Date.now()}`,
-        orderCode: `IM-${new Date().toISOString().slice(2, 10).replace(/-/g, '')}-${Math.floor(
-          100 + Math.random() * 900
-        )}`,
-        tableId: table.id,
-        tableName: table.name,
-        restaurantId: restaurant.id,
-        items: newOrderItems,
-        subTotal: totalCartAmount,
-        totalAmount: totalCartAmount,
-        status: 'Preparing',
-        isPaid: false,
-        orderSource: 'QR_CUSTOMER',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      allOrders.unshift(updatedOrder);
-
-      // Update table status to Occupied
-      const allTables = storageService.getTables();
-      const tIdx = allTables.findIndex((t) => t.id === table.id);
-      if (tIdx > -1) {
-        allTables[tIdx].status = 'Occupied';
-        allTables[tIdx].currentOrderId = updatedOrder.id;
-        allTables[tIdx].activeSince = new Date().toISOString();
-        storageService.saveTables(allTables);
-        setTable(allTables[tIdx]);
+      if (activeOrder) {
+        // Calling addItems on existing order (Subsequent Round)
+        const res = await apiClient.customerOrders.addItems(
+          activeOrder.id,
+          {
+            restaurantSlug,
+            tableCode,
+            qrToken: qrToken || '',
+            orderId: activeOrder.id,
+            items: itemsPayload,
+          },
+          { idempotencyKey },
+        );
+        resOrder = res.data!;
+      } else {
+        // Calling create for Round 1
+        const res = await apiClient.customerOrders.create(
+          {
+            restaurantSlug,
+            tableCode,
+            qrToken: qrToken || '',
+            items: itemsPayload,
+          },
+          { idempotencyKey },
+        );
+        resOrder = res.data!;
       }
+
+      setActiveOrder(resOrder);
+      setCart([]);
+      setIsCartOpen(false);
+      setCurrentIdempotencyKey(null); // Reset key upon verified success
+      showToast('🎉 Đã gửi đơn thành công! Vui lòng chờ thu ngân duyệt.');
+      setIsTrackerOpen(true);
+    } catch (err: any) {
+      console.error('Lỗi gửi đơn gọi món:', err);
+      showToast(err.message || 'Không thể gửi đơn món ăn. Vui lòng nhấn gửi lại!');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    storageService.saveOrders(allOrders);
-    setActiveOrder(updatedOrder);
-    setCart([]);
-    setIsCartOpen(false);
-
-    // Broadcast real-time event to Admin POS & Kitchen KDS tabs
-    realtimeHub.publish('NEW_ORDER', updatedOrder, restaurant.id);
-
-    showToast('🎉 Đã gửi đơn thành công đến Bếp & Thu ngân!');
-    setIsTrackerOpen(true);
   };
 
   // Call Staff action
   const handleSendCallStaff = (reason: string) => {
-    if (!table) return;
+    if (!table || !restaurant) return;
     realtimeHub.publish(
       'CALL_STAFF',
       {
@@ -332,42 +429,68 @@ export default function CustomerTableMenuPage() {
         reason,
         timestamp: Date.now(),
       },
-      restaurant.id
+      restaurant.id,
     );
     setIsCallStaffOpen(false);
     showToast(`🔔 Đã gửi yêu cầu "${reason}" đến nhân viên!`);
   };
 
   // Request payment action
-  const handleRequestPayment = (method: 'VietQR' | 'Cash') => {
+  const handleRequestPayment = async (method: 'VietQR' | 'Cash') => {
     if (!activeOrder || !table) return;
-
-    const allOrders = storageService.getOrders();
-    const idx = allOrders.findIndex((o) => o.id === activeOrder.id);
-    if (idx > -1) {
-      allOrders[idx].status = 'PaymentRequested';
-      allOrders[idx].paymentMethod = method;
-      storageService.saveOrders(allOrders);
-      setActiveOrder(allOrders[idx]);
-    }
-
-    const allTables = storageService.getTables();
-    const tIdx = allTables.findIndex((t) => t.id === table.id);
-    if (tIdx > -1) {
-      allTables[tIdx].status = 'PaymentRequested';
-      storageService.saveTables(allTables);
-      setTable(allTables[tIdx]);
-    }
-
-    realtimeHub.publish('PAYMENT_REQUESTED', { orderId: activeOrder.id, method }, restaurant.id);
-    setIsPreBillOpen(false);
-
-    if (method === 'VietQR') {
-      setIsVietQROpen(true);
-    } else {
-      showToast('💵 Đã báo thu ngân mang hóa đơn & tiền thừa tới bàn!');
+    setIsRequestingPayment(true);
+    try {
+      const res = await apiClient.orders.requestPayment(activeOrder.id, method);
+      if (res.data) {
+        setActiveOrder(res.data);
+      }
+      setIsPreBillOpen(false);
+      if (method === 'VietQR') {
+        setIsVietQROpen(true);
+      } else {
+        showToast('💵 Đã báo thu ngân mang hóa đơn & tiền thừa tới bàn!');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Không thể gửi yêu cầu thanh toán lúc này.');
+    } finally {
+      setIsRequestingPayment(false);
     }
   };
+
+  // Render Loading Screen
+  if (isLoadingContext) {
+    return (
+      <div className="max-w-lg mx-auto bg-[#f7f5ef] min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <Loader2 className="w-10 h-10 text-[#176044] animate-spin mb-4" />
+        <h2 className="text-base font-bold text-slate-800">Đang nạp thực đơn bàn...</h2>
+        <p className="text-xs text-slate-500 mt-1">
+          Hệ thống đang xác thực mã QR bàn {tableCode || ''} và kết nối máy chủ
+        </p>
+      </div>
+    );
+  }
+
+  // Render Error Screen (QR Invalid / Network down)
+  if (contextError || !restaurant || !table) {
+    return (
+      <div className="max-w-lg mx-auto bg-[#f7f5ef] min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-4 shadow-sm">
+          <AlertCircle className="w-8 h-8" />
+        </div>
+        <h2 className="text-lg font-bold text-slate-900">Không thể tải thực đơn</h2>
+        <p className="text-xs text-slate-600 max-w-xs mt-2 leading-relaxed">
+          {contextError || 'Không xác định được bàn hoặc thông tin nhà hàng.'}
+        </p>
+        <Button
+          variant="primary"
+          onClick={() => loadData()}
+          className="mt-6 flex items-center gap-2 px-6 py-2.5 text-xs font-semibold shadow-md"
+        >
+          <RefreshCw className="w-4 h-4" /> Thử lại
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-lg mx-auto bg-[#f7f5ef] min-h-screen pb-28">
@@ -389,7 +512,7 @@ export default function CustomerTableMenuPage() {
 
           <div className="flex items-center gap-1.5">
             <div className="px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-bold text-amber-300">
-              {table?.name || 'Bàn'}
+              {table.name}
             </div>
             <button
               onClick={() => setIsCallStaffOpen(true)}
@@ -409,7 +532,7 @@ export default function CustomerTableMenuPage() {
               className="flex items-center gap-1.5 text-amber-300 font-semibold"
             >
               <Clock className="w-3.5 h-3.5 animate-spin" />
-              <span>Tiến độ món ({activeOrder.items.length} món)</span>
+              <span>Tiến độ món ({activeOrder.items?.length || 0} món)</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
             <button
@@ -466,7 +589,7 @@ export default function CustomerTableMenuPage() {
                   : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
               }`}
             >
-              <span>{cat.icon}</span>
+              <span>{cat.icon || '🍽️'}</span>
               <span>{cat.name}</span>
             </button>
           ))}
@@ -478,7 +601,14 @@ export default function CustomerTableMenuPage() {
         {filteredItems.length === 0 ? (
           <div className="text-center py-16 text-slate-400 space-y-2">
             <p className="text-sm">Không tìm thấy món ăn phù hợp</p>
-            <Button variant="outline" size="sm" onClick={() => { setSearchQuery(''); setActiveCategoryId('all'); }}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setSearchQuery('');
+                setActiveCategoryId('all');
+              }}
+            >
               Xem tất cả thực đơn
             </Button>
           </div>
@@ -496,7 +626,7 @@ export default function CustomerTableMenuPage() {
               {/* Dish Photo */}
               <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
                 <img
-                  src={item.imageUrl}
+                  src={item.imageUrl || '/placeholder-food.jpg'}
                   alt={item.name}
                   className="w-full h-full object-cover"
                   loading="lazy"
@@ -560,69 +690,72 @@ export default function CustomerTableMenuPage() {
               <div className="w-8 h-8 rounded-full bg-amber-400 text-slate-900 grid place-items-center text-xs font-black">
                 {totalCartCount}
               </div>
-              <span className="text-sm">Xem giỏ hàng</span>
+              <div className="text-left">
+                <div className="text-xs text-amber-200">Giỏ món ăn</div>
+                <div className="text-sm leading-tight">{formatCurrencyVND(totalCartAmount)}</div>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-base text-amber-300">{formatCurrencyVND(totalCartAmount)}</span>
-              <ChevronRight className="w-5 h-5 text-slate-300" />
+            <div className="flex items-center gap-1.5 text-xs text-amber-300">
+              <span>Xem giỏ & Gửi món</span>
+              <ChevronRight className="w-4 h-4" />
             </div>
           </button>
         </div>
       )}
 
-      {/* ================= ITEM DETAIL & CUSTOMIZE MODAL ================= */}
+      {/* ================= ITEM OPTIONS DETAIL MODAL ================= */}
       <Modal
         isOpen={!!selectedItemForDetail}
         onClose={() => setSelectedItemForDetail(null)}
-        maxWidth="md"
+        title={selectedItemForDetail?.name || 'Chi tiết món'}
+        subtitle={
+          selectedItemForDetail
+            ? `Giá gốc: ${formatCurrencyVND(selectedItemForDetail.price)}`
+            : undefined
+        }
       >
         {selectedItemForDetail && (
-          <div className="space-y-5">
-            <div className="relative -mx-6 -mt-6 h-48 bg-slate-100 overflow-hidden">
-              <img
-                src={selectedItemForDetail.imageUrl}
-                alt={selectedItemForDetail.name}
-                className="w-full h-full object-cover"
-              />
-              <button
-                onClick={() => setSelectedItemForDetail(null)}
-                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center backdrop-blur-sm"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div>
-              <div className="flex items-start justify-between gap-4">
-                <h2 className="text-lg font-bold text-slate-900">{selectedItemForDetail.name}</h2>
-                <span className="text-base font-extrabold text-[#176044]">
-                  {formatCurrencyVND(selectedItemForDetail.price)}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                {selectedItemForDetail.description}
-              </p>
-            </div>
-
-            {/* Options list */}
+          <div className="space-y-4">
+            {/* Options Groups */}
             {selectedItemForDetail.options?.map((grp) => (
-              <div key={grp.id} className="space-y-2 pt-2 border-t border-slate-100">
-                <div className="flex items-center justify-between text-xs font-bold text-slate-800">
-                  <span>{grp.name}</span>
-                  {grp.required && <span className="text-[10px] text-amber-600">Bắt buộc</span>}
+              <div key={grp.id} className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-800">
+                    {grp.name}{' '}
+                    {grp.required && <span className="text-rose-500 font-semibold">*</span>}
+                  </span>
+                  {grp.required && (
+                    <span className="text-[10px] text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full font-semibold">
+                      Bắt buộc
+                    </span>
+                  )}
                 </div>
-                <div className="grid grid-cols-1 gap-2">
+
+                <div className="grid grid-cols-2 gap-2">
                   {grp.values.map((val) => {
-                    const isSelected = modalSelectedOptions.some((o) => o.valueId === val.id);
+                    const isSelected = modalSelectedOptions.some(
+                      (o) => o.groupId === grp.id && o.valueId === val.id,
+                    );
                     return (
                       <button
-                        key={val.id}
                         type="button"
+                        key={val.id}
                         onClick={() => {
-                          if (grp.multiple) {
+                          if (grp.required) {
+                            setModalSelectedOptions([
+                              ...modalSelectedOptions.filter((o) => o.groupId !== grp.id),
+                              {
+                                groupId: grp.id,
+                                groupName: grp.name,
+                                valueId: val.id,
+                                valueName: val.name,
+                                priceDelta: val.priceDelta,
+                              },
+                            ]);
+                          } else {
                             if (isSelected) {
                               setModalSelectedOptions(
-                                modalSelectedOptions.filter((o) => o.valueId !== val.id)
+                                modalSelectedOptions.filter((o) => o.valueId !== val.id),
                               );
                             } else {
                               setModalSelectedOptions([
@@ -636,19 +769,6 @@ export default function CustomerTableMenuPage() {
                                 },
                               ]);
                             }
-                          } else {
-                            // Single choice in group
-                            const filtered = modalSelectedOptions.filter((o) => o.groupId !== grp.id);
-                            setModalSelectedOptions([
-                              ...filtered,
-                              {
-                                groupId: grp.id,
-                                groupName: grp.name,
-                                valueId: val.id,
-                                valueName: val.name,
-                                priceDelta: val.priceDelta,
-                              },
-                            ]);
                           }
                         }}
                         className={`p-2.5 rounded-xl border text-xs flex items-center justify-between transition-all ${
@@ -659,7 +779,9 @@ export default function CustomerTableMenuPage() {
                       >
                         <span>{val.name}</span>
                         {val.priceDelta > 0 && (
-                          <span className="text-slate-500">+{formatCurrencyVND(val.priceDelta)}</span>
+                          <span className="text-slate-500">
+                            +{formatCurrencyVND(val.priceDelta)}
+                          </span>
                         )}
                       </button>
                     );
@@ -711,7 +833,7 @@ export default function CustomerTableMenuPage() {
                 {formatCurrencyVND(
                   (selectedItemForDetail.price +
                     modalSelectedOptions.reduce((s, o) => s + o.priceDelta, 0)) *
-                    modalQuantity
+                    modalQuantity,
                 )}
               </Button>
             </div>
@@ -723,7 +845,7 @@ export default function CustomerTableMenuPage() {
       <Drawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        title={`Giỏ hàng · ${table?.name || 'Bàn'}`}
+        title={`Giỏ hàng · ${table.name}`}
         position="bottom"
       >
         <div className="space-y-4">
@@ -759,7 +881,7 @@ export default function CustomerTableMenuPage() {
                       } else {
                         const updated = [...cart];
                         updated[idx].quantity -= 1;
-                        updated[idx].itemTotal -= item.itemTotal / (item.quantity);
+                        updated[idx].itemTotal -= item.itemTotal / item.quantity;
                         setCart(updated);
                       }
                     }}
@@ -794,10 +916,20 @@ export default function CustomerTableMenuPage() {
             <Button
               variant="primary"
               onClick={handleSubmitOrder}
-              className="w-full py-3.5 text-base shadow-lg"
+              disabled={isSubmitting}
+              className="w-full py-3.5 text-base shadow-lg flex items-center justify-center gap-2"
             >
-              <Send className="w-4 h-4 mr-2" />
-              Gửi gọi món tới Bếp ngay
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Đang gửi gọi món...</span>
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4" />
+                  <span>Gửi gọi món tới Bếp ngay</span>
+                </>
+              )}
             </Button>
           </div>
         </div>
@@ -808,7 +940,7 @@ export default function CustomerTableMenuPage() {
         isOpen={isTrackerOpen}
         onClose={() => setIsTrackerOpen(false)}
         title="Tiến độ chế biến món ăn"
-        subtitle={`${table?.name || 'Bàn'} · Mã đơn: ${activeOrder?.orderCode || ''}`}
+        subtitle={`${table.name} · Mã đơn: ${activeOrder?.orderCode || ''}`}
       >
         {activeOrder ? (
           <div className="space-y-6">
@@ -818,40 +950,77 @@ export default function CustomerTableMenuPage() {
                 <StatusChip status={activeOrder.status} />
               </div>
               <p className="text-xs text-slate-600">
-                Đơn hàng đang được Bếp tiếp nhận và nấu nướng theo thứ tự yêu cầu.
+                {activeOrder.status === 'WaitingConfirmation'
+                  ? 'Đơn gọi món đang chờ Thu ngân/Phục vụ xác nhận duyệt vào Bếp.'
+                  : 'Đơn hàng đang được Bếp tiếp nhận và nấu nướng theo thứ tự yêu cầu.'}
               </p>
             </div>
 
-            {/* Dishes checklist in order */}
+            {/* Rounds or Dishes Checklist */}
             <div className="space-y-3">
               <h4 className="text-xs font-bold uppercase text-slate-500 tracking-wider">
-                Chi tiết món ăn ({activeOrder.items.length} món)
+                Chi tiết món ăn ({activeOrder.items?.length || 0} món)
               </h4>
-              <div className="space-y-2">
-                {activeOrder.items.map((it) => (
-                  <div
-                    key={it.id}
-                    className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between"
-                  >
-                    <div>
-                      <strong className="text-xs text-slate-900 block">
-                        {it.quantity}x {it.name}
-                      </strong>
-                      {it.note && <small className="text-[10px] text-amber-700">{it.note}</small>}
-                    </div>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                        it.status === 'Ready'
-                          ? 'bg-teal-100 text-teal-800'
-                          : it.status === 'Cooking'
-                          ? 'bg-amber-100 text-amber-800 animate-pulse'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}
+              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                {activeOrder.items?.map((it) => {
+                  const isWaitingConf =
+                    it.status === 'WaitingConfirmation' ||
+                    activeOrder.status === 'WaitingConfirmation';
+                  const isReady = it.status === 'Ready';
+                  const isCooking = it.status === 'Cooking';
+                  const isServed = it.status === 'Served';
+                  const isCancelled = it.status === 'Cancelled';
+
+                  return (
+                    <div
+                      key={it.id}
+                      className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between"
                     >
-                      {it.status === 'Ready' ? '✓ Đã xong' : it.status === 'Cooking' ? '♨ Đang nấu' : 'Chờ nấu'}
-                    </span>
-                  </div>
-                ))}
+                      <div>
+                        <strong className="text-xs text-slate-900 block">
+                          {it.quantity}x {it.name}
+                        </strong>
+                        {it.roundNumber && (
+                          <span className="text-[10px] text-slate-400 block font-mono">
+                            Lượt #{it.roundNumber}
+                          </span>
+                        )}
+                        {it.note && <small className="text-[10px] text-amber-700">{it.note}</small>}
+                      </div>
+                      <span
+                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${
+                          isWaitingConf
+                            ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
+                            : isReady
+                            ? 'bg-teal-100 text-teal-800'
+                            : isServed
+                            ? 'bg-blue-100 text-blue-800'
+                            : isCooking
+                            ? 'bg-orange-100 text-orange-800 animate-pulse'
+                            : isCancelled
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-slate-100 text-slate-700'
+                        }`}
+                      >
+                        {isWaitingConf ? (
+                          <>
+                            <Hourglass className="w-3 h-3" /> Chờ thu ngân duyệt
+                          </>
+                        ) : isReady ? (
+                          '✓ Đã xong'
+                        ) : isServed ? (
+                          '✓ Đã phục vụ'
+                        ) : isCooking ? (
+                          '♨ Đang nấu'
+                        ) : isCancelled ? (
+                          '✕ Đã hủy'
+                        ) : (
+                          '⏳ Chờ nấu'
+                        )}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -884,18 +1053,20 @@ export default function CustomerTableMenuPage() {
         isOpen={isPreBillOpen}
         onClose={() => setIsPreBillOpen(false)}
         title="Phiếu tạm tính hóa đơn"
-        subtitle={`${restaurant.name} · ${table?.name || 'Bàn'}`}
+        subtitle={`${restaurant.name} · ${table.name}`}
       >
         {activeOrder ? (
           <div className="space-y-4">
             <div className="p-4 bg-[#fff9ed] border border-[#f0dbb5] rounded-2xl space-y-3 font-mono text-xs">
               <div className="text-center pb-3 border-b border-dashed border-[#dbc89f]">
                 <strong className="text-sm font-sans block text-slate-900">{restaurant.name}</strong>
-                <span className="text-[11px] text-slate-600">{table?.name} · {activeOrder.orderCode}</span>
+                <span className="text-[11px] text-slate-600">
+                  {table.name} · {activeOrder.orderCode}
+                </span>
               </div>
 
               <div className="space-y-1.5 py-1">
-                {activeOrder.items.map((it) => (
+                {activeOrder.items?.map((it) => (
                   <div key={it.id} className="flex justify-between items-start text-[11px]">
                     <span className="text-slate-800">
                       {it.quantity}x {it.name}
@@ -919,6 +1090,7 @@ export default function CustomerTableMenuPage() {
               <Button
                 variant="secondary"
                 onClick={() => handleRequestPayment('Cash')}
+                disabled={isRequestingPayment}
                 className="py-3"
               >
                 💵 Tiền mặt
@@ -926,6 +1098,7 @@ export default function CustomerTableMenuPage() {
               <Button
                 variant="amber"
                 onClick={() => handleRequestPayment('VietQR')}
+                disabled={isRequestingPayment}
                 className="py-3"
               >
                 <QrCode className="w-4 h-4 mr-1.5" /> Quét VietQR
@@ -978,7 +1151,7 @@ export default function CustomerTableMenuPage() {
                   accountNo: restaurant.bankAccount?.accountNo || '0908123456',
                   accountName: restaurant.bankAccount?.accountName || 'BEP NHA RESTAURANT',
                   amount: activeOrder.totalAmount,
-                  memo: `${restaurant.slug} ${table?.name} ${activeOrder.orderCode}`,
+                  memo: `${restaurant.slug} ${table.name} ${activeOrder.orderCode}`,
                 })}
                 alt="VietQR Payment"
                 className="w-56 h-auto rounded-lg shadow-sm"
@@ -988,7 +1161,7 @@ export default function CustomerTableMenuPage() {
                   {formatCurrencyVND(activeOrder.totalAmount)}
                 </strong>
                 <p className="text-[11px] text-slate-500 font-mono">
-                  Nội dung: {restaurant.slug} {table?.name}
+                  Nội dung: {restaurant.slug} {table.name}
                 </p>
               </div>
             </div>

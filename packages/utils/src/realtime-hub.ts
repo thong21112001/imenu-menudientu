@@ -37,8 +37,13 @@ class RealtimeHub {
     const eventMapping: Array<{ wsEvent: string; localType: RealtimeEventType }> = [
       { wsEvent: 'order:created', localType: 'NEW_ORDER' },
       { wsEvent: 'order:item_status_updated', localType: 'ORDER_STATUS_UPDATED' },
-      { wsEvent: 'table:status_updated', localType: 'TABLE_STATUS_UPDATED' },
+      { wsEvent: 'order:round_added', localType: 'ROUND_ADDED' },
+      { wsEvent: 'order:round_confirmed', localType: 'ROUND_CONFIRMED' },
+      { wsEvent: 'order:round_cancelled', localType: 'ROUND_CANCELLED' },
+      { wsEvent: 'order:payment_requested', localType: 'PAYMENT_REQUESTED' },
       { wsEvent: 'order:payment_completed', localType: 'PAYMENT_COMPLETED' },
+      { wsEvent: 'order:updated', localType: 'ORDER_STATUS_UPDATED' },
+      { wsEvent: 'table:status_updated', localType: 'TABLE_STATUS_UPDATED' },
     ];
 
     eventMapping.forEach(({ wsEvent, localType }) => {

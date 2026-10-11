@@ -34,3 +34,22 @@ export interface Table {
   branchId?: string;
   isDeleted?: boolean;
 }
+
+export interface MergeTablesPayload {
+  fromTableIds: string[];
+  targetTableId: string;
+  note?: string;
+}
+
+export interface MoveTableItemSelection {
+  itemId: string;
+  quantity?: number;
+}
+
+export interface MoveTableItemsPayload {
+  fromTableId: string;
+  toTableId: string;
+  items: MoveTableItemSelection[];
+  reason?: string;
+}
+

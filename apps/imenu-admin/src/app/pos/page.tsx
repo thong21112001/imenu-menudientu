@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   storageService,
   formatCurrencyVND,
@@ -18,6 +18,7 @@ import {
   SelectedOption,
   MenuItemOptionGroup,
   MenuItemOptionValue,
+  OrderRound,
 } from '@imenu/types';
 import { Card, Button, CustomSelect, Modal, useToast } from '@imenu/ui';
 import {
@@ -35,6 +36,15 @@ import {
   ShoppingBag,
   Store,
   RefreshCw,
+  Bell,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Hourglass,
+  Loader2,
+  ArrowRight,
+  UtensilsCrossed,
 } from 'lucide-react';
 
 interface PosCartItem {
@@ -76,6 +86,77 @@ export default function PosTerminalPage() {
   // Last submitted order confirmation modal
   const [lastSubmittedOrder, setLastSubmittedOrder] = useState<Order | null>(null);
 
+  // Active Tab: 'pos' (terminal) vs 'qr_approvals' (pending QR orders/rounds queue)
+  const [activeTab, setActiveTab] = useState<'pos' | 'qr_approvals'>('pos');
+  const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
+  const [isLoadingPending, setIsLoadingPending] = useState<boolean>(false);
+  const [isConfirmingAction, setIsConfirmingAction] = useState<string | null>(null);
+  const [rejectRoundModal, setRejectRoundModal] = useState<{
+    orderId: string;
+    orderCode: string;
+    tableName: string;
+    roundNumber: number;
+    reason: string;
+  } | null>(null);
+
+  // Fetch pending QR orders/rounds
+  const fetchPendingOrders = useCallback(async () => {
+    setIsLoadingPending(true);
+    try {
+      const res = await apiClient.orders.list({
+        branchId: activeBranchId || undefined,
+        limit: 100,
+      });
+      const raw = res?.data?.items || res?.data || [];
+      const list: Order[] = Array.isArray(raw) ? raw : [];
+      const waiting = list.filter((ord) => {
+        if (ord.status === 'WaitingConfirmation') return true;
+        if (ord.rounds && ord.rounds.some((r: any) => r.status === 'WaitingConfirmation')) return true;
+        if (ord.items && ord.items.some((it: any) => it.status === 'WaitingConfirmation')) return true;
+        return false;
+      });
+      setPendingOrders(waiting);
+    } catch (err) {
+      console.error('Lỗi lấy danh sách duyệt QR:', err);
+    } finally {
+      setIsLoadingPending(false);
+    }
+  }, [activeBranchId]);
+
+  const handleConfirmRound = async (orderId: string, roundNumber: number) => {
+    const actionKey = `${orderId}-${roundNumber}`;
+    setIsConfirmingAction(actionKey);
+    try {
+      await apiClient.orders.confirmRound(orderId, roundNumber);
+      toast.success(`Đã duyệt lượt gọi món #${roundNumber} thành công và gửi vào Bếp!`);
+      await fetchPendingOrders();
+    } catch (err: any) {
+      console.error('Lỗi duyệt lượt gọi món:', err);
+      toast.error(err.message || 'Không thể duyệt đơn. Đang làm mới dữ liệu...');
+      await fetchPendingOrders();
+    } finally {
+      setIsConfirmingAction(null);
+    }
+  };
+
+  const handleRejectRound = async () => {
+    if (!rejectRoundModal) return;
+    const { orderId, roundNumber, reason } = rejectRoundModal;
+    setIsConfirmingAction(`${orderId}-${roundNumber}`);
+    try {
+      await apiClient.orders.cancelRound(orderId, roundNumber, reason || 'Từ chối bởi thu ngân');
+      toast.success(`Đã từ chối lượt gọi món #${roundNumber}`);
+      setRejectRoundModal(null);
+      await fetchPendingOrders();
+    } catch (err: any) {
+      console.error('Lỗi từ chối lượt gọi món:', err);
+      toast.error(err.message || 'Không thể từ chối lượt gọi món.');
+      await fetchPendingOrders();
+    } finally {
+      setIsConfirmingAction(null);
+    }
+  };
+
   // Initialize data and branch listeners
   useEffect(() => {
     const user = storageService.getCurrentUser();
@@ -88,18 +169,42 @@ export default function PosTerminalPage() {
     setActiveBranchId(branchId);
 
     fetchBranchAndMenuData(branchId);
+    fetchPendingOrders();
 
     const handleBranchChange = (e: any) => {
       const newBranchId = e.detail?.branchId ?? null;
       setActiveBranchId(newBranchId);
       fetchBranchAndMenuData(newBranchId);
+      fetchPendingOrders();
     };
 
     window.addEventListener('imenu:branch_changed', handleBranchChange);
+
+    const unsubRealtime = realtimeHub.subscribe('*', (payload) => {
+      const evt = payload.type as string;
+      if (
+        evt === 'NEW_ORDER' ||
+        evt === 'ROUND_ADDED' ||
+        evt === 'ROUND_CONFIRMED' ||
+        evt === 'ROUND_CANCELLED' ||
+        evt === 'order:created' ||
+        evt === 'order:round_added' ||
+        evt === 'order:round_confirmed' ||
+        evt === 'order:round_cancelled' ||
+        evt === 'order:updated'
+      ) {
+        fetchPendingOrders();
+        if (evt.includes('added') || evt === 'NEW_ORDER' || evt === 'ROUND_ADDED') {
+          soundEngine.playNewOrderChime();
+        }
+      }
+    });
+
     return () => {
       window.removeEventListener('imenu:branch_changed', handleBranchChange);
+      unsubRealtime();
     };
-  }, []);
+  }, [fetchPendingOrders]);
 
   const fetchBranchAndMenuData = async (branchId: string | null) => {
     setIsLoading(true);
@@ -431,54 +536,27 @@ export default function PosTerminalPage() {
       })),
     };
 
+    const idempotencyKey = `pos-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     let createdOrder: Order | null = null;
     try {
-      const res = await apiClient.orders.create(orderPayload);
+      const res = await apiClient.orders.create(orderPayload, { idempotencyKey });
       if (res.data) {
         createdOrder = {
           ...res.data,
-          id: res.data._id || res.data.id,
+          id: (res.data as any)._id || res.data.id,
           createdAt: res.data.createdAt || new Date().toISOString(),
           updatedAt: res.data.updatedAt || new Date().toISOString(),
         };
       }
     } catch (err: any) {
-      console.warn('API create order failed, saving locally:', err);
+      console.error('API create order failed:', err);
+      toast.error(err.message || 'Gửi đơn hàng POS thất bại. Vui lòng kiểm tra kết nối máy chủ!');
+      return;
     }
 
     if (!createdOrder) {
-      const newOrderItems: OrderItem[] = posCart.map((c, i) => ({
-        id: `pos-${Date.now()}-${i}`,
-        menuItemId: c.item.id,
-        name: c.item.name,
-        price: c.unitPrice,
-        quantity: c.quantity,
-        selectedOptions: c.selectedOptions,
-        note: c.note,
-        status: 'Cooking',
-        itemTotal: c.itemTotal,
-      }));
-
-      createdOrder = {
-        id: `ord-${Date.now()}`,
-        orderCode: `POS-${Math.floor(1000 + Math.random() * 9000)}`,
-        tableId: table.id,
-        tableName: table.name,
-        restaurantId: restId,
-        items: newOrderItems,
-        subTotal: totalCartAmount,
-        totalAmount: totalCartAmount,
-        status: 'Preparing',
-        isPaid: false,
-        orderSource: 'STAFF_POS',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      // Save order into storage
-      const allOrders = storageService.getOrders();
-      allOrders.unshift(createdOrder);
-      storageService.saveOrders(allOrders);
+      toast.error('Không nhận được phản hồi tạo đơn từ máy chủ.');
+      return;
     }
 
     // Update table status to Occupied in memory
@@ -551,8 +629,207 @@ export default function PosTerminalPage() {
         </div>
       </div>
 
-      {/* Main Grid: Menu selection (Left) vs Order Cart (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      {/* View Switcher: POS Terminal vs QR Order Approvals Queue */}
+      <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit">
+        <button
+          onClick={() => setActiveTab('pos')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
+            activeTab === 'pos'
+              ? 'bg-white text-slate-900 shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <ShoppingBag className="w-4 h-4 text-[#176044]" />
+          <span>Bán hàng POS tại quầy</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('qr_approvals')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer relative ${
+            activeTab === 'qr_approvals'
+              ? 'bg-[#176044] text-white shadow-sm'
+              : 'text-slate-600 hover:text-slate-900'
+          }`}
+        >
+          <Bell className={`w-4 h-4 ${activeTab === 'qr_approvals' ? 'text-amber-300' : 'text-amber-500'}`} />
+          <span>Duyệt đơn gọi món QR</span>
+          {pendingOrders.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
+              {pendingOrders.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {activeTab === 'qr_approvals' ? (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+            <div>
+              <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
+                <Hourglass className="w-4 h-4 text-amber-500" />
+                Hàng đợi duyệt đơn QR từ khách hàng ({pendingOrders.length})
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Các lượt gọi món qua mã QR tại bàn cần Thu ngân/Phục vụ xác nhận trước khi chuyển xuống Bếp.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchPendingOrders}
+              disabled={isLoadingPending}
+              className="flex items-center gap-1.5 text-xs"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${isLoadingPending ? 'animate-spin' : ''}`} />
+              Làm mới
+            </Button>
+          </div>
+
+          {isLoadingPending ? (
+            <div className="p-16 bg-white rounded-2xl border border-slate-200 text-center space-y-3">
+              <Loader2 className="w-8 h-8 text-[#176044] animate-spin mx-auto" />
+              <p className="text-xs text-slate-500 font-medium">Đang kiểm tra đơn gọi món QR mới...</p>
+            </div>
+          ) : pendingOrders.length === 0 ? (
+            <div className="p-16 bg-white rounded-2xl border border-slate-200 text-center space-y-3">
+              <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                <CheckCircle2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-sm font-bold text-slate-900">Không có đơn QR nào đang chờ duyệt</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Tất cả các lượt gọi món từ khách hàng tại bàn đã được tiếp nhận và xử lý hoàn tất!
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {pendingOrders.map((ord) => {
+                const pendingRounds = ord.rounds && ord.rounds.length > 0
+                  ? ord.rounds.filter((r) => r.status === 'WaitingConfirmation')
+                  : ord.status === 'WaitingConfirmation'
+                  ? [{ roundNumber: 1, status: 'WaitingConfirmation' as const, items: ord.items }]
+                  : [];
+
+                return pendingRounds.map((round) => {
+                  const roundItems = (round as any).items?.length
+                    ? (round as any).items
+                    : ord.items?.filter((it) => it.roundNumber === round.roundNumber) || ord.items || [];
+
+                  const roundTotal = roundItems.reduce(
+                    (s: number, i: any) => s + (i.itemTotal || (i.price || 0) * (i.quantity || 1)),
+                    0,
+                  );
+                  const actionKey = `${ord.id}-${round.roundNumber}`;
+                  const isProcessing = isConfirmingAction === actionKey;
+
+                  return (
+                    <Card
+                      key={`${ord.id}-round-${round.roundNumber}`}
+                      className="p-4 border-2 border-amber-300 bg-amber-50/20 shadow-md space-y-3.5 flex flex-col justify-between"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-start justify-between border-b border-amber-200 pb-2.5">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-black px-2.5 py-1 rounded-lg bg-[#124a36] text-white">
+                                {ord.tableName}
+                              </span>
+                              <span className="text-xs font-bold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md">
+                                Lượt #{round.roundNumber}
+                              </span>
+                            </div>
+                            <span className="text-[10px] text-slate-500 font-mono mt-1 block">
+                              Mã đơn: {ord.orderCode} · {ord.openedAt || ord.createdAt ? new Date(ord.openedAt || ord.createdAt).toLocaleTimeString('vi-VN') : ''}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                          {roundItems.map((it: any, idx: number) => (
+                            <div
+                              key={it.id || idx}
+                              className="p-2.5 bg-white rounded-xl border border-slate-200 flex items-start justify-between gap-2"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-extrabold text-[#176044]">
+                                    {it.quantity}x
+                                  </span>
+                                  <strong className="text-xs text-slate-900 truncate">
+                                    {it.name}
+                                  </strong>
+                                </div>
+                                {it.selectedOptions && it.selectedOptions.length > 0 && (
+                                  <p className="text-[10px] text-slate-500 mt-0.5">
+                                    {it.selectedOptions.map((o: any) => o.valueName || o.name).join(', ')}
+                                  </p>
+                                )}
+                                {it.note && (
+                                  <p className="text-[10px] text-amber-700 italic mt-0.5">
+                                    Ghi chú: {it.note}
+                                  </p>
+                                )}
+                              </div>
+                              <span className="text-xs font-bold text-slate-800 whitespace-nowrap">
+                                {formatCurrencyVND(it.itemTotal || (it.price || 0) * (it.quantity || 1))}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-amber-200 space-y-2.5">
+                        <div className="flex justify-between items-center text-xs font-bold text-slate-800">
+                          <span>Tổng tiền lượt gọi:</span>
+                          <span className="text-sm font-black text-[#176044]">
+                            {formatCurrencyVND(roundTotal)}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={isProcessing}
+                            onClick={() =>
+                              setRejectRoundModal({
+                                orderId: ord.id,
+                                orderCode: ord.orderCode,
+                                tableName: ord.tableName,
+                                roundNumber: round.roundNumber,
+                                reason: '',
+                              })
+                            }
+                            className="text-rose-600 border-rose-300 hover:bg-rose-50 text-xs py-2"
+                          >
+                            <X className="w-3.5 h-3.5 mr-1" /> Từ chối
+                          </Button>
+
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            disabled={isProcessing}
+                            onClick={() => handleConfirmRound(ord.id, round.roundNumber)}
+                            className="bg-[#176044] hover:bg-[#124a36] text-white text-xs py-2 shadow-sm flex items-center justify-center gap-1"
+                          >
+                            {isProcessing ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                              <Check className="w-3.5 h-3.5" />
+                            )}
+                            <span>Duyệt vào Bếp</span>
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                });
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+        /* Main Grid: Menu selection (Left) vs Order Cart (Right) */
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Left Column: Category Quick Tabs & Dish Grid */}
         <div className="lg:col-span-7 xl:col-span-8 space-y-4">
           {/* Category Quick Tabs Bar */}
@@ -892,6 +1169,7 @@ export default function PosTerminalPage() {
           </Card>
         </div>
       </div>
+      )}
 
       {/* Modal 1: Option Groups / Toppings Customization Modal */}
       {customizingItem && (
@@ -1074,6 +1352,50 @@ export default function PosTerminalPage() {
             >
               Tiếp tục tạo đơn mới
             </Button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal 3: Reject Round Modal */}
+      {rejectRoundModal && (
+        <Modal
+          isOpen={true}
+          onClose={() => setRejectRoundModal(null)}
+          title={`Từ chối lượt gọi món #${rejectRoundModal.roundNumber}`}
+          subtitle={`${rejectRoundModal.tableName} · Mã đơn: ${rejectRoundModal.orderCode}`}
+        >
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-800">
+                Lý do từ chối (thông báo tới bàn khách):
+              </label>
+              <textarea
+                value={rejectRoundModal.reason}
+                onChange={(e) =>
+                  setRejectRoundModal({ ...rejectRoundModal, reason: e.target.value })
+                }
+                placeholder="Ví dụ: Món ăn tạm hết nguyên liệu, quầy bar quá tải..."
+                rows={3}
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-rose-500"
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setRejectRoundModal(null)}
+                className="flex-1"
+              >
+                Hủy bỏ
+              </Button>
+              <Button
+                variant="danger"
+                onClick={handleRejectRound}
+                disabled={isConfirmingAction !== null}
+                className="flex-1"
+              >
+                Xác nhận từ chối
+              </Button>
+            </div>
           </div>
         </Modal>
       )}
