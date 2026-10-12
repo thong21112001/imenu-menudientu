@@ -356,7 +356,7 @@ export default function CustomerTableMenuPage() {
 
   // Submit Order via Backend API with Idempotency Key
   const handleSubmitOrder = async () => {
-    if (cart.length === 0 || !table || !restaurant) return;
+    if (isSubmitting || cart.length === 0 || !table || !restaurant) return;
     setIsSubmitting(true);
 
     // Reuse key on retry, or generate new logical key for a fresh submission
@@ -437,7 +437,7 @@ export default function CustomerTableMenuPage() {
 
   // Request payment action
   const handleRequestPayment = async (method: 'VietQR' | 'Cash') => {
-    if (!activeOrder || !table) return;
+    if (isRequestingPayment || !activeOrder || !table) return;
     setIsRequestingPayment(true);
     try {
       const res = await apiClient.orders.requestPayment(activeOrder.id, method);
@@ -875,6 +875,7 @@ export default function CustomerTableMenuPage() {
                 {/* Quantity Control */}
                 <div className="flex items-center gap-2">
                   <button
+                    disabled={isSubmitting}
                     onClick={() => {
                       if (item.quantity === 1) {
                         setCart(cart.filter((_, i) => i !== idx));
@@ -885,12 +886,13 @@ export default function CustomerTableMenuPage() {
                         setCart(updated);
                       }
                     }}
-                    className="w-6 h-6 rounded-md bg-white border border-slate-300 text-slate-700 flex items-center justify-center"
+                    className="w-6 h-6 rounded-md bg-white border border-slate-300 text-slate-700 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Minus className="w-3 h-3" />
                   </button>
                   <span className="text-xs font-bold text-slate-800">{item.quantity}</span>
                   <button
+                    disabled={isSubmitting}
                     onClick={() => {
                       const updated = [...cart];
                       const unitP = item.itemTotal / item.quantity;
@@ -898,7 +900,7 @@ export default function CustomerTableMenuPage() {
                       updated[idx].itemTotal += unitP;
                       setCart(updated);
                     }}
-                    className="w-6 h-6 rounded-md bg-white border border-slate-300 text-slate-700 flex items-center justify-center"
+                    className="w-6 h-6 rounded-md bg-white border border-slate-300 text-slate-700 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <Plus className="w-3 h-3" />
                   </button>
