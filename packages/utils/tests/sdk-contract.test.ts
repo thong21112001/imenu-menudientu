@@ -261,11 +261,7 @@ async function runSdkContractTests() {
   console.log(`Kết quả kiểm thử Frontend SDK Contract: ${passed} passed, ${failed} failed`);
   console.log('----------------------------------------------------------------\n');
 
-  if (failed > 0) {
-    process.exit(1);
-  } else {
-    process.exit(0);
-  }
+  process.exitCode = failed > 0 ? 1 : 0;
 }
 
 runSdkContractTests();

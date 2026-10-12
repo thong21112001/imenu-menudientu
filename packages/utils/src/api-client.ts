@@ -834,7 +834,7 @@ export const apiClient = {
       if (query?.vatAmount !== undefined) q.append('vatAmount', String(query.vatAmount));
       if (query?.vatPercent !== undefined) q.append('vatPercent', String(query.vatPercent));
       const qs = q.toString();
-      return request<BillPreviewResult>(`/orders/${id}/preview-bill${qs ? `?${qs}` : ''}`);
+      return request<BillPreviewResult>(`/orders/${id}/bill-preview${qs ? `?${qs}` : ''}`);
     },
 
     async pay(
@@ -871,7 +871,7 @@ export const apiClient = {
     },
 
     async create(payload: CustomerCreateOrderPayload, options?: { idempotencyKey?: string }) {
-      return request<Order>('/orders', {
+      return request<Order>('/orders/customer', {
         method: 'POST',
         body: JSON.stringify(payload),
         headers: options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : undefined,
@@ -883,15 +883,15 @@ export const apiClient = {
       payload: CustomerAddItemsPayload,
       options?: { idempotencyKey?: string },
     ) {
-      return request<Order>(`/orders/${orderId}/items`, {
+      return request<Order>('/orders/customer/items', {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ ...payload, orderId: payload.orderId || orderId }),
         headers: options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : undefined,
       });
     },
 
     async getActiveOrder(orderId: string) {
-      return request<Order>(`/orders/${orderId}`);
+      return request<Order>(`/orders/customer/${orderId}`);
     },
   },
 };
