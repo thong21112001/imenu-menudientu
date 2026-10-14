@@ -184,7 +184,11 @@ export default function KitchenDisplaySystemPage() {
 
                     {/* Action buttons */}
                     <div className="flex items-center gap-1.5 flex-shrink-0">
-                      {it.status === 'Cooking' ? (
+                      {it.status === 'WaitingConfirmation' || ord.status === 'WaitingConfirmation' ? (
+                        <span className="px-2 py-1 rounded-lg bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold flex items-center gap-1">
+                          ⏳ Chờ duyệt
+                        </span>
+                      ) : it.status === 'Cooking' ? (
                         <button
                           onClick={() => handleUpdateItemStatus(ord.id, it.id, 'Ready')}
                           className="px-2.5 py-1 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-[11px] font-bold shadow-sm"

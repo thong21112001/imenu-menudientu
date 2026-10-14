@@ -1,7 +1,14 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
-import { storageService, formatCurrencyVND, formatDateTime, generateVietQRUrl } from '@imenu/utils';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  storageService,
+  formatCurrencyVND,
+  formatDateTime,
+  generateVietQRUrl,
+  apiClient,
+  realtimeHub,
+} from '@imenu/utils';
 import { Order, Restaurant } from '@imenu/types';
 import { Card, Button, StatusChip } from '@imenu/ui';
 import {
@@ -17,6 +24,8 @@ import {
   Store,
   ChevronRight,
   Maximize2,
+  RefreshCw,
+  Loader2,
 } from 'lucide-react';
 
 export default function BillsPage() {
@@ -25,11 +34,53 @@ export default function BillsPage() {
   const [selectedOrderForBill, setSelectedOrderForBill] = useState<Order | null>(null);
   const [zoomScale, setZoomScale] = useState<number>(1);
   const [statusFilter, setStatusFilter] = useState<'all' | 'Paid' | 'Preparing' | 'PaymentRequested'>('all');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [activeBranchId, setActiveBranchId] = useState<string | null>(storageService.getActiveBranchId());
+
+  const fetchOrders = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await apiClient.orders.list({
+        branchId: activeBranchId || undefined,
+        limit: 100,
+      });
+      const raw = res?.data?.items || res?.data || [];
+      const list: Order[] = Array.isArray(raw) ? raw : [];
+      setOrders(list);
+    } catch (err) {
+      console.error('Lỗi tải hóa đơn:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeBranchId]);
 
   useEffect(() => {
-    setOrders(storageService.getOrders());
+    fetchOrders();
     setRestaurant(storageService.getRestaurant());
-  }, []);
+
+    const handleBranchChange = (e: any) => {
+      const newBranchId = e.detail?.branchId ?? null;
+      setActiveBranchId(newBranchId);
+    };
+    window.addEventListener('imenu:branch_changed', handleBranchChange);
+
+    const unsub = realtimeHub.subscribe('*', (payload) => {
+      const evt = payload.type as string;
+      if (
+        evt === 'PAYMENT_COMPLETED' ||
+        evt === 'order:payment_completed' ||
+        evt === 'ORDER_STATUS_UPDATED' ||
+        evt === 'order:updated'
+      ) {
+        fetchOrders();
+      }
+    });
+
+    return () => {
+      window.removeEventListener('imenu:branch_changed', handleBranchChange);
+      unsub();
+    };
+  }, [fetchOrders]);
 
   // Keyboard shortcut: ESC to close preview
   useEffect(() => {
@@ -382,15 +433,29 @@ export default function BillsPage() {
                   </div>
                   <div className="flex justify-between text-slate-700">
                     <span>Tạm tính tiền món:</span>
-                    <span>{formatCurrencyVND(selectedOrderForBill.subTotal)}</span>
+                    <span>{formatCurrencyVND(selectedOrderForBill.subTotal || selectedOrderForBill.totalAmount)}</span>
                   </div>
+                  {Boolean(selectedOrderForBill.discountAmount && selectedOrderForBill.discountAmount > 0) && (
+                    <div className="flex justify-between text-rose-600">
+                      <span>Giảm giá / Ưu đãi:</span>
+                      <span>-{formatCurrencyVND(selectedOrderForBill.discountAmount)}</span>
+                    </div>
+                  )}
+                  {Boolean(selectedOrderForBill.serviceFee && selectedOrderForBill.serviceFee > 0) && (
+                    <div className="flex justify-between text-slate-700">
+                      <span>Phí dịch vụ:</span>
+                      <span>+{formatCurrencyVND(selectedOrderForBill.serviceFee)}</span>
+                    </div>
+                  )}
+                  {Boolean(selectedOrderForBill.vatAmount && selectedOrderForBill.vatAmount > 0) && (
+                    <div className="flex justify-between text-slate-700">
+                      <span>Thuế VAT:</span>
+                      <span>+{formatCurrencyVND(selectedOrderForBill.vatAmount)}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-slate-700">
-                    <span>Giảm giá / Ưu đãi:</span>
-                    <span>0đ</span>
-                  </div>
-                  <div className="flex justify-between text-slate-700">
-                    <span>Thuế VAT (0%):</span>
-                    <span>0đ</span>
+                    <span>Hình thức thanh toán:</span>
+                    <span className="font-bold">{selectedOrderForBill.paymentMethod || 'Tiền mặt'}</span>
                   </div>
 
                   {/* Grand Total */}

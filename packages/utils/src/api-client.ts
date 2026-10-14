@@ -1,4 +1,15 @@
 import { storageService } from './storage';
+import {
+  Order,
+  CustomerTableContext,
+  CustomerCreateOrderPayload,
+  CustomerAddItemsPayload,
+  PayOrderPayload,
+  BillPreviewQuery,
+  BillPreviewResult,
+  MergeTablesPayload,
+  MoveTableItemsPayload,
+} from '@imenu/types';
 
 export interface ApiResponse<T = any> {
   success?: boolean;
@@ -87,6 +98,10 @@ async function request<T = any>(
   const token = storageService.getAccessToken();
   if (token && !headers['Authorization']) {
     headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  if ((options as any)?.idempotencyKey && !headers['idempotency-key']) {
+    headers['idempotency-key'] = (options as any).idempotencyKey;
   }
 
   try {
@@ -642,6 +657,13 @@ export const apiClient = {
       });
     },
 
+    async moveItems(payload: MoveTableItemsPayload) {
+      return request<any>('/tables/move-items', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
     async delete(id: string) {
       return request<any>(`/tables/${id}`, {
         method: 'DELETE',
@@ -710,26 +732,65 @@ export const apiClient = {
     },
 
     async get(id: string) {
-      return request<any>(`/orders/${id}`);
+      return request<Order>(`/orders/${id}`);
     },
 
-    async create(payload: {
-      tableId: string;
-      items: any[];
-      orderSource?: string;
-      branchId?: string;
-      customerNote?: string;
-    }) {
-      return request<any>('/orders', {
+    async getByTable(tableId: string) {
+      return request<Order | null>(`/orders/by-table/${tableId}`);
+    },
+
+    async create(
+      payload: {
+        tableId: string;
+        items: any[];
+        orderSource?: string;
+        branchId?: string;
+        customerNote?: string;
+      },
+      options?: { idempotencyKey?: string },
+    ) {
+      return request<Order>('/orders', {
         method: 'POST',
         body: JSON.stringify(payload),
+        headers: options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : undefined,
       });
     },
 
-    async addItems(id: string, payload: { items: any[]; note?: string }) {
-      return request<any>(`/orders/${id}/items`, {
+    async addItems(
+      id: string,
+      payload: { items: any[]; note?: string },
+      options?: { idempotencyKey?: string },
+    ) {
+      return request<Order>(`/orders/${id}/items`, {
         method: 'POST',
         body: JSON.stringify(payload),
+        headers: options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : undefined,
+      });
+    },
+
+    async confirmRound(orderId: string, roundNumber: number) {
+      return request<Order>(`/orders/${orderId}/rounds/${roundNumber}/confirm`, {
+        method: 'POST',
+      });
+    },
+
+    async cancelRound(orderId: string, roundNumber: number, reason?: string) {
+      return request<Order>(`/orders/${orderId}/rounds/${roundNumber}/cancel`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: reason || 'Từ chối lượt gọi món' }),
+      });
+    },
+
+    async confirm(id: string) {
+      return request<Order>(`/orders/${id}/confirm`, {
+        method: 'POST',
+      });
+    },
+
+    async cancelItem(orderId: string, itemId: string, reason?: string) {
+      return request<Order>(`/orders/${orderId}/items/${itemId}/cancel`, {
+        method: 'POST',
+        body: JSON.stringify({ reason: reason || 'Hủy món' }),
       });
     },
 
@@ -751,19 +812,40 @@ export const apiClient = {
       });
     },
 
+    async requestPayment(id: string, paymentMethod?: string) {
+      return request<Order>(`/orders/${id}/request-payment`, {
+        method: 'POST',
+        body: JSON.stringify({ paymentMethod: paymentMethod || 'Cash' }),
+      });
+    },
+
+    async revertPaymentRequest(id: string) {
+      return request<Order>(`/orders/${id}/revert-payment-request`, {
+        method: 'POST',
+      });
+    },
+
+    async previewBill(id: string, query?: BillPreviewQuery) {
+      const q = new URLSearchParams();
+      if (query?.discountAmount !== undefined) q.append('discountAmount', String(query.discountAmount));
+      if (query?.discountPercent !== undefined) q.append('discountPercent', String(query.discountPercent));
+      if (query?.serviceFee !== undefined) q.append('serviceFee', String(query.serviceFee));
+      if (query?.serviceFeePercent !== undefined) q.append('serviceFeePercent', String(query.serviceFeePercent));
+      if (query?.vatAmount !== undefined) q.append('vatAmount', String(query.vatAmount));
+      if (query?.vatPercent !== undefined) q.append('vatPercent', String(query.vatPercent));
+      const qs = q.toString();
+      return request<BillPreviewResult>(`/orders/${id}/bill-preview${qs ? `?${qs}` : ''}`);
+    },
+
     async pay(
       id: string,
-      payload?: {
-        paymentMethod?: string;
-        discountAmount?: number;
-        serviceFee?: number;
-        vatAmount?: number;
-        note?: string;
-      },
+      payload?: PayOrderPayload,
+      options?: { idempotencyKey?: string },
     ) {
       return request<any>(`/orders/${id}/pay`, {
         method: 'POST',
         body: JSON.stringify(payload || {}),
+        headers: options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : undefined,
       });
     },
 
@@ -772,6 +854,44 @@ export const apiClient = {
         method: 'POST',
         body: JSON.stringify({ reason: reason || 'Hủy đơn hàng' }),
       });
+    },
+  },
+
+  customerOrders: {
+    async getTableContext(params: {
+      restaurantSlug: string;
+      tableCode: string;
+      qrToken?: string;
+    }) {
+      const q = new URLSearchParams();
+      q.append('restaurantSlug', params.restaurantSlug);
+      q.append('tableCode', params.tableCode);
+      if (params.qrToken) q.append('qrToken', params.qrToken);
+      return request<CustomerTableContext>(`/orders/public/table-context?${q.toString()}`);
+    },
+
+    async create(payload: CustomerCreateOrderPayload, options?: { idempotencyKey?: string }) {
+      return request<Order>('/orders/customer', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : undefined,
+      });
+    },
+
+    async addItems(
+      orderId: string,
+      payload: CustomerAddItemsPayload,
+      options?: { idempotencyKey?: string },
+    ) {
+      return request<Order>('/orders/customer/items', {
+        method: 'POST',
+        body: JSON.stringify({ ...payload, orderId: payload.orderId || orderId }),
+        headers: options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : undefined,
+      });
+    },
+
+    async getActiveOrder(orderId: string) {
+      return request<Order>(`/orders/customer/${orderId}`);
     },
   },
 };

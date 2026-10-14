@@ -130,6 +130,12 @@ export const AdminHeader: React.FC = () => {
           `🔔 ${payload.data.tableName}: "${payload.data.reason}"`,
           ...prev,
         ]);
+      } else if (payload.type === 'ROUND_ADDED' || payload.type === 'order:round_added') {
+        soundEngine.playNewOrderChime();
+        setNotifications((prev) => [
+          `🛎️ Lượt gọi món mới từ ${payload.data.tableName || 'Bàn'} (Chờ duyệt)`,
+          ...prev,
+        ]);
       } else if (payload.type === 'PAYMENT_REQUESTED') {
         soundEngine.playReadyChime();
         setNotifications((prev) => [

@@ -1,0 +1,459 @@
+# 🍽️ iMenu — Next-Generation Restaurant & Digital QR Menu Platform (Frontend Monorepo)
+
+*Read documentation in Vietnamese: [Vietnamese README (Tài liệu Tiếng Việt)](README.md)*
+
+Comprehensive **Frontend Monorepo** repository for the **iMenu Platform** (F&B All-in-One SaaS: Multi-round QR Table Ordering, POS Cashier Approval & Billing, Kitchen Display System KDS with Real-time WebSockets, Interactive Floor Map & Advanced Table Operations, VietQR & Cash Settlement, 80mm ESC/POS Thermal Receipt Printing, and Multi-Branch Management) built using **Turborepo** and **npm workspaces** following enterprise-grade production design system standards.
+
+Official Repository: [https://github.com/thong21112001/imenu-menudientu.git](https://github.com/thong21112001/imenu-menudientu.git)
+
+---
+
+## 📁 1. Monorepo Directory Structure
+
+```text
+imenu-menudientu/
+├── apps/
+│   ├── imenu-admin/            # Restaurant Admin Hub, POS Cashier, Kitchen KDS, Table Map, QR Studio & 80mm Thermal Bills (Port 3003)
+│   ├── imenu-client-web/       # SaaS Marketing Landing Page, Features Overview, 3-Tier Pricing & Restaurant Onboarding (Port 3004)
+│   └── imenu-customer-menu/    # Mobile-First Customer QR Table Ordering PWA, Multi-Round & Live Kitchen Tracker (Port 3005)
+│
+├── packages/
+│   ├── ui/                     # Shared Design System: Button, Card, Modal, StatusChip, Toast (@imenu/ui)
+│   ├── utils/                  # SDK Client (apiClient), RealtimeHub, SocketClient, VietQR, Storage (@imenu/utils)
+│   ├── types/                  # Shared TypeScript Models & Interfaces: Order, Table, User, Menu (@imenu/types)
+│   ├── typescript-config/      # Shared TypeScript Configurations (@imenu/typescript-config)
+│   └── eslint-config/          # Shared ESLint Configurations (@imenu/eslint-config)
+│
+├── scripts/
+│   ├── e2e-order-lifecycle.mjs # Cross-App Browser E2E Order Lifecycle Test Suite using Puppeteer (9 Checkpoints)
+│   └── capture-guide-screenshots.mjs # Documentation screenshot capture utility
+│
+├── test-artifacts/             # Test artifact directory for E2E failure traces and screenshots
+├── turbo.json                  # Turborepo Build Pipeline & Caching Configuration
+└── package.json                # Root package.json managing workspaces and command orchestration
+```
+
+---
+
+## 🚀 2. Applications & Ports
+
+| Application | Package Name | Default Port | Primary Tech Stack | Purpose & Core Capabilities |
+| :--- | :--- | :--- | :--- | :--- |
+| **Merchant Admin & POS** | `@imenu/admin` | `http://localhost:3003` | Next.js 15, React 19, Tailwind v4, Lucide | Table Floor Map, POS Cashier Terminal, QR Approval Queue, Real-time WebSocket Kitchen KDS, VAT Pre-bill Calculation, 80mm Thermal Receipt Printing, Standee/Sticker QR Studio, Revenue Reports & Multi-Branch RBAC |
+| **SaaS Landing & Onboarding** | `@imenu/client-web` | `http://localhost:3004` | Next.js 15, React 19, Tailwind v4, Framer Motion | Marketing Landing Page, 3-Tier Pricing Plans, Feature Demos, Restaurant Setup Wizard & Visual Onboarding Flow |
+| **Customer QR Menu** | `@imenu/customer-menu` | `http://localhost:3005` | Next.js 15, React 19, Tailwind v4, VietQR | Mobile-First QR Table Ordering Web App: Modifiers/Toppings/Sizes, Floating Cart, Multi-Round Ordering, Live Kitchen Progress Tracker & VietQR / Cash Settlement |
+
+---
+
+## 🛠️ 3. Prerequisites
+
+- **Node.js**: `>= 20.x` (Node.js 20 LTS or Node.js 22 LTS recommended)
+- **Package Manager**: `npm >= 10.x` (npm 11.x recommended)
+- **Backend API**: `imenu-api` running on `http://localhost:3001` (NestJS 11 + MongoDB Mongoose 8)
+- **Google Chrome Browser**: Installed on host machine for running automated Puppeteer E2E tests
+- **Turborepo**: Bundled inside root `devDependencies`, automatically orchestrates workspace tasks
+
+---
+
+## 💻 4. Quick Start & Environment Setup
+
+### Step 1: Install Dependencies
+
+In the root directory of `imenu-menudientu`:
+
+```bash
+npm install
+```
+
+### Step 2: Environment Variables & Credentials Security
+
+Copy the template configuration files `.env.example` to `.env` or `.env.local` for the monorepo root and each application:
+
+```bash
+# Setup environment configuration for monorepo root (used by E2E test suite)
+cp .env.example .env
+
+# Setup environment configuration for Admin & POS application
+cp apps/imenu-admin/.env.example apps/imenu-admin/.env.local
+
+# Setup environment configuration for SaaS Landing & Onboarding
+cp apps/imenu-client-web/.env.example apps/imenu-client-web/.env.local
+```
+
+#### Monorepo Root Template (`.env.example`):
+```env
+# API & Application Base URLs
+API_BASE_URL=http://localhost:3001/api
+ADMIN_BASE_URL=http://localhost:3003
+MENU_BASE_URL=http://localhost:3005
+
+# Demo account credentials for running E2E lifecycle test suite
+DEMO_USER_EMAIL=owner@sample.vn
+DEMO_USER_PASSWORD=your_demo_password_here
+
+# Client-side demo password pre-fill (optional for local rapid UI testing)
+NEXT_PUBLIC_DEMO_PASSWORD=your_demo_password_here
+```
+
+#### Admin POS Application Config (`apps/imenu-admin/.env.local`):
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001/api
+NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
+NEXT_PUBLIC_WS_URL=http://localhost:3001
+NEXT_PUBLIC_CUSTOMER_MENU_URL=http://localhost:3005
+NEXT_PUBLIC_DEMO_PASSWORD=your_local_demo_password
+```
+
+> [!IMPORTANT]
+> **Credentials Security & Main Branch Merge Compliance**:
+> - All Git-tracked codebase files **strictly contain NO hardcoded passwords**.
+> - All `.env.example` template files contain placeholder values only (`your_demo_password_here`), ensuring 100% security when committing to Git and avoiding automated Secret Scanning alerts (GitHub Secret Scanning, TruffleHog, SonarQube).
+> - For local development, set your active credentials in `.env` or `.env.local` files (strictly ignored by `.gitignore`).
+> - For production deployments, leave `NEXT_PUBLIC_DEMO_PASSWORD` unset to ensure login forms are never pre-filled.
+
+### Step 3: Run Development Servers
+
+Run all 3 applications concurrently via Turborepo:
+
+```bash
+npm run dev
+```
+
+Or run applications individually:
+
+```bash
+# 1. Merchant Admin Hub & POS Cashier (Port 3003)
+npm run dev:admin
+
+# 2. SaaS Landing Page & Onboarding (Port 3004)
+npm run dev:client
+
+# 3. Customer QR Menu Mobile PWA (Port 3005)
+npm run dev:menu
+```
+
+### Step 4: Build Production Bundles
+
+```bash
+# Build all workspaces and shared packages
+npm run build
+
+# Build individual applications
+npm run build:admin
+npm run build:client
+npm run build:menu
+```
+
+---
+
+## ⚡ 5. Comprehensive Order & POS Operations (Phase 6 Highlights)
+
+Phase 6 completes the entire end-to-end F&B restaurant operational cycle from guest mobile ordering to cashier settlement and kitchen prep:
+
+### 1. Mobile-First Customer QR Multi-Round Ordering (`apps/imenu-customer-menu`)
+- **Table Context Resolution**: Calls `GET /api/orders/public/table-context` with `restaurantSlug`, `tableCode`, `qrToken` to resolve restaurant details, table metadata, and active dining order (`activeOrder`).
+- **Initial Round 1 Order**: Guests select dishes, configure modifiers/toppings/notes, and submit their initial order with `WaitingConfirmation` status via `POST /api/orders/customer` accompanied by an `idempotency-key` header.
+- **Subsequent Rounds (Round 2+)**: When an active dining party calls for additional dishes, the existing order is preserved. The application invokes `POST /api/orders/customer/items` creating an appended round in `WaitingConfirmation` status while previously confirmed dishes remain cooking or served.
+- **Real-Time Order Tracker**: Live visual status progress per dish: `Waiting Confirmation` ➔ `Cooking` ➔ `Ready` ➔ `Served`.
+
+### 2. POS Cashier Approval Queue (`apps/imenu-admin/src/app/pos`)
+- **QR Order Alert**: The "Duyệt đơn QR" tab highlights pending incoming orders/rounds (`WaitingConfirmation`) with acoustic notifications.
+- **Approve to Kitchen (`confirmRound`)**: Cashier clicks "Duyệt vào Bếp", triggering `POST /api/orders/:id/rounds/:roundNumber/confirm`. Backend transitions the round to `Confirmed`, sets the order status to `Preparing`, and emits a WebSocket event immediately dispatching the ticket to the Kitchen KDS line.
+- **Reject Order Round (`cancelRound`)**: Cashier can reject invalid or out-of-stock rounds with an explicit reason string.
+
+### 3. Interactive Table Map & Advanced Table Operations (`/tables`)
+- **Live Visual Status Indicators**: 🟢 Available (`Available`), 🔴 Occupied (`Occupied`), 🟡 Payment Requested (`PaymentRequested`), 🔵 Reserved (`Reserved`), ⚪ Cleaning (`Cleaning`).
+- **Table Transfer**: Seamlessly move an active order and guest party from Table A to Table B via `POST /api/tables/transfer`. Source table automatically reverts to `Available`.
+- **Table Merge**: Consolidate multiple dining tables into a single target table via `POST /api/tables/merge`. All ordered dishes are unified into one billing session, releasing the secondary tables.
+- **Move Items**: Split or move specific dishes between tables via `POST /api/tables/move-items`, with backend automatic recalculation of `subTotal` across both tables.
+
+### 4. Bill Preview, Cash Settlement & Atomic Table Release
+- **Bill Preview**: Invokes `GET /api/orders/:id/bill-preview` to calculate exact item subtotal (`subTotal`), custom discounts (`discountAmount`), service charges (`serviceFee`), VAT tax (`vatAmount`), and grand total (`totalAmount`).
+- **Cash Payment Flow**: Cashier enters received amount (`cashGiven`), system displays change owed (`cashChange`), and executes `POST /api/orders/:id/pay` with an `idempotency-key` header.
+- **VietQR Payment Integration**: Generates dynamic Napas 247 compliant QR codes encoding the exact order amount and reference code.
+- **Atomic Table Release Invariant**: Upon successful settlement inside a single MongoDB Transaction, the order status transitions to `Paid`, the table status is released to `Available` (`currentOrderId: null`), the active banner clears on the customer's phone, and the table session is securely cleared.
+
+### 5. Real-Time Kitchen Display System KDS (`/kitchen`)
+- Automatically connects to Socket.IO and joins branch-scoped room: `joinBranch: { restaurantId, branchId }`.
+- Single-tap dish progression: `Waiting` ➔ `Cooking` ➔ `Ready` via `PATCH /api/orders/:id/items/:itemId/status`.
+- Optimistic UI updates with Web Audio API acoustic chimes when new tickets arrive or dishes are marked ready.
+
+### 6. 80mm ESC/POS Thermal Bill Printing & QR Studio (`/bills`, `/qr-codes`)
+- Standardized 80mm thermal receipt layout with restaurant logo, branch address, cashier name, itemized dish list with modifiers, VAT tax, and thank-you footer formatted for browser printing (`@media print`).
+- QR Print Studio: Generates Standee A6 (105 x 148 mm) and Table Stickers (80 x 80 mm) per table or in bulk batches per zone.
+
+---
+
+## 🔄 6. API Integration Flows & Sequence Diagrams
+
+Below are 6 detailed sequence diagrams showing interactions between Frontend Monorepo components (`Customer Menu`, `POS`, `KDS`), Shared Utilities (`@imenu/utils`), and Backend API:
+
+### Flow 1: Customer QR Scan & Multi-Round Ordering Flow
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Guest as Guest (Customer Mobile 3005)
+  participant MenuApp as Customer Menu PWA
+  participant SDK as @imenu/utils (apiClient)
+  participant API as Backend API (3001)
+  participant WS as WebSocket Gateway
+
+  Guest->>MenuApp: Scan QR Code (/menu/:slug/:tableCode?t=:qrToken)
+  MenuApp->>SDK: customerOrders.getTableContext(...)
+  SDK->>API: GET /api/orders/public/table-context
+  API-->>SDK: Table metadata + Active Order (if existing)
+  MenuApp-->>Guest: Render menu & current dining session
+
+  Guest->>MenuApp: Select dishes & Submit Round 1
+  MenuApp->>SDK: customerOrders.create(payload, { idempotencyKey })
+  SDK->>API: POST /api/orders/customer (Header: idempotency-key)
+  API-->>WS: Emit "order:created" / "NEW_ORDER"
+  API-->>SDK: Created Order (Status: WaitingConfirmation, Round 1)
+  MenuApp-->>Guest: Display Order Tracker (Pending cashier confirmation)
+
+  opt Add Additional Dishes in Round 2 (Subsequent Round)
+    Guest->>MenuApp: Select additional dishes & Tap "Send to Kitchen"
+    MenuApp->>SDK: customerOrders.addItems(orderId, payload, { idempotencyKey })
+    SDK->>API: POST /api/orders/customer/items (Header: idempotency-key)
+    API-->>WS: Emit "order:round_added" / "ROUND_ADDED"
+    API-->>SDK: Order updated (Round 1 preserved, Round 2: WaitingConfirmation)
+    MenuApp-->>Guest: Update tracker showing multi-round item groupings
+  end
+```
+
+### Flow 2: POS Cashier Approval & Real-Time Kitchen KDS Flow
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Cashier as Cashier (POS Terminal 3003)
+  participant POS as POS Page (/pos)
+  actor Chef as Kitchen Chef (/kitchen)
+  participant KDS as Kitchen KDS (/kitchen)
+  participant API as Backend API (3001)
+  participant WS as WebSocket Gateway
+
+  WS-->>POS: Real-time alert: New QR order waiting for confirmation
+  Cashier->>POS: Open "Duyệt đơn QR" tab & inspect items
+  Cashier->>POS: Click "Duyệt vào Bếp" (Approve)
+  POS->>API: POST /api/orders/:id/rounds/:roundNumber/confirm
+  API-->>WS: Emit "order:round_confirmed" & "NEW_ORDER"
+  WS-->>KDS: Play new order chime + display order ticket on KDS line
+  KDS-->>Chef: Display ticket with modifiers & customer notes
+  Chef->>KDS: Tap dish to transition status to "Cooking"
+  KDS->>API: PATCH /api/orders/:id/items/:itemId/status { status: 'Cooking' }
+  API-->>WS: Emit "order:item_status_updated"
+  WS-->>POS: Update dish preparation progress on POS terminal
+```
+
+### Flow 3: Bill Preview, Settlement & Atomic Table Release
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Cashier as Cashier (POS 3003)
+  participant TableUI as Table Management (/tables)
+  participant API as Backend API (3001)
+  participant DB as MongoDB Transaction
+
+  Cashier->>TableUI: Click occupied table to open checkout drawer
+  TableUI->>API: GET /api/orders/:id/bill-preview?vatPercent=8&discountAmount=...
+  API-->>TableUI: BillPreviewResult (subTotal, discount, serviceFee, vat, totalAmount)
+  Cashier->>TableUI: Enter cash amount given (or show VietQR)
+  Cashier->>TableUI: Click "Complete Payment"
+  TableUI->>API: POST /api/orders/:id/pay (Header: idempotency-key, Body: Cash/VietQR)
+  API->>DB: Execute Atomic MongoDB Transaction:
+  DB->>DB: 1. Update order status -> 'Paid', isPaid: true, closedAt: Now
+  DB->>DB: 2. Update table status -> 'Available', currentOrderId: null
+  DB->>DB: Commit Transaction successfully
+  API-->>TableUI: 200 OK (Order Paid, Table Released)
+  TableUI-->>Cashier: Play ready chime & update table to green (Available)
+```
+
+### Flow 4: Advanced Table Operations (Transfer, Merge, Move Items)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor Staff as Staff / Manager
+  participant UI as Table Floor Map (/tables)
+  participant API as Backend API (3001)
+
+  alt Table Transfer
+    Staff->>UI: Select Transfer from Table A ➔ Table B
+    UI->>API: POST /api/tables/transfer { fromTableId, toTableId, reason }
+    API-->>UI: 200 OK (Order reassigned to Table B, Table A released to Available)
+  else Table Merge
+    Staff->>UI: Select Merge Table A into Table B
+    UI->>API: POST /api/tables/merge { fromTableIds: [A], targetTableId: B }
+    API-->>UI: 200 OK (All items consolidated to Table B, Table A released)
+  else Move Items
+    Staff->>UI: Select specific items from Table A ➔ Table B
+    UI->>API: POST /api/tables/move-items { fromTableId, toTableId, items }
+    API-->>UI: 200 OK (Items partitioned, subTotal recalculated across both orders)
+  end
+```
+
+### Flow 5: Dual Real-Time Architecture (Socket.IO + BroadcastChannel)
+
+```mermaid
+graph TD
+  subgraph Backend ["Backend API (Port 3001)"]
+    Gateway["OrderGateway (Socket.IO WebSocket)"]
+  end
+
+  subgraph Browser ["Client Web Browser Environment"]
+    subgraph Tab1 ["Tab 1: Cashier POS (Port 3003)"]
+      App1["POS UI"]
+      Hub1["RealtimeHub"]
+      Sock1["SocketClient"]
+    end
+
+    subgraph Tab2 ["Tab 2: Kitchen KDS (Port 3003)"]
+      App2["Kitchen UI"]
+      Hub2["RealtimeHub"]
+      Sock2["SocketClient"]
+    end
+
+    subgraph Tab3 ["Tab 3: Customer QR Menu (Port 3005)"]
+      App3["Customer Menu PWA"]
+      Hub3["RealtimeHub"]
+    end
+
+    BC["BroadcastChannel ('imenu_realtime_channel')"]
+  end
+
+  Gateway <-->|WebSocket Events| Sock1
+  Gateway <-->|WebSocket Events| Sock2
+  Hub1 <-->|Local Tab Synchronization| BC
+  Hub2 <-->|Local Tab Synchronization| BC
+  Hub3 <-->|Local Tab Synchronization| BC
+```
+
+### Flow 6: Idempotency Key & Double-Billing Prevention
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Client as Frontend (Customer Menu / POS)
+  participant API as Backend API (3001)
+  participant Store as Idempotency Key Store
+
+  Client->>Client: Generate unique key: `idem-pos-1791940128-abc123`
+  Client->>API: POST /api/orders/customer or POST /api/orders/:id/pay
+  Note over Client,API: Includes Header: `idempotency-key: idem-pos-...`
+
+  API->>Store: Lookup key `idem-pos-...`
+  alt First-time Request (New Mutation)
+    API->>Store: Mark state as `IN_PROGRESS`
+    API->>API: Process business logic & write to database
+    API->>Store: Store cached response snapshot (status, body)
+    API-->>Client: 201 Created / 200 OK (Original response payload)
+  else Network Retry Replay (Duplicate Submission)
+    API-->>Client: 200 OK + Header `x-idempotent-replay: true` (Return cached result without duplicate billing)
+  end
+```
+
+---
+
+## 📡 7. SDK Client Library (`@imenu/utils` — `apiClient`)
+
+The Frontend Monorepo encapsulates all backend HTTP communication within the `apiClient` singleton (`packages/utils/src/api-client.ts`):
+
+- **Automatic JWT Injection**: Extracts accessToken from `storageService` and sets `Authorization: Bearer <token>` on all authenticated routes.
+- **Transparent Token Refresh**: Intercepts `401 Unauthorized` responses, invokes `/api/auth/refresh` using the saved `refreshToken`, stores the new `accessToken`, and retries the original request seamlessly. If refresh fails, dispatches an `imenu:unauthorized` event to force login redirection.
+- **Idempotency Key Forwarding**: Automatically forwards `{ idempotencyKey }` as the `idempotency-key` HTTP header.
+
+### Core SDK Endpoints Mapping Table:
+
+| SDK Module | Method Signature | Backend Route | Purpose |
+| :--- | :--- | :--- | :--- |
+| `customerOrders` | `.getTableContext(params)` | `GET /api/orders/public/table-context` | Resolve public QR table context |
+| | `.create(payload, opts)` | `POST /api/orders/customer` | Guest submits Round 1 order via QR |
+| | `.addItems(orderId, payload, opts)`| `POST /api/orders/customer/items` | Guest appends subsequent order rounds |
+| | `.getActiveOrder(orderId)` | `GET /api/orders/customer/:id` | Guest tracks live order progress |
+| `orders` | `.list(params)` | `GET /api/orders` | Query orders list with branch/table filters |
+| | `.get(id)` | `GET /api/orders/:id` | Fetch complete order details |
+| | `.create(payload, opts)` | `POST /api/orders` | Cashier creates staff order at POS |
+| | `.confirmRound(orderId, round)` | `POST /api/orders/:id/rounds/:roundNumber/confirm` | Cashier approves round to kitchen |
+| | `.cancelRound(orderId, round, reason)` | `POST /api/orders/:id/rounds/:roundNumber/cancel` | Cashier cancels/rejects round |
+| | `.previewBill(id, query)` | `GET /api/orders/:id/bill-preview` | Calculate bill preview with VAT & discounts |
+| | `.pay(id, payload, opts)` | `POST /api/orders/:id/pay` | Pay order (Cash/VietQR) & release table |
+| | `.updateItemStatus(orderId, itemId, status)` | `PATCH /api/orders/:id/items/:itemId/status` | Kitchen KDS updates item progress |
+| `tables` | `.list(params)` | `GET /api/tables` | List tables by branch and zone |
+| | `.transfer(payload)` | `POST /api/tables/transfer` | Transfer active dining party to another table |
+| | `.merge(payload)` | `POST /api/tables/merge` | Merge multiple tables into one party |
+| | `.moveItems(payload)` | `POST /api/tables/move-items` | Partition dishes between tables |
+| | `.seedDefault(branchId)` | `POST /api/tables/seed-default` | One-click seed 12 default tables for branch |
+
+---
+
+## 🧪 8. Testing & Quality Assurance
+
+The Frontend Monorepo provides automated testing spanning SDK contract validation and cross-app browser end-to-end execution:
+
+```bash
+# 1. Run SDK Contract Test Suite (9 automated tests)
+npm run test:sdk
+
+# 2. Pre-requisite check before launching browser E2E
+node scripts/e2e-order-lifecycle.mjs --prereq-check
+
+# 3. Run Cross-App Browser E2E Order Lifecycle Test Suite (9 Checkpoints)
+npm run test:e2e
+
+# 4. TypeScript Compiler Check across all packages
+npm run typecheck
+
+# 5. ESLint Static Analysis Check
+npm run lint
+
+# 6. Production Bundle Build Verification
+npm run build
+```
+
+### SDK Contract Test Suite (`npm run test:sdk`)
+The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory HTTP mock server to verify API contract parity:
+- **SDK-01**: `customerOrders.getTableContext` properly passes query parameters (`restaurantSlug`, `tableCode`, `qrToken`).
+- **SDK-02 & SDK-02b**: `customerOrders.create` invokes public endpoint `POST /api/orders/customer` and transmits `idempotency-key` header.
+- **SDK-03 & SDK-03b**: `customerOrders.addItems` invokes public endpoint `POST /api/orders/customer/items` and transmits `idempotency-key` header.
+- **SDK-04**: `orders.previewBill` targets `GET /api/orders/:id/bill-preview`.
+- **SDK-05**: `orders.pay` targets `POST /api/orders/:id/pay` and transmits `idempotency-key` header.
+- **SDK-06**: Table operations (`transfer`, `merge`, `moveItems`) map correctly to their respective backend endpoints.
+- **SDK-07**: Round management (`confirmRound`, `cancelRound`) routes map accurately to backend endpoints.
+
+### Cross-App Browser E2E Suite (`npm run test:e2e`)
+The script `scripts/e2e-order-lifecycle.mjs` connects via `puppeteer-core` to Google Chrome, simultaneously simulating two concurrent browser contexts: **Guest Mobile (Viewport: 390x844)** and **Cashier POS Desktop (Viewport: 1440x900)** across 9 comprehensive checkpoints:
+
+| Checkpoint | Checkpoint Name | Real-world Simulation & Acceptance Verification |
+| :---: | :--- | :--- |
+| **E2E-01** | Table QR Context | Guest navigates to QR URL; verifies header resolves table name and code accurately. |
+| **E2E-02** | Round 1 Order Submission | Guest selects dish, opens floating cart, and submits; verifies order is created with `WaitingConfirmation` status. |
+| **E2E-03** | POS Round 1 Approval | Cashier opens POS `/pos`, views QR approval queue, and clicks approve; verifies order moves to `Preparing`. |
+| **E2E-04** | Customer Round 2 Add Items | Guest adds a second dish and submits; verifies Round 1 is preserved and Round 2 is appended with `WaitingConfirmation`. |
+| **E2E-05** | POS Round 2 Approval | Cashier approves Round 2; verifies both rounds reach `Confirmed` status. |
+| **E2E-06** | POS Bill Preview | Bill preview endpoint invoked; verifies subtotal, VAT calculation, and positive grand total. |
+| **E2E-07** | POS Cash Payment | Cashier completes cash payment; verifies order transitions to `Paid` inside a single MongoDB Transaction. |
+| **E2E-08** | Customer UI State Reflection | Guest page reloads; verifies order is marked Paid, active tracking banner clears, and table session is released. |
+| **E2E-09** | Table Release & Idempotency Invariants | Database verifies table status is `Available` (`currentOrderId: null`) and payment replay triggers `x-idempotent-replay: true`. |
+
+---
+
+## ⚠️ 9. Architectural Boundaries & Known Constraints
+
+To preserve architectural precision and avoid assumptions regarding Phase 6:
+
+1. **80mm Thermal Printer Hardware**:
+   - Phase 6 delivers the ESC/POS standardized 80mm CSS print layout (`@media print`) on the `/bills` page and the architecture specification document (`thermal-printer-spec.md`).
+   - Hardware drivers (WebUSB, WebSerial, or raw ESC/POS binary protocols) are strictly **out of scope** for Phase 6 and scheduled for **Phase 8**.
+2. **Single-Node Real-Time Hub**:
+   - The current real-time subsystem utilizes Socket.IO connected to a single NestJS server process paired with client-side `BroadcastChannel`. Redis Pub/Sub for distributed multi-node clusters is deferred to future scaling phases.
+3. **Table Release Proof**:
+   - Test suites verify final table status (`Available`, `currentOrderId: null`) and payment idempotency replay. However, this does not inspect internal physical database mutation call counts directly.
+
+---
+
+## 📄 10. License & Attribution
+
+Proprietary software developed for the **iMenu Digital Restaurant Ecosystem**. All rights reserved.

@@ -8,11 +8,19 @@ export type RealtimeEventType =
   | 'CALL_STAFF'
   | 'PAYMENT_REQUESTED'
   | 'PAYMENT_COMPLETED'
+  | 'ROUND_ADDED'
+  | 'ROUND_CONFIRMED'
+  | 'ROUND_CANCELLED'
   | 'MENU_AVAILABILITY_CHANGED'
   | 'order:created'
   | 'order:item_status_updated'
-  | 'table:status_updated'
-  | 'order:payment_completed';
+  | 'order:round_added'
+  | 'order:round_confirmed'
+  | 'order:round_cancelled'
+  | 'order:payment_requested'
+  | 'order:payment_completed'
+  | 'order:updated'
+  | 'table:status_updated';
 
 export interface RealtimePayload<T = any> {
   type: RealtimeEventType | string;

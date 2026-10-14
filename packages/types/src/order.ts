@@ -18,6 +18,22 @@ export interface SelectedOption {
   priceDelta: number;
 }
 
+export type RoundStatus = 'WaitingConfirmation' | 'Confirmed' | 'Cancelled';
+export type OrderSource = 'STAFF_POS' | 'QR_CUSTOMER';
+
+export interface OrderRound {
+  roundNumber: number;
+  source: OrderSource;
+  status: RoundStatus;
+  createdAt: string | Date;
+  confirmedAt?: string | Date;
+  confirmedBy?: string;
+  cancelledAt?: string | Date;
+  cancelledBy?: string;
+  cancelReason?: string;
+  roundSubTotal: number;
+}
+
 export interface OrderItem {
   _id?: string;
   id: string;
@@ -27,7 +43,8 @@ export interface OrderItem {
   quantity: number;
   selectedOptions?: SelectedOption[];
   note?: string;
-  status: 'Waiting' | 'Cooking' | 'Ready' | 'Served' | 'Cancelled';
+  status: 'WaitingConfirmation' | 'Waiting' | 'Cooking' | 'Ready' | 'Served' | 'Cancelled';
+  roundNumber?: number;
   itemTotal: number;
 }
 
@@ -39,6 +56,7 @@ export interface Order {
   tableName: string;
   restaurantId: string;
   branchId?: string;
+  rounds?: OrderRound[];
   items: OrderItem[];
   subTotal: number;
   discountAmount?: number;
@@ -50,6 +68,90 @@ export interface Order {
   isPaid: boolean;
   orderSource?: 'QR_CUSTOMER' | 'STAFF_POS' | string;
   customerNote?: string;
+  openedAt?: string | Date;
+  closedAt?: string | Date;
+  cancelReason?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface CustomerTableContext {
+  restaurant: {
+    id: string;
+    name: string;
+    slug: string;
+    phone?: string;
+    address?: string;
+    logoUrl?: string;
+  };
+  table: {
+    id: string;
+    code: string;
+    name: string;
+    branchId?: string;
+    zoneId?: string;
+    capacity?: number;
+    qrStatus?: string;
+  };
+  activeOrder: Order | null;
+}
+
+export interface CustomerCreateOrderItemPayload {
+  menuItemId: string;
+  quantity: number;
+  selectedOptions?: SelectedOption[];
+  note?: string;
+}
+
+export interface CustomerCreateOrderPayload {
+  restaurantSlug: string;
+  tableCode: string;
+  qrToken: string;
+  customerNote?: string;
+  items: CustomerCreateOrderItemPayload[];
+}
+
+export interface CustomerAddItemsPayload {
+  restaurantSlug: string;
+  tableCode: string;
+  qrToken: string;
+  orderId?: string;
+  note?: string;
+  items: CustomerCreateOrderItemPayload[];
+}
+
+export interface PayOrderPayload {
+  paymentMethod?: PaymentMethod;
+  discountAmount?: number;
+  discountPercent?: number;
+  serviceFee?: number;
+  serviceFeePercent?: number;
+  vatAmount?: number;
+  vatPercent?: number;
+  amountReceived?: number;
+  cashGiven?: number;
+  note?: string;
+}
+
+export interface BillPreviewQuery {
+  discountAmount?: number;
+  discountPercent?: number;
+  serviceFee?: number;
+  serviceFeePercent?: number;
+  vatAmount?: number;
+  vatPercent?: number;
+}
+
+export interface BillPreviewResult {
+  orderId: string;
+  orderCode: string;
+  subTotal: number;
+  discountAmount: number;
+  discountPercent?: number;
+  serviceFee: number;
+  serviceFeePercent?: number;
+  vatAmount: number;
+  vatPercent?: number;
+  totalAmount: number;
+  itemsCount: number;
 }

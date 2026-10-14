@@ -15,7 +15,9 @@
     "build:client": "turbo run build --filter=@imenu/client-web",
     "build:menu": "turbo run build --filter=@imenu/customer-menu",
     "lint": "turbo run lint",
-    "typecheck": "turbo run typecheck"
+    "typecheck": "turbo run typecheck",
+    "test:sdk": "npx ts-node packages/utils/tests/sdk-contract.test.ts",
+    "test:e2e": "node scripts/e2e-order-lifecycle.mjs"
   },
   "devDependencies": {
     "puppeteer-core": "^25.10.0",

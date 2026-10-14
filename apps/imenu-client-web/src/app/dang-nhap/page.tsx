@@ -6,9 +6,11 @@ import { Logo, Button } from '@imenu/ui';
 import { CheckCircle2, ArrowRight, AlertCircle, Loader2 } from 'lucide-react';
 import { apiClient } from '@imenu/utils';
 
+const DEFAULT_DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD || '';
+
 export default function LoginPage() {
   const [email, setEmail] = useState('owner@sample.vn');
-  const [password, setPassword] = useState('Demo@123');
+  const [password, setPassword] = useState(DEFAULT_DEMO_PASSWORD);
   const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -86,7 +88,9 @@ export default function LoginPage() {
             {/* Demo Credentials Hint */}
             <div className="p-3.5 bg-emerald-50 border border-dashed border-emerald-200 rounded-xl text-xs text-emerald-800 mb-4">
               <strong>Tài khoản trải nghiệm sẵn có:</strong>
-              <div className="font-mono mt-1 font-semibold">owner@sample.vn · Demo@123</div>
+              <div className="font-mono mt-1 font-semibold">
+                owner@sample.vn {DEFAULT_DEMO_PASSWORD ? `· ${DEFAULT_DEMO_PASSWORD}` : ''}
+              </div>
             </div>
 
             {error && (
