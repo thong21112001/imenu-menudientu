@@ -43,6 +43,7 @@ export interface OrderItem {
   quantity: number;
   selectedOptions?: SelectedOption[];
   note?: string;
+  cancelReason?: string;
   status: 'WaitingConfirmation' | 'Waiting' | 'Cooking' | 'Ready' | 'Served' | 'Cancelled';
   roundNumber?: number;
   itemTotal: number;
@@ -71,6 +72,7 @@ export interface Order {
   openedAt?: string | Date;
   closedAt?: string | Date;
   cancelReason?: string;
+  elapsedMinutes?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -155,3 +157,29 @@ export interface BillPreviewResult {
   totalAmount: number;
   itemsCount: number;
 }
+
+export interface KitchenItemsSummaryItem {
+  menuItemId: string;
+  name: string;
+  waitingQty: number;
+  cookingQty: number;
+  totalActiveQty: number;
+  notes: string[];
+  tables: string[];
+}
+
+export interface KitchenItemsSummaryResponse {
+  totalWaitingItems: number;
+  totalCookingItems: number;
+  summary: KitchenItemsSummaryItem[];
+}
+
+export interface KitchenOrderFilterParams {
+  branchId?: string;
+  zoneId?: string;
+  tableId?: string;
+  status?: string;
+  search?: string;
+  includeUnconfirmed?: boolean;
+}
+
