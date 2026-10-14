@@ -39,12 +39,14 @@ interface DemoAccountItem {
   targetRoute: string;
 }
 
+const DEFAULT_DEMO_PASSWORD = process.env.NEXT_PUBLIC_DEMO_PASSWORD || '';
+
 const DEMO_ACCOUNTS: DemoAccountItem[] = [
   {
     key: 'owner',
     role: 'Chủ Quán (HQ)',
     email: 'owner@sample.vn',
-    pass: 'Demo@123',
+    pass: DEFAULT_DEMO_PASSWORD,
     name: 'Nguyễn Minh An',
     desc: 'Toàn quyền quản trị chi nhánh chính & toàn chuỗi',
     icon: Store,
@@ -56,7 +58,7 @@ const DEMO_ACCOUNTS: DemoAccountItem[] = [
     key: 'manager',
     role: 'Quản Lý Ca',
     email: 'manager@sample.vn',
-    pass: 'Demo@123',
+    pass: DEFAULT_DEMO_PASSWORD,
     name: 'Trần Quốc Bảo',
     desc: 'Quản lý vận hành ca, sơ đồ bàn, KDS và nhân sự',
     icon: Briefcase,
@@ -68,7 +70,7 @@ const DEMO_ACCOUNTS: DemoAccountItem[] = [
     key: 'cashier',
     role: 'Thu Ngân POS',
     email: 'cashier@sample.vn',
-    pass: 'Demo@123',
+    pass: DEFAULT_DEMO_PASSWORD,
     name: 'Lê Thu Thảo',
     desc: 'Order bàn, thu tiền VietQR/tiền mặt & in bill 80mm',
     icon: CreditCard,
@@ -80,7 +82,7 @@ const DEMO_ACCOUNTS: DemoAccountItem[] = [
     key: 'kitchen',
     role: 'Bếp KDS',
     email: 'kitchen@sample.vn',
-    pass: 'Demo@123',
+    pass: DEFAULT_DEMO_PASSWORD,
     name: 'Hoàng Văn Bếp',
     desc: 'Màn hình KDS nhận vé chế biến & báo hết món tức thì',
     icon: ChefHat,
@@ -92,7 +94,7 @@ const DEMO_ACCOUNTS: DemoAccountItem[] = [
     key: 'waiter',
     role: 'Phục Vụ',
     email: 'waiter@sample.vn',
-    pass: 'Demo@123',
+    pass: DEFAULT_DEMO_PASSWORD,
     name: 'Phạm Văn Phục',
     desc: 'Hỗ trợ khách tại bàn, mở bàn, kiểm tra món và gọi đồ',
     icon: UtensilsCrossed,
@@ -109,7 +111,7 @@ function LoginForm() {
   const isExpired = searchParams.get('expired') === '1';
 
   const [email, setEmail] = useState('owner@sample.vn');
-  const [password, setPassword] = useState('Demo@123');
+  const [password, setPassword] = useState(DEFAULT_DEMO_PASSWORD);
   const [selectedAccountKey, setSelectedAccountKey] = useState<string>('owner');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(true);

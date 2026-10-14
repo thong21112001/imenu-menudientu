@@ -9,9 +9,22 @@ import fs from 'fs';
 import path from 'path';
 import http from 'http';
 
+// ---------------------------------------------------------------------------
+// 0. AUTO-LOAD ENVIRONMENT VARIABLES
+// ---------------------------------------------------------------------------
+if (typeof process.loadEnvFile === 'function') {
+  ['.env', '.env.local', 'apps/imenu-admin/.env.local', 'apps/imenu-admin/.env'].forEach((f) => {
+    if (fs.existsSync(f)) {
+      try { process.loadEnvFile(f); } catch {}
+    }
+  });
+}
+
 const API_BASE = process.env.API_BASE_URL || 'http://localhost:3001/api';
 const ADMIN_BASE = process.env.ADMIN_BASE_URL || 'http://localhost:3003';
 const MENU_BASE = process.env.MENU_BASE_URL || 'http://localhost:3005';
+const DEMO_EMAIL = process.env.DEMO_USER_EMAIL || 'owner@sample.vn';
+const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD || process.env.DEMO_PASSWORD || process.env.NEXT_PUBLIC_DEMO_PASSWORD;
 
 const ARTIFACTS_DIR = path.resolve('test-artifacts/e2e-failures');
 if (!fs.existsSync(ARTIFACTS_DIR)) {
@@ -136,11 +149,15 @@ async function main() {
     // -------------------------------------------------------------------------
     // SETUP: FIXTURES QUA API CHÍNH THỨC
     // -------------------------------------------------------------------------
-    console.log('\n[SETUP] 1. Xác thực tài khoản quản trị mẫu (owner@sample.vn)...');
+    if (!DEMO_PASSWORD) {
+      throw new Error('❌ FAIL: DEMO_USER_PASSWORD chưa được cấu hình. Vui lòng thiết lập biến môi trường DEMO_USER_PASSWORD trong .env hoặc .env.local.');
+    }
+
+    console.log(`\n[SETUP] 1. Xác thực tài khoản quản trị mẫu (${DEMO_EMAIL})...`);
     const loginRes = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'owner@sample.vn', password: 'Demo@123' }),
+      body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD }),
     });
     const loginData = await loginRes.json();
     if (!loginRes.ok || !loginData?.data?.accessToken) {

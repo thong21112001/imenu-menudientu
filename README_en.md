@@ -65,22 +65,51 @@ In the root directory of `imenu-menudientu`:
 npm install
 ```
 
-### Step 2: Environment Variables Configuration
+### Step 2: Environment Variables & Credentials Security
 
-The monorepo contains sensible defaults pointing to Backend `http://localhost:3001`. If custom ports or hosts are required, create a `.env.local` file in each app folder:
+Copy the template configuration files `.env.example` to `.env` or `.env.local` for the monorepo root and each application:
 
+```bash
+# Setup environment configuration for monorepo root (used by E2E test suite)
+cp .env.example .env
+
+# Setup environment configuration for Admin & POS application
+cp apps/imenu-admin/.env.example apps/imenu-admin/.env.local
+
+# Setup environment configuration for SaaS Landing & Onboarding
+cp apps/imenu-client-web/.env.example apps/imenu-client-web/.env.local
+```
+
+#### Monorepo Root Template (`.env.example`):
 ```env
-# apps/imenu-admin/.env.local
+# API & Application Base URLs
+API_BASE_URL=http://localhost:3001/api
+ADMIN_BASE_URL=http://localhost:3003
+MENU_BASE_URL=http://localhost:3005
+
+# Demo account credentials for running E2E lifecycle test suite
+DEMO_USER_EMAIL=owner@sample.vn
+DEMO_USER_PASSWORD=your_demo_password_here
+
+# Client-side demo password pre-fill (optional for local rapid UI testing)
+NEXT_PUBLIC_DEMO_PASSWORD=your_demo_password_here
+```
+
+#### Admin POS Application Config (`apps/imenu-admin/.env.local`):
+```env
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
 NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
 NEXT_PUBLIC_WS_URL=http://localhost:3001
 NEXT_PUBLIC_CUSTOMER_MENU_URL=http://localhost:3005
-
-# apps/imenu-customer-menu/.env.local
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
-NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
-NEXT_PUBLIC_WS_URL=http://localhost:3001
+NEXT_PUBLIC_DEMO_PASSWORD=your_local_demo_password
 ```
+
+> [!IMPORTANT]
+> **Credentials Security & Main Branch Merge Compliance**:
+> - All Git-tracked codebase files **strictly contain NO hardcoded passwords**.
+> - All `.env.example` template files contain placeholder values only (`your_demo_password_here`), ensuring 100% security when committing to Git and avoiding automated Secret Scanning alerts (GitHub Secret Scanning, TruffleHog, SonarQube).
+> - For local development, set your active credentials in `.env` or `.env.local` files (strictly ignored by `.gitignore`).
+> - For production deployments, leave `NEXT_PUBLIC_DEMO_PASSWORD` unset to ensure login forms are never pre-filled.
 
 ### Step 3: Run Development Servers
 

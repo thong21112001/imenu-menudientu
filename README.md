@@ -65,22 +65,51 @@ Tại thư mục gốc của `imenu-menudientu`:
 npm install
 ```
 
-### Bước 2: Cấu hình Biến Môi Trường (Environment Variables)
+### Bước 2: Cấu hình Biến Môi Trường & Bảo Mật Xác Thực (Environment Variables & Credentials Security)
 
-Hệ thống đã thiết lập sẵn fallback mặc định kết nối tới Backend `http://localhost:3001`. Nếu cần tùy biến cổng hoặc domain, tạo tệp `.env.local` tại từng ứng dụng:
+Sao chép tệp cấu hình mẫu `.env.example` sang `.env` hoặc `.env.local` tương ứng cho từng ứng dụng:
 
+```bash
+# Cấu hình môi trường cho thư mục gốc Monorepo (chạy bộ test E2E)
+cp .env.example .env
+
+# Cấu hình môi trường cho ứng dụng Quản trị & POS
+cp apps/imenu-admin/.env.example apps/imenu-admin/.env.local
+
+# Cấu hình môi trường cho Landing Page & Onboarding
+cp apps/imenu-client-web/.env.example apps/imenu-client-web/.env.local
+```
+
+#### Cấu hình mẫu gốc (`.env.example`):
 ```env
-# apps/imenu-admin/.env.local
+# API & Application Base URLs
+API_BASE_URL=http://localhost:3001/api
+ADMIN_BASE_URL=http://localhost:3003
+MENU_BASE_URL=http://localhost:3005
+
+# Thông tin tài khoản trải nghiệm phục vụ kịch bản kiểm thử E2E
+DEMO_USER_EMAIL=owner@sample.vn
+DEMO_USER_PASSWORD=your_demo_password_here
+
+# Mật khẩu demo tự động điền phía client (tùy chọn cho local testing)
+NEXT_PUBLIC_DEMO_PASSWORD=your_demo_password_here
+```
+
+#### Cấu hình ứng dụng Admin POS (`apps/imenu-admin/.env.local`):
+```env
 NEXT_PUBLIC_API_URL=http://localhost:3001/api
 NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
 NEXT_PUBLIC_WS_URL=http://localhost:3001
 NEXT_PUBLIC_CUSTOMER_MENU_URL=http://localhost:3005
-
-# apps/imenu-customer-menu/.env.local
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
-NEXT_PUBLIC_SOCKET_URL=http://localhost:3001
-NEXT_PUBLIC_WS_URL=http://localhost:3001
+NEXT_PUBLIC_DEMO_PASSWORD=your_local_demo_password
 ```
+
+> [!IMPORTANT]
+> **Quy Tắc Bảo Mật & Phòng Chống Cảnh Báo Khi Gộp Nhánh Main**:
+> - Toàn bộ mã nguồn Git-tracked **tuyệt đối không hardcode mật khẩu**.
+> - Các tệp `.env.example` chỉ chứa placeholder (`your_demo_password_here`), an toàn 100% khi commit lên Git và vượt qua các bộ kiểm tra Secret Scanning (GitHub Secret Scanning, TruffleHog, SonarQube).
+> - Khi phát triển cục bộ, lập trình viên đặt mật khẩu thật trong các tệp `.env` hoặc `.env.local` (được bảo vệ bởi `.gitignore`).
+> - Khi triển khai môi trường Production, không thiết lập biến `NEXT_PUBLIC_DEMO_PASSWORD` để đảm bảo form đăng nhập không tự động điền mật khẩu.
 
 ### Bước 3: Khởi Chạy Máy Chủ Phát Triển (Development Servers)
 

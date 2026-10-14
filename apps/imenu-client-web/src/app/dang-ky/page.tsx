@@ -13,8 +13,8 @@ export default function RegisterPage() {
   const [ownerName, setOwnerName] = useState('Nguyễn Minh An');
   const [ownerPhone, setOwnerPhone] = useState('0901 234 567');
   const [email, setEmail] = useState('owner@sample.vn');
-  const [password, setPassword] = useState('Demo@123');
-  const [confirmPassword, setConfirmPassword] = useState('Demo@123');
+  const [password, setPassword] = useState(process.env.NEXT_PUBLIC_DEMO_PASSWORD || '');
+  const [confirmPassword, setConfirmPassword] = useState(process.env.NEXT_PUBLIC_DEMO_PASSWORD || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
