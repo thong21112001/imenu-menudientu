@@ -120,6 +120,10 @@ class RealtimeHub {
   public joinRestaurant(restaurantId: string, branchId?: string) {
     socketClient.joinRestaurant(restaurantId, branchId);
   }
+
+  public joinTable(tableId: string, restaurantId?: string) {
+    socketClient.joinTable(tableId, restaurantId);
+  }
 }
 
 export const realtimeHub = new RealtimeHub();

@@ -11,16 +11,20 @@ export interface ToastItem {
   type: ToastType;
 }
 
+export interface ToastOptions {
+  duration?: number;
+}
+
 interface ToastContextValue {
-  showToast: (message: string, type?: ToastType) => void;
-  success: (message: string) => void;
-  error: (message: string) => void;
-  info: (message: string) => void;
+  showToast: (message: string, type?: ToastType, options?: ToastOptions) => void;
+  success: (message: string, options?: ToastOptions) => void;
+  error: (message: string, options?: ToastOptions) => void;
+  info: (message: string, options?: ToastOptions) => void;
   removeToast: (id: string) => void;
   toast: {
-    success: (message: string) => void;
-    error: (message: string) => void;
-    info: (message: string) => void;
+    success: (message: string, options?: ToastOptions) => void;
+    error: (message: string, options?: ToastOptions) => void;
+    info: (message: string, options?: ToastOptions) => void;
   };
 }
 
@@ -54,20 +58,29 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const showToast = useCallback(
-    (message: string, type: ToastType = 'success') => {
+    (message: string, type: ToastType = 'success', options?: ToastOptions) => {
       const id = `toast-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
       setToasts((prev) => [...prev, { id, message, type }]);
 
       setTimeout(() => {
         removeToast(id);
-      }, 3500);
+      }, options?.duration ?? 3500);
     },
     [removeToast],
   );
 
-  const success = useCallback((msg: string) => showToast(msg, 'success'), [showToast]);
-  const error = useCallback((msg: string) => showToast(msg, 'error'), [showToast]);
-  const info = useCallback((msg: string) => showToast(msg, 'info'), [showToast]);
+  const success = useCallback(
+    (msg: string, options?: ToastOptions) => showToast(msg, 'success', options),
+    [showToast],
+  );
+  const error = useCallback(
+    (msg: string, options?: ToastOptions) => showToast(msg, 'error', options),
+    [showToast],
+  );
+  const info = useCallback(
+    (msg: string, options?: ToastOptions) => showToast(msg, 'info', options),
+    [showToast],
+  );
 
   const toastObj = useMemo(
     () => ({
