@@ -454,10 +454,41 @@ async function main() {
     // -------------------------------------------------------------------------
     // CHECKPOINT 8: E2E-08 - Giao diện khách hàng phản ánh thanh toán hoàn tất
     // -------------------------------------------------------------------------
-    console.log('[STEP 8] Khách hàng tải lại hoặc nhận thông báo thanh toán...');
+    console.log('[STEP 8] Khách hàng tải lại và đồng bộ trạng thái thanh toán...');
     await customerPage.reload({ waitUntil: 'domcontentloaded' });
-    await new Promise(r => setTimeout(r, 1200));
-    pass('E2E-08', 'Giao diện khách hàng đồng bộ trạng thái đơn đã thanh toán');
+    await new Promise(r => setTimeout(r, 1500));
+
+    // Xác minh trên DOM giao diện thực khách
+    await customerPage.waitForSelector('header', { timeout: 10000 });
+    const headerTextAfterPay = await customerPage.$eval('header', el => el.innerText);
+    const hasTableContext = headerTextAfterPay.includes(TABLE_NAME) || headerTextAfterPay.includes(TABLE_CODE);
+    const hasActiveOrderBanner = headerTextAfterPay.includes('Tiến độ món') || headerTextAfterPay.includes('Tạm tính:');
+
+    // Xác minh qua endpoint công khai của khách hàng
+    const custOrderRes = await fetch(`${API_BASE}/orders/public/customer/${orderId}`);
+    const custOrderData = await custOrderRes.json();
+    const isOrderPaid = custOrderRes.ok && custOrderData?.data?.status === 'Paid';
+
+    const tableCtxRes = await fetch(
+      `${API_BASE}/orders/public/table-context?restaurantSlug=${restaurantSlug}&tableCode=${TABLE_CODE}&qrToken=${qrToken}`
+    );
+    const tableCtxData = await tableCtxRes.json();
+    const isTableContextClean = tableCtxRes.ok && tableCtxData?.data?.activeOrder === null;
+
+    if (hasTableContext && !hasActiveOrderBanner && isOrderPaid && isTableContextClean) {
+      pass(
+        'E2E-08',
+        'Giao diện khách hàng đồng bộ trạng thái đơn đã thanh toán (Order Paid, Active Banner Cleared, Session Released)',
+        `Order: Paid, Banner: Cleared, Table: Available`
+      );
+    } else {
+      fail('E2E-08', 'Giao diện khách hàng không phản ánh đúng trạng thái đã thanh toán / giải phóng', {
+        hasTableContext,
+        hasActiveOrderBanner,
+        isOrderPaid,
+        isTableContextClean,
+      });
+    }
 
     // -------------------------------------------------------------------------
     // CHECKPOINT 9: E2E-09 - Xác minh bất biến giải phóng bàn và Idempotency
