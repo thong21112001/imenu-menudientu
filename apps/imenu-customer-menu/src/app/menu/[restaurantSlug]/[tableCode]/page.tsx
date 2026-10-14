@@ -158,8 +158,10 @@ export default function CustomerTableMenuPage() {
         }),
       ]);
 
-      setCategories(catRes.data || []);
-      setMenuItems(itemRes.data || []);
+      setCategories(Array.isArray(catRes.data) ? catRes.data : (catRes.data as any)?.categories || []);
+      const rawItems = itemRes.data;
+      const itemsList = Array.isArray(rawItems) ? rawItems : (rawItems as any)?.items || [];
+      setMenuItems(itemsList);
     } catch (err: any) {
       console.error('Lỗi tải dữ liệu QR bàn:', err);
       setContextError(
