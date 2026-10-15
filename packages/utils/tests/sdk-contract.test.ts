@@ -1,4 +1,7 @@
 import { apiClient } from '../src/api-client';
+import { buildReceiptData } from '../src/receipt';
+import { EscPosEncoder, stripAccents, thermalPrinterService } from '../src/escpos';
+import { generateVietQRMemo, maskBankAccount } from '../src/vietqr';
 import http from 'http';
 
 interface CapturedRequest {
@@ -10,7 +13,7 @@ interface CapturedRequest {
 
 async function runSdkContractTests() {
   console.log('========================================================================');
-  console.log('  iMenu Frontend - Sub-phase 6.8: SDK Contract & Route Verification     ');
+  console.log('  iMenu Frontend - Phase 8: SDK Contract & ESC/POS Route Verification   ');
   console.log('========================================================================\n');
 
   let passed = 0;
@@ -367,6 +370,404 @@ async function runSdkContractTests() {
       fail('SDK-12: batch / availability methods sai route hoặc body', { reqBatchCook, reqBatchReady, reqToggleAvail });
       failed++;
     }
+
+    // =========================================================================
+    // PHASE 8: PAYMENT, BILL & HARDWARE THERMAL PRINTER TESTS
+    // =========================================================================
+
+    // -------------------------------------------------------------------------
+    // TEST 13: orders.completePayment route & idempotency-key header
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.orders.completePayment(
+      'order-complete-001',
+      { paymentMethod: 'VietQR', amountReceived: 350000 },
+      { idempotencyKey: 'idem-complete-key-999' },
+    );
+
+    const reqComplete = capturedRequests[0];
+    if (
+      reqComplete?.method === 'POST' &&
+      reqComplete?.url === '/api/orders/order-complete-001/complete-payment' &&
+      reqComplete?.headers['idempotency-key'] === 'idem-complete-key-999'
+    ) {
+      pass('SDK-13: orders.completePayment map chính xác POST /api/orders/:id/complete-payment và truyền header idempotency-key');
+      passed++;
+    } else {
+      fail('SDK-13: orders.completePayment sai route hoặc thiếu header', reqComplete);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 14: orders.getReceipt route & query params
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.orders.getReceipt('order-receipt-001', {
+      discountAmount: 20000,
+      vatPercent: 8,
+    });
+
+    const reqReceipt = capturedRequests[0];
+    if (
+      reqReceipt?.method === 'GET' &&
+      reqReceipt?.url?.startsWith('/api/orders/order-receipt-001/receipt') &&
+      reqReceipt?.url?.includes('discountAmount=20000') &&
+      reqReceipt?.url?.includes('vatPercent=8')
+    ) {
+      pass('SDK-14: orders.getReceipt map chính xác GET /api/orders/:id/receipt kèm query parameters');
+      passed++;
+    } else {
+      fail('SDK-14: orders.getReceipt sai route', reqReceipt);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 15: orders.getVietQr route
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.orders.getVietQr('order-vietqr-001');
+
+    const reqVietQr = capturedRequests[0];
+    if (
+      reqVietQr?.method === 'GET' &&
+      reqVietQr?.url === '/api/orders/order-vietqr-001/vietqr'
+    ) {
+      pass('SDK-15: orders.getVietQr map chính xác GET /api/orders/:id/vietqr');
+      passed++;
+    } else {
+      fail('SDK-15: orders.getVietQr sai route', reqVietQr);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 16: customerOrders.requestPayment route & body
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.customerOrders.requestPayment('order-cust-001', {
+      restaurantSlug: 'pho-viet',
+      tableCode: 'ban-05',
+      qrToken: 'token-xyz-789',
+      paymentMethod: 'VietQR',
+    });
+
+    const reqCustPayReq = capturedRequests[0];
+    const bodyCustPayReq = JSON.parse(reqCustPayReq?.body || '{}');
+    if (
+      reqCustPayReq?.method === 'POST' &&
+      reqCustPayReq?.url === '/api/orders/customer/order-cust-001/request-payment' &&
+      bodyCustPayReq.paymentMethod === 'VietQR' &&
+      bodyCustPayReq.tableCode === 'ban-05'
+    ) {
+      pass('SDK-16: customerOrders.requestPayment map chính xác POST /api/orders/customer/:id/request-payment kèm body');
+      passed++;
+    } else {
+      fail('SDK-16: customerOrders.requestPayment sai route hoặc body', reqCustPayReq);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 17: customerOrders.getVietQr route & params
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.customerOrders.getVietQr('order-cust-002', {
+      restaurantSlug: 'pho-viet',
+      tableCode: 'ban-05',
+      qrToken: 'token-xyz-789',
+    });
+
+    const reqCustQr = capturedRequests[0];
+    if (
+      reqCustQr?.method === 'GET' &&
+      reqCustQr?.url?.startsWith('/api/orders/customer/order-cust-002/vietqr') &&
+      reqCustQr?.url?.includes('restaurantSlug=pho-viet') &&
+      reqCustQr?.url?.includes('tableCode=ban-05')
+    ) {
+      pass('SDK-17: customerOrders.getVietQr map chính xác GET /api/orders/customer/:id/vietqr kèm query credentials');
+      passed++;
+    } else {
+      fail('SDK-17: customerOrders.getVietQr sai route', reqCustQr);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 18: customerOrders.getReceipt route & params
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.customerOrders.getReceipt('order-cust-003', {
+      restaurantSlug: 'pho-viet',
+      tableCode: 'ban-05',
+      qrToken: 'token-xyz-789',
+    });
+
+    const reqCustReceipt = capturedRequests[0];
+    if (
+      reqCustReceipt?.method === 'GET' &&
+      reqCustReceipt?.url?.startsWith('/api/orders/customer/order-cust-003/receipt') &&
+      reqCustReceipt?.url?.includes('restaurantSlug=pho-viet') &&
+      reqCustReceipt?.url?.includes('tableCode=ban-05')
+    ) {
+      pass('SDK-18: customerOrders.getReceipt map chính xác GET /api/orders/customer/:id/receipt kèm query credentials');
+      passed++;
+    } else {
+      fail('SDK-18: customerOrders.getReceipt sai route', reqCustReceipt);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 19: bills.list route & filter parameters
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.bills.list({
+      branchId: 'branch-01',
+      paymentMethod: 'VietQR',
+      paymentStatus: 'PAID',
+      search: 'BILL-261015',
+      page: 1,
+      limit: 20,
+    });
+
+    const reqBillsList = capturedRequests[0];
+    if (
+      reqBillsList?.method === 'GET' &&
+      reqBillsList?.url?.startsWith('/api/bills') &&
+      reqBillsList?.url?.includes('branchId=branch-01') &&
+      reqBillsList?.url?.includes('paymentMethod=VietQR') &&
+      reqBillsList?.url?.includes('paymentStatus=PAID') &&
+      reqBillsList?.url?.includes('search=BILL-261015')
+    ) {
+      pass('SDK-19: bills.list map chính xác GET /api/bills kèm các bộ lọc phân trang và điều kiện');
+      passed++;
+    } else {
+      fail('SDK-19: bills.list sai route', reqBillsList);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 20: bills.get & bills.getByOrder routes
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.bills.get('bill-001');
+    await apiClient.bills.getByOrder('order-001');
+
+    const [reqBillGet, reqBillByOrder] = capturedRequests;
+    if (
+      reqBillGet?.method === 'GET' &&
+      reqBillGet?.url === '/api/bills/bill-001' &&
+      reqBillByOrder?.method === 'GET' &&
+      reqBillByOrder?.url === '/api/bills/by-order/order-001'
+    ) {
+      pass('SDK-20: bills.get & bills.getByOrder map chính xác GET /api/bills/:id và GET /api/bills/by-order/:orderId');
+      passed++;
+    } else {
+      fail('SDK-20: bills.get / byOrder sai route', { reqBillGet, reqBillByOrder });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 21: bills.logPrint route & POST method
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.bills.logPrint('bill-001');
+
+    const reqBillPrint = capturedRequests[0];
+    if (
+      reqBillPrint?.method === 'POST' &&
+      reqBillPrint?.url === '/api/bills/bill-001/print'
+    ) {
+      pass('SDK-21: bills.logPrint map chính xác POST /api/bills/:id/print');
+      passed++;
+    } else {
+      fail('SDK-21: bills.logPrint sai route', reqBillPrint);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 22: activityLogs.list route & filter query params
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.activityLogs.list({
+      module: 'PAYMENT',
+      action: 'PAYMENT_COMPLETED',
+      branchId: 'branch-01',
+      page: 1,
+      limit: 10,
+    });
+
+    const reqActList = capturedRequests[0];
+    if (
+      reqActList?.method === 'GET' &&
+      reqActList?.url?.startsWith('/api/activity-logs') &&
+      reqActList?.url?.includes('module=PAYMENT') &&
+      reqActList?.url?.includes('action=PAYMENT_COMPLETED') &&
+      reqActList?.url?.includes('branchId=branch-01')
+    ) {
+      pass('SDK-22: activityLogs.list map chính xác GET /api/activity-logs kèm bộ lọc kiểm toán tài chính');
+      passed++;
+    } else {
+      fail('SDK-22: activityLogs.list sai route', reqActList);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 23: buildReceiptData Unit Tests (Cancelled Items, Option Notes, Bank Hierarchy)
+    // -------------------------------------------------------------------------
+    const mockOrder: any = {
+      orderCode: 'ORD-20261015-088',
+      tableName: 'Ban 08',
+      branchId: 'branch-hb',
+      items: [
+        {
+          id: 'item-1',
+          name: 'Phở bò tái nạm',
+          price: 65000,
+          quantity: 2,
+          itemTotal: 130000,
+          status: 'Served',
+          selectedOptions: [
+            { groupId: 'size', groupName: 'Size', valueId: 'l', valueName: 'Tô lớn', priceDelta: 15000 },
+            { groupId: 'spice', groupName: 'Độ cay', valueId: 'hot', valueName: 'Cay nhiều', priceDelta: 0 },
+          ],
+        },
+        {
+          id: 'item-2',
+          name: 'Nước ngọt có gas',
+          price: 20000,
+          quantity: 1,
+          itemTotal: 20000,
+          status: 'Cancelled', // PHẢI BỊ LOẠI TRỪ KHỎI RECEIPT
+        },
+      ],
+      subTotal: 130000,
+      discountAmount: 10000,
+      vatAmount: 9600,
+      vatPercent: 8,
+      totalAmount: 129600,
+      paymentMethod: 'Cash',
+      amountReceived: 150000,
+      changeAmount: 20400,
+      status: 'Paid',
+      isPaid: true,
+    };
+
+    const mockRestaurant: any = {
+      name: 'Nhà Hàng Phở Việt',
+      tagline: 'Vị Phở Truyền Thống Hà Nội',
+      address: '123 Hoàng Mai, Hà Nội',
+      phone: '0901234567',
+      bankAccount: {
+        bankId: 'VCB',
+        bankName: 'Vietcombank',
+        accountNo: '001100223344',
+        accountName: 'CONG TY PHO VIET',
+      },
+      branches: [
+        {
+          id: 'branch-hb',
+          name: 'Chi Nhánh Hai Bà Trưng',
+          address: '456 Phố Huế, Hai Bà Trưng',
+          phone: '0988776655',
+          bankAccount: {
+            bankId: 'MB',
+            bankName: 'MBBank',
+            accountNo: '999988887777',
+            accountName: 'PHO VIET HAI BA TRUNG',
+          },
+        },
+      ],
+    };
+
+    const receiptData = buildReceiptData(mockOrder, mockRestaurant);
+
+    const hasCancelledItem = receiptData.items.some((i) => i.name === 'Nước ngọt có gas');
+    const optionNoteCorrect = receiptData.items[0]?.selectedOptionsNote === 'Tô lớn (+15.000đ), Cay nhiều';
+    const bankResolvedToBranch =
+      receiptData.paymentQr?.bankName === 'MBBank' &&
+      receiptData.paymentQr?.accountNo === '999988887777';
+
+    if (!hasCancelledItem && optionNoteCorrect && bankResolvedToBranch && receiptData.metadata.receiptType === 'FINAL_BILL') {
+      pass('SDK-23: buildReceiptData lọc bỏ 100% món Cancelled, tổng hợp option note và phân giải đúng ngân hàng chi nhánh');
+      passed++;
+    } else {
+      fail('SDK-23: buildReceiptData trả về dữ liệu chưa chính xác', {
+        hasCancelledItem,
+        optionNoteCorrect,
+        bankResolvedToBranch,
+        receiptData,
+      });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 24: EscPosEncoder Unit Tests (ASCII Strip, Cash Drawer, Cut, QR)
+    // -------------------------------------------------------------------------
+    const strippedStr = stripAccents('Phở Bò Tái Nạm, Trà Sữa Đào 100% Đường 50% Đá!');
+    const encoder = new EscPosEncoder('80mm');
+    const encodedBuffer = encoder.encodeReceipt(receiptData, { kickDrawerOnCash: true });
+
+    // Kiểm tra các opcode ESC/POS quan trọng:
+    // 1. Kick Drawer: 1B 70 00 19 FA (27, 112, 0, 25, 250)
+    // 2. Cut: 1D 56 42 00 (29, 86, 66, 0)
+    let hasKickDrawer = false;
+    let hasCutPaper = false;
+
+    for (let i = 0; i <= encodedBuffer.length - 4; i++) {
+      if (
+        encodedBuffer[i] === 0x1b &&
+        encodedBuffer[i + 1] === 0x70 &&
+        encodedBuffer[i + 2] === 0x00 &&
+        encodedBuffer[i + 3] === 0x19 &&
+        encodedBuffer[i + 4] === 0xfa
+      ) {
+        hasKickDrawer = true;
+      }
+      if (
+        encodedBuffer[i] === 0x1d &&
+        encodedBuffer[i + 1] === 0x56 &&
+        encodedBuffer[i + 2] === 0x42 &&
+        encodedBuffer[i + 3] === 0x00
+      ) {
+        hasCutPaper = true;
+      }
+    }
+
+    if (
+      strippedStr === 'Pho Bo Tai Nam, Tra Sua Dao 100% Duong 50% Da!' &&
+      hasKickDrawer &&
+      hasCutPaper &&
+      encodedBuffer.length > 500
+    ) {
+      pass('SDK-24: EscPosEncoder mã hóa chuẩn xác đặc tả 80mm ESC/POS (tẩy dấu tiếng Việt, kick drawer khi thanh toán Cash, cắt giấy partial cut)');
+      passed++;
+    } else {
+      fail('SDK-24: EscPosEncoder thiếu opcode hoặc tẩy dấu sai', {
+        strippedStr,
+        hasKickDrawer,
+        hasCutPaper,
+        bufferLength: encodedBuffer.length,
+      });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 25: thermalPrinterService.generatePrintPayload Unit Test
+    // -------------------------------------------------------------------------
+    const printPayload = thermalPrinterService.generatePrintPayload(receiptData);
+    if (
+      printPayload.buffer instanceof Uint8Array &&
+      typeof printPayload.base64 === 'string' &&
+      printPayload.base64.length > 0 &&
+      typeof printPayload.hex === 'string' &&
+      printPayload.hex.includes('1B 40') &&
+      typeof printPayload.textPreview === 'string' &&
+      printPayload.textPreview.includes('HOA DON THANH TOAN')
+    ) {
+      pass('SDK-25: thermalPrinterService.generatePrintPayload sinh đầy đủ buffer Uint8Array, base64, hex và textPreview');
+      passed++;
+    } else {
+      fail('SDK-25: thermalPrinterService.generatePrintPayload trả về thiếu trường', printPayload);
+      failed++;
+    }
+
 
   } finally {
     await new Promise<void>((resolve) => mockServer.close(() => resolve()));
