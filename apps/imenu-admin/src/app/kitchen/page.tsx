@@ -146,6 +146,11 @@ export default function KitchenDisplaySystemPage() {
     }
   }, []);
 
+  const isStockoutOpenRef = React.useRef(isStockoutOpen);
+  useEffect(() => {
+    isStockoutOpenRef.current = isStockoutOpen;
+  }, [isStockoutOpen]);
+
   useEffect(() => {
     loadOrders();
 
@@ -186,7 +191,7 @@ export default function KitchenDisplaySystemPage() {
         pType === 'menu:availability_changed'
       ) {
         loadOrders(true);
-        if (isStockoutOpen) {
+        if (isStockoutOpenRef.current) {
           loadStockoutItems();
         }
       }
@@ -196,7 +201,7 @@ export default function KitchenDisplaySystemPage() {
       window.removeEventListener('imenu:branch_changed', handleBranchChange);
       unsub();
     };
-  }, [loadOrders, isStockoutOpen, loadStockoutItems]);
+  }, [loadOrders, loadStockoutItems]);
 
   // Single Item Status Transition Handler
   const handleTransitionItem = async (
@@ -209,12 +214,11 @@ export default function KitchenDisplaySystemPage() {
 
     setIsActionInProgress((prev) => ({ ...prev, [actionKey]: true }));
 
-    // Optimistic Update
+    // Snapshot state for Rollback (AUD-7.6)
+    const previousOrders = orders;
     const nextStatus = action === 'startCooking' ? 'Cooking' : action === 'markReady' ? 'Ready' : 'Served';
-    if (nextStatus === 'Ready') {
-      soundEngine.playReadyChime();
-    }
 
+    // Optimistic Update
     setOrders((prev) =>
       prev.map((ord) => {
         if (ord.id === orderId) {
@@ -233,6 +237,7 @@ export default function KitchenDisplaySystemPage() {
         toast.success('Bắt đầu chế biến món ăn');
       } else if (action === 'markReady') {
         await apiClient.kitchen.markItemReady(itemId, orderId);
+        soundEngine.playReadyChime(); // Hardening AUD-7.6: Chỉ phát chuông SAU KHI server ghi nhận thành công
         toast.success('Món ăn đã chế biến xong!');
       } else if (action === 'markServed') {
         await apiClient.kitchen.markItemServed(itemId, orderId);
@@ -241,6 +246,8 @@ export default function KitchenDisplaySystemPage() {
       await loadOrders(true);
     } catch (err: any) {
       console.error('Lỗi chuyển trạng thái món:', err);
+      // Hardening AUD-7.6: Rollback ngay lập tức về snapshot trước đó
+      setOrders(previousOrders);
       toast.error(err.message || 'Không thể cập nhật trạng thái món');
       await loadOrders(true);
     } finally {
@@ -290,6 +297,9 @@ export default function KitchenDisplaySystemPage() {
     const itemId = item._id || item.id;
     const branchId = storageService.getActiveBranchId() || undefined;
 
+    // Snapshot state for Rollback (AUD-7.6)
+    const previousStockoutItems = stockoutItems;
+
     // Optimistic Update in Drawer
     setStockoutItems((prev) =>
       prev.map((it) => {
@@ -308,6 +318,8 @@ export default function KitchenDisplaySystemPage() {
       await apiClient.kitchen.toggleItemAvailability(itemId, nextStatus, branchId);
       toast.success(`Đã đổi "${item.name}" sang: ${nextStatus ? 'Còn món' : 'Hết món (86)'}`);
     } catch (err: any) {
+      // Hardening AUD-7.6: Rollback ngay lập tức
+      setStockoutItems(previousStockoutItems);
       toast.error(err.message || 'Không thể cập nhật tình trạng món');
       await loadStockoutItems();
     }
