@@ -25,7 +25,8 @@ imenu-menudientu/
 │   └── eslint-config/          # Cấu hình ESLint chia sẻ (@imenu/eslint-config)
 │
 ├── scripts/
-│   ├── e2e-order-lifecycle.mjs # Kịch bản kiểm thử E2E trình duyệt đa ứng dụng Puppeteer (9 Checkpoints)
+│   ├── e2e-order-lifecycle.mjs # Kịch bản kiểm thử E2E trình duyệt POS Order Lifecycle (9 Checkpoints)
+│   ├── e2e-kds-lifecycle.mjs   # Kịch bản kiểm thử E2E KDS trình duyệt điều phối món ăn (6 Checkpoints)
 │   └── capture-guide-screenshots.mjs # Tiện ích chụp ảnh màn hình tài liệu
 │
 ├── test-artifacts/             # Thư mục lưu vết lỗi và bằng chứng kiểm thử E2E (ảnh chụp màn hình)
@@ -414,7 +415,7 @@ npm run build
 ```
 
 ### Chi Tiết Bộ Kiểm Thử SDK Contract (`npm run test:sdk`)
-Tệp `packages/utils/tests/sdk-contract.test.ts` tự động dựng một Mock HTTP Server tại cổng nội bộ, thực thi gọi các hàm của `apiClient` và xác minh tính chính xác của:
+Tệp `packages/utils/tests/sdk-contract.test.ts` tự động dựng một Mock HTTP Server tại cổng nội bộ, thực thi gọi các hàm của `apiClient` và xác minh tính chính xác của 14 ca test:
 - **SDK-01**: `customerOrders.getTableContext` khớp chính xác query params (`restaurantSlug`, `tableCode`, `qrToken`).
 - **SDK-02 & SDK-02b**: `customerOrders.create` gọi đúng endpoint công khai `POST /api/orders/customer` và truyền đúng header `idempotency-key`.
 - **SDK-03 & SDK-03b**: `customerOrders.addItems` gọi đúng endpoint `POST /api/orders/customer/items` và truyền đúng header `idempotency-key`.
@@ -422,6 +423,11 @@ Tệp `packages/utils/tests/sdk-contract.test.ts` tự động dựng một Mock
 - **SDK-05**: `orders.pay` gọi đúng `POST /api/orders/:id/pay` và truyền đúng header `idempotency-key`.
 - **SDK-06**: Các thao tác bàn ăn (`transfer`, `merge`, `moveItems`) gọi đúng routes tương ứng.
 - **SDK-07**: Quản lý đợt gọi món (`confirmRound`, `cancelRound`) gọi đúng routes nghiệp vụ.
+- **SDK-08**: `kitchen.getOrders` gọi đúng endpoint `GET /api/kitchen/orders` với bộ lọc query (`branchId`, `zoneId`, `status`, `search`).
+- **SDK-09**: `kitchen.getItemsSummary` gọi đúng endpoint `GET /api/kitchen/items-summary` tổng hợp món theo chi nhánh.
+- **SDK-10**: `kitchen.startCookingItem` hỗ trợ cả Flat route (`/order-items/:id/start-cooking`) và Nested route (`/orders/:orderId/items/:id/start-cooking`).
+- **SDK-11**: `kitchen.markItemReady` và `markItemServed` gọi đúng `POST /api/order-items/:id/mark-ready` và `mark-served`.
+- **SDK-12**: `kitchen.startCookingAll`, `markReadyAll` và `toggleItemAvailability` gọi đúng POST batch và PATCH availability với `branchId`.
 
 ### Chi Tiết Kịch Bản E2E Trình Duyệt Đa Ứng Dụng (`npm run test:e2e`)
 Tệp `scripts/e2e-order-lifecycle.mjs` sử dụng `puppeteer-core` kết nối trực tiếp với Google Chrome, mô phỏng đồng thời 2 ngữ cảnh người dùng: **Khách Hàng (Mobile Viewport: 390x844)** và **Thu Ngân POS (Desktop Viewport: 1440x900)** trải qua 9 Checkpoints kiểm thử nghiêm ngặt:
@@ -437,6 +443,18 @@ Tệp `scripts/e2e-order-lifecycle.mjs` sử dụng `puppeteer-core` kết nối
 | **E2E-07** | Thanh toán tiền mặt | Thu ngân thực hiện thanh toán tiền mặt; xác minh đơn hàng chuyển sang trạng thái `Paid` trong MongoDB Transaction. |
 | **E2E-08** | Giao diện khách đồng bộ | Khách hàng tải lại trang; xác minh trạng thái đơn đã thanh toán, thanh theo dõi món đóng lại và phiên bàn được giải phóng. |
 | **E2E-09** | Bất biến giải phóng bàn | Xác minh trạng thái bàn tại database là `Available` (`currentOrderId: null`) và thử nghiệm replay thanh toán trả về header `x-idempotent-replay: true`. |
+
+### Chi Tiết Kịch Bản E2E Trình Duyệt Màn Hình Bếp KDS (`node scripts/e2e-kds-lifecycle.mjs`)
+Tệp `scripts/e2e-kds-lifecycle.mjs` kiểm chứng chu trình điều phối món ăn KDS 3 chiều:
+
+| Checkpoint | Tên Checkpoint | Thao tác thực tế & Tiêu chí nghiệm thu |
+| :---: | :--- | :--- |
+| **KDS-E2E-01** | Bếp đăng nhập & Mở `/kitchen` | Đầu bếp truy cập `/kitchen`, xác minh giao diện Dark Mode hiển thị thanh Header Summary Bar. |
+| **KDS-E2E-02** | Khách gọi món qua QR Menu | Khách quét mã gọi món, xác minh vé order xuất hiện ngay lập tức trên màn hình bếp KDS qua WebSocket. |
+| **KDS-E2E-03** | Bếp bấm Bắt đầu nấu | Bếp bấm "Bắt đầu nấu" trên món; xác minh huy hiệu món chuyển sang `Cooking` màu vàng hổ phách và Order chuyển `Preparing`. |
+| **KDS-E2E-04** | Bếp bấm Báo xong món | Bếp bấm "Báo xong" trên món; xác minh chuông reo Chime Alert và huy hiệu chuyển sang `Ready` màu xanh lục. |
+| **KDS-E2E-05** | Khách theo dõi tiến độ | Drawer theo dõi của khách hàng hiển thị chính xác trạng thái món ăn mà không cần F5 tải lại trang. |
+| **KDS-E2E-06** | Phục vụ bàn & Hoàn tất | Bếp bấm "Đã phục vụ" trên tất cả các món; xác minh thẻ đơn tự động biến mất khỏi hàng đợi nấu. |
 
 ---
 
@@ -454,6 +472,16 @@ Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai 
 
 ---
 
-## 📄 10. Bản Quyền & Giấy Phép (License)
+## 📄 10. Trạng Thái Dự Án & Nghiệm Thu (Project Status)
+
+### Phase 7: Kitchen Display System (KDS) & Realtime Dispatching — ✅ ĐÃ NGHIỆM THU
+- **Màn hình Bếp KDS (`/kitchen`)**: Hoàn thiện giao diện Dark Mode tương phản cao, thẻ đơn hàng, bộ đếm thời gian thực và cảnh báo trễ quá 15 phút.
+- **Hợp đồng SDK Frontend (`@imenu/utils`)**: 14/14 ca test hợp đồng SDK (`SDK-01` đến `SDK-12`) đạt 100% PASS.
+- **Đồng bộ thời gian thực 3 chiều**: Ghép nối WebSocket tức thì giữa Màn hình Bếp KDS, POS và Khách quét QR Menu.
+- **Bảo mật & Gia cố**: Ngăn chặn rò rỉ WebSocket của khách vãng lai, tự động hoàn tác Optimistic UI khi API trả về lỗi.
+
+---
+
+## 📄 11. Bản Quyền & Giấy Phép (License)
 
 Bản quyền thuộc về **Hệ sinh thái iMenu — Nền tảng Quản lý F&B Toàn diện**. Tất cả các quyền được bảo lưu.

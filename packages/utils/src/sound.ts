@@ -76,6 +76,10 @@ class SoundEngine {
       osc.stop(now + 0.6);
     } catch (e) {}
   }
+
+  public playItemReadyChime() {
+    this.playReadyChime();
+  }
 }
 
 export const soundEngine = new SoundEngine();

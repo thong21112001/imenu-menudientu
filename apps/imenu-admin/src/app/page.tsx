@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { storageService, formatCurrencyVND, apiClient, realtimeHub } from '@imenu/utils';
+import { storageService, formatCurrencyVND, apiClient, realtimeHub, soundEngine } from '@imenu/utils';
 import { DashboardOverviewData } from '@imenu/types';
-import { Card, Button, StatusChip, Badge } from '@imenu/ui';
+import { Card, Button, StatusChip, Badge, useToast } from '@imenu/ui';
 import {
   TrendingUp,
   ShoppingBag,
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function DashboardOverviewPage() {
+  const { toast } = useToast();
   const [overview, setOverview] = useState<DashboardOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeBranchId, setActiveBranchId] = useState<string | null>(storageService.getActiveBranchId());
@@ -101,7 +102,22 @@ export default function DashboardOverviewPage() {
 
     window.addEventListener('imenu:branch_changed', handleBranchChange);
 
-    const unsub = realtimeHub.subscribe('*', () => {
+    const unsub = realtimeHub.subscribe('*', (payload) => {
+      const evt = payload.type as string;
+      const orderData = payload.data?.order || payload.data;
+      const status = orderData?.status || payload.data?.status;
+      const tableName = orderData?.table?.name || payload.data?.tableName || 'Bàn';
+
+      if (
+        (evt === 'ORDER_STATUS_UPDATED' || evt === 'order:item_status_updated') &&
+        status === 'Ready'
+      ) {
+        soundEngine.playItemReadyChime();
+        toast.success(
+          `🔔 Bếp đã nấu xong toàn bộ món cho ${tableName}! Vui lòng mang ra phục vụ.`,
+          { duration: 5000 },
+        );
+      }
       loadDashboard();
     });
 

@@ -9,6 +9,7 @@ import {
   generateVietQRUrl,
   realtimeHub,
   soundEngine,
+  socketClient,
 } from '@imenu/utils';
 import {
   Restaurant,
@@ -147,6 +148,10 @@ export default function CustomerTableMenuPage() {
       const restId = (ctx.restaurant as any).id || (ctx.restaurant as any)._id;
       const targetBranchId = ctx.table.branchId || branchId;
 
+      // Realtime Pairing: Join table room and restaurant room via WebSocket
+      socketClient.connect(restId, targetBranchId, ctx.table.id);
+      socketClient.joinTable(ctx.table.id, restId);
+
       const [catRes, itemRes] = await Promise.all([
         apiClient.categories.listPublic({
           restaurantId: restId,
@@ -176,27 +181,92 @@ export default function CustomerTableMenuPage() {
     loadData();
   }, [loadData]);
 
-  // Subscribe to Realtime Hub
+  // Subscribe to Realtime Hub for instant cross-app synchronization
   useEffect(() => {
     const unsub = realtimeHub.subscribe('*', (payload) => {
       if (!table) return;
 
-      const relevantTypes = [
-        'ROUND_ADDED',
-        'ROUND_CONFIRMED',
-        'ROUND_CANCELLED',
+      const evt = payload.type as string;
+
+      // 1. Menu item availability changed (Bếp bấm "Báo hết món" hoặc "Mở bán lại")
+      if (evt === 'MENU_AVAILABILITY_CHANGED' || evt === 'menu:availability_changed') {
+        const changedItemId = payload.data?.menuItemId || payload.data?.id;
+        const isAvailable = payload.data?.effectiveIsAvailable ?? payload.data?.isAvailable ?? false;
+        if (changedItemId) {
+          setMenuItems((prev) =>
+            prev.map((item) =>
+              item.id === changedItemId
+                ? { ...item, isAvailable, effectiveIsAvailable: isAvailable }
+                : item
+            )
+          );
+          if (!isAvailable) {
+            setCart((currentCart) => {
+              const inCart = currentCart.find((c) => c.menuItemId === changedItemId);
+              if (inCart) {
+                showToast(`⚠️ Món "${inCart.item.name}" trong giỏ vừa hết hàng tại Bếp!`);
+              }
+              return currentCart;
+            });
+          }
+        }
+        return;
+      }
+
+      // 2. Order & Item status updates (KDS nấu món, duyệt đơn, hủy món)
+      const orderEvents = [
         'ORDER_STATUS_UPDATED',
-        'PAYMENT_REQUESTED',
-        'PAYMENT_COMPLETED',
-        'order:round_added',
-        'order:round_confirmed',
-        'order:round_cancelled',
         'order:item_status_updated',
-        'order:updated',
+        'ORDER_CONFIRMED',
+        'order:confirmed',
+        'ROUND_CONFIRMED',
+        'order:round_confirmed',
+        'ROUND_CANCELLED',
+        'order:round_cancelled',
+        'ITEM_CANCELLED',
+        'order:item_cancelled',
+        'ORDER_CANCELLED',
+        'order:cancelled',
+        'ROUND_ADDED',
+        'order:round_added',
+        'PAYMENT_REQUESTED',
+        'order:payment_requested',
+        'PAYMENT_COMPLETED',
         'order:payment_completed',
+        'order:updated',
       ];
 
-      if (relevantTypes.includes(payload.type as string)) {
+      if (orderEvents.includes(evt)) {
+        // Immediate optimistic update if payload contains order data matching current table
+        const incomingOrder = payload.data?.order || (payload.data?.orderCode ? payload.data : null);
+        const incomingTableId =
+          incomingOrder?.tableId?._id || incomingOrder?.tableId || payload.data?.tableId;
+
+        if (
+          incomingOrder &&
+          (incomingOrder.id === activeOrder?.id ||
+            incomingOrder._id === activeOrder?.id ||
+            incomingTableId === table.id ||
+            incomingTableId === (table as any)._id)
+        ) {
+          setActiveOrder(incomingOrder);
+        }
+
+        // Notification sound & message
+        if (payload.data?.status === 'Ready') {
+          soundEngine.playItemReadyChime();
+          showToast('🍽️ Món ăn của bàn bạn đã được Bếp nấu xong!');
+        } else if (evt === 'ORDER_CONFIRMED' || evt === 'order:confirmed') {
+          showToast('🎉 Đơn gọi món đã được Thu ngân duyệt vào Bếp!');
+        } else if (evt === 'ROUND_CONFIRMED' || evt === 'order:round_confirmed') {
+          showToast('🎉 Lượt gọi món mới đã được duyệt vào Bếp!');
+        } else if (evt === 'ROUND_CANCELLED' || evt === 'order:round_cancelled') {
+          showToast('⚠️ Một lượt gọi món đã bị từ chối');
+        } else if (evt === 'ITEM_CANCELLED' || evt === 'order:item_cancelled') {
+          showToast('⚠️ Món ăn đã được Bếp hủy');
+        }
+
+        // Fallback API re-fetch for authoritative consistency
         if (activeOrder?.id) {
           apiClient.customerOrders
             .getActiveOrder(activeOrder.id)
@@ -213,20 +283,10 @@ export default function CustomerTableMenuPage() {
             .catch(() => {});
         }
       }
-
-      if (payload.type === 'MENU_AVAILABILITY_CHANGED' && restaurant) {
-        const restId = (restaurant as any).id || (restaurant as any)._id;
-        apiClient.menuItems
-          .listPublic({ restaurantId: restId, branchId: table.branchId })
-          .then((res) => {
-            if (res.data) setMenuItems(res.data);
-          })
-          .catch(() => {});
-      }
     });
 
     return () => unsub();
-  }, [table, activeOrder?.id, restaurant]);
+  }, [table, activeOrder?.id]);
 
   // 8-second Polling Fallback if activeOrder is pending/cooking
   useEffect(() => {
@@ -851,64 +911,92 @@ export default function CustomerTableMenuPage() {
         position="bottom"
       >
         <div className="space-y-4">
-          <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
-            {cart.map((item, idx) => (
-              <div
-                key={item.id}
-                className="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-start justify-between gap-3"
-              >
-                <div className="flex-1 min-w-0">
-                  <h4 className="text-xs font-bold text-slate-800">{item.item.name}</h4>
-                  {item.selectedOptions.length > 0 && (
-                    <div className="text-[10px] text-slate-500 mt-0.5">
-                      {item.selectedOptions.map((o) => o.valueName).join(', ')}
-                    </div>
-                  )}
-                  {item.note && (
-                    <div className="text-[10px] text-amber-700 mt-0.5 italic">
-                      Ghi chú: {item.note}
-                    </div>
-                  )}
-                  <span className="text-xs font-bold text-[#176044] mt-1 block">
-                    {formatCurrencyVND(item.itemTotal)}
-                  </span>
-                </div>
+          {/* Out-of-stock warning banner in cart */}
+          {cart.some((c) => {
+            const currentItem = menuItems.find((m) => m.id === c.menuItemId);
+            return currentItem && currentItem.isAvailable === false;
+          }) && (
+            <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2.5 text-xs text-rose-800 font-medium">
+              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+              <span>Trong giỏ có món vừa hết hàng tại Bếp. Vui lòng xóa món hết hàng trước khi gửi đơn!</span>
+            </div>
+          )}
 
-                {/* Quantity Control */}
-                <div className="flex items-center gap-2">
-                  <button
-                    disabled={isSubmitting}
-                    onClick={() => {
-                      if (item.quantity === 1) {
-                        setCart(cart.filter((_, i) => i !== idx));
-                      } else {
+          <div className="space-y-3 max-h-[50vh] overflow-y-auto pr-1">
+            {cart.map((item, idx) => {
+              const isItemOutOfStock =
+                menuItems.find((m) => m.id === item.menuItemId)?.isAvailable === false ||
+                item.item.isAvailable === false;
+
+              return (
+                <div
+                  key={item.id}
+                  className={`p-3 rounded-2xl border flex items-start justify-between gap-3 ${
+                    isItemOutOfStock
+                      ? 'bg-rose-50/60 border-rose-300'
+                      : 'bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-xs font-bold text-slate-800">{item.item.name}</h4>
+                      {isItemOutOfStock && (
+                        <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-rose-600 text-white shadow-sm">
+                          Hết món tại Bếp
+                        </span>
+                      )}
+                    </div>
+                    {item.selectedOptions.length > 0 && (
+                      <div className="text-[10px] text-slate-500 mt-0.5">
+                        {item.selectedOptions.map((o) => o.valueName).join(', ')}
+                      </div>
+                    )}
+                    {item.note && (
+                      <div className="text-[10px] text-amber-700 mt-0.5 italic">
+                        Ghi chú: {item.note}
+                      </div>
+                    )}
+                    <span className="text-xs font-bold text-[#176044] mt-1 block">
+                      {formatCurrencyVND(item.itemTotal)}
+                    </span>
+                  </div>
+
+                  {/* Quantity Control */}
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={isSubmitting}
+                      onClick={() => {
+                        if (item.quantity === 1) {
+                          setCart(cart.filter((_, i) => i !== idx));
+                        } else {
+                          const updated = [...cart];
+                          updated[idx].quantity -= 1;
+                          updated[idx].itemTotal -= item.itemTotal / item.quantity;
+                          setCart(updated);
+                        }
+                      }}
+                      className="w-6 h-6 rounded-md bg-white border border-slate-300 text-slate-700 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Minus className="w-3 h-3" />
+                    </button>
+                    <span className="text-xs font-bold text-slate-800">{item.quantity}</span>
+                    <button
+                      disabled={isSubmitting || isItemOutOfStock}
+                      onClick={() => {
                         const updated = [...cart];
-                        updated[idx].quantity -= 1;
-                        updated[idx].itemTotal -= item.itemTotal / item.quantity;
+                        const unitP = item.itemTotal / item.quantity;
+                        updated[idx].quantity += 1;
+                        updated[idx].itemTotal += unitP;
                         setCart(updated);
-                      }
-                    }}
-                    className="w-6 h-6 rounded-md bg-white border border-slate-300 text-slate-700 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <Minus className="w-3 h-3" />
-                  </button>
-                  <span className="text-xs font-bold text-slate-800">{item.quantity}</span>
-                  <button
-                    disabled={isSubmitting}
-                    onClick={() => {
-                      const updated = [...cart];
-                      const unitP = item.itemTotal / item.quantity;
-                      updated[idx].quantity += 1;
-                      updated[idx].itemTotal += unitP;
-                      setCart(updated);
-                    }}
-                    className="w-6 h-6 rounded-md bg-white border border-slate-300 text-slate-700 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    <Plus className="w-3 h-3" />
-                  </button>
+                      }}
+                      className="w-6 h-6 rounded-md bg-white border border-slate-300 text-slate-700 flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      <Plus className="w-3 h-3" />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="pt-3 border-t border-slate-200 space-y-3">
@@ -920,7 +1008,10 @@ export default function CustomerTableMenuPage() {
             <Button
               variant="primary"
               onClick={handleSubmitOrder}
-              disabled={isSubmitting}
+              disabled={
+                isSubmitting ||
+                cart.some((c) => menuItems.find((m) => m.id === c.menuItemId)?.isAvailable === false)
+              }
               className="w-full py-3.5 text-base shadow-lg flex items-center justify-center gap-2"
             >
               {isSubmitting ? (
@@ -939,118 +1030,187 @@ export default function CustomerTableMenuPage() {
         </div>
       </Drawer>
 
-      {/* ================= ORDER TRACKER TIMELINE MODAL ================= */}
-      <Modal
+      {/* ================= ORDER TRACKER DRAWER ================= */}
+      <Drawer
         isOpen={isTrackerOpen}
         onClose={() => setIsTrackerOpen(false)}
-        title="Tiến độ chế biến món ăn"
-        subtitle={`${table.name} · Mã đơn: ${activeOrder?.orderCode || ''}`}
+        title="Theo dõi tiến độ chế biến"
+        position="bottom"
       >
-        {activeOrder ? (
-          <div className="space-y-6">
-            <div className="p-4 rounded-2xl bg-[#edf6f1] border border-[#d9ece3] space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="text-slate-600 font-semibold">Trạng thái tổng thể:</span>
-                <StatusChip status={activeOrder.status} />
+        {activeOrder ? (() => {
+          const validItems = activeOrder.items?.filter((it) => it.status !== 'Cancelled') || [];
+          const totalValid = validItems.length;
+          const scoreWeight: Record<string, number> = {
+            WaitingConfirmation: 10,
+            Waiting: 25,
+            Cooking: 60,
+            Ready: 90,
+            Served: 100,
+          };
+          const progressPercent =
+            totalValid > 0
+              ? Math.min(
+                  100,
+                  Math.round(
+                    validItems.reduce((sum, it) => sum + (scoreWeight[it.status] || 25), 0) /
+                      totalValid,
+                  ),
+                )
+              : 0;
+
+          const readyOrServedCount = validItems.filter(
+            (it) => it.status === 'Ready' || it.status === 'Served',
+          ).length;
+
+          return (
+            <div className="space-y-5">
+              {/* Progress Summary Card */}
+              <div className="p-4 rounded-2xl bg-[#edf6f1] border border-[#d9ece3] space-y-3">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-slate-800 font-bold flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-[#176044]" /> Tiến độ hoàn thành:
+                  </span>
+                  <span className="text-sm font-black text-[#176044]">{progressPercent}%</span>
+                </div>
+
+                {/* Progress Bar Track */}
+                <div className="w-full h-3 bg-white rounded-full overflow-hidden border border-emerald-200/80 p-0.5 shadow-inner">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-400 via-[#176044] to-emerald-500 transition-all duration-700 shadow-sm"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-[11px] text-slate-600">
+                  <span>
+                    Đã xong / Phục vụ: <strong className="text-slate-900">{readyOrServedCount}</strong>/{totalValid} món
+                  </span>
+                  <StatusChip status={activeOrder.status} size="sm" />
+                </div>
               </div>
-              <p className="text-xs text-slate-600">
-                {activeOrder.status === 'WaitingConfirmation'
-                  ? 'Đơn gọi món đang chờ Thu ngân/Phục vụ xác nhận duyệt vào Bếp.'
-                  : 'Đơn hàng đang được Bếp tiếp nhận và nấu nướng theo thứ tự yêu cầu.'}
-              </p>
-            </div>
 
-            {/* Rounds or Dishes Checklist */}
-            <div className="space-y-3">
-              <h4 className="text-xs font-bold uppercase text-slate-500 tracking-wider">
-                Chi tiết món ăn ({activeOrder.items?.length || 0} món)
-              </h4>
-              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
-                {activeOrder.items?.map((it) => {
-                  const isWaitingConf =
-                    it.status === 'WaitingConfirmation' ||
-                    activeOrder.status === 'WaitingConfirmation';
-                  const isReady = it.status === 'Ready';
-                  const isCooking = it.status === 'Cooking';
-                  const isServed = it.status === 'Served';
-                  const isCancelled = it.status === 'Cancelled';
+              {/* Dishes List with Distinct Stages */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between text-xs font-bold uppercase text-slate-500 tracking-wider">
+                  <span>Chi tiết món ăn ({activeOrder.items?.length || 0})</span>
+                  <span className="font-mono text-[10px] text-slate-400">Mã đơn: {activeOrder.orderCode}</span>
+                </div>
 
-                  return (
-                    <div
-                      key={it.id}
-                      className="p-3 bg-white rounded-xl border border-slate-200 flex items-center justify-between"
-                    >
-                      <div>
-                        <strong className="text-xs text-slate-900 block">
-                          {it.quantity}x {it.name}
-                        </strong>
-                        {it.roundNumber && (
-                          <span className="text-[10px] text-slate-400 block font-mono">
-                            Lượt #{it.roundNumber}
-                          </span>
-                        )}
-                        {it.note && <small className="text-[10px] text-amber-700">{it.note}</small>}
-                      </div>
-                      <span
-                        className={`text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 ${
-                          isWaitingConf
-                            ? 'bg-amber-100 text-amber-900 border border-amber-300 animate-pulse'
-                            : isReady
-                            ? 'bg-teal-100 text-teal-800'
-                            : isServed
-                            ? 'bg-blue-100 text-blue-800'
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {activeOrder.items?.map((it) => {
+                    const isWaitingConf =
+                      it.status === 'WaitingConfirmation' ||
+                      activeOrder.status === 'WaitingConfirmation';
+                    const isWaitingKitchen = it.status === 'Waiting' && !isWaitingConf;
+                    const isCooking = it.status === 'Cooking';
+                    const isReady = it.status === 'Ready';
+                    const isServed = it.status === 'Served';
+                    const isCancelled = it.status === 'Cancelled';
+
+                    return (
+                      <div
+                        key={it.id}
+                        className={`p-3 rounded-2xl border transition-all flex items-center justify-between gap-3 ${
+                          isReady
+                            ? 'bg-emerald-50/70 border-emerald-300 ring-1 ring-emerald-400/40'
                             : isCooking
-                            ? 'bg-orange-100 text-orange-800 animate-pulse'
+                            ? 'bg-orange-50/50 border-orange-200'
                             : isCancelled
-                            ? 'bg-rose-100 text-rose-800'
-                            : 'bg-slate-100 text-slate-700'
+                            ? 'bg-slate-50 border-slate-200 opacity-60'
+                            : 'bg-white border-slate-200'
                         }`}
                       >
-                        {isWaitingConf ? (
-                          <>
-                            <Hourglass className="w-3 h-3" /> Chờ thu ngân duyệt
-                          </>
-                        ) : isReady ? (
-                          '✓ Đã xong'
-                        ) : isServed ? (
-                          '✓ Đã phục vụ'
-                        ) : isCooking ? (
-                          '♨ Đang nấu'
-                        ) : isCancelled ? (
-                          '✕ Đã hủy'
-                        ) : (
-                          '⏳ Chờ nấu'
-                        )}
-                      </span>
-                    </div>
-                  );
-                })}
+                        <div className="flex-1 min-w-0">
+                          <strong className="text-xs font-bold text-slate-900 block truncate">
+                            {it.quantity}x {it.name}
+                          </strong>
+                          {it.roundNumber && (
+                            <span className="text-[10px] text-slate-400 block font-mono">
+                              Lượt #{it.roundNumber}
+                            </span>
+                          )}
+                          {it.selectedOptions && it.selectedOptions.length > 0 && (
+                            <span className="text-[10px] text-slate-500 block truncate">
+                              {it.selectedOptions.map((o) => o.valueName).join(', ')}
+                            </span>
+                          )}
+                          {it.note && (
+                            <span className="text-[10px] text-amber-700 block italic">
+                              Ghi chú: {it.note}
+                            </span>
+                          )}
+                          {isCancelled && (it as any).cancelReason && (
+                            <span className="text-[10px] text-rose-600 block">
+                              Lý do hủy: {(it as any).cancelReason}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Distinct Status Badges */}
+                        <div className="shrink-0">
+                          {isWaitingConf ? (
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 animate-pulse flex items-center gap-1 shadow-sm">
+                              <Hourglass className="w-3 h-3 text-amber-700" /> Chờ xác nhận
+                            </span>
+                          ) : isWaitingKitchen ? (
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-300 flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-slate-500" /> Chờ bếp nấu
+                            </span>
+                          ) : isCooking ? (
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-orange-100 text-orange-800 border border-orange-300 animate-pulse flex items-center gap-1 shadow-sm">
+                              <Flame className="w-3 h-3 text-orange-600" /> Đang chế biến ♨
+                            </span>
+                          ) : isReady ? (
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-[#176044] border border-emerald-300 flex items-center gap-1 shadow-sm">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Đã xong ✓
+                            </span>
+                          ) : isServed ? (
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-blue-100 text-blue-800 border border-blue-200 flex items-center gap-1">
+                              ✓ Đã phục vụ
+                            </span>
+                          ) : isCancelled ? (
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-rose-100 text-rose-800 border border-rose-200 flex items-center gap-1">
+                              ✕ Đã hủy
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
+                              {it.status}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-2 border-t border-slate-200">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsTrackerOpen(false);
+                    setIsPreBillOpen(true);
+                  }}
+                  className="flex-1 py-3 text-xs font-bold"
+                >
+                  <Receipt className="w-4 h-4 mr-1.5" /> Phiếu tạm tính
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => setIsTrackerOpen(false)}
+                  className="flex-1 py-3 text-xs font-bold"
+                >
+                  Gọi thêm món
+                </Button>
               </div>
             </div>
-
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setIsPreBillOpen(true)}
-                className="flex-1"
-              >
-                <Receipt className="w-4 h-4 mr-1.5" /> Xem phiếu tạm tính
-              </Button>
-              <Button
-                variant="primary"
-                onClick={() => setIsTrackerOpen(false)}
-                className="flex-1"
-              >
-                Gọi thêm món
-              </Button>
-            </div>
-          </div>
-        ) : (
+          );
+        })() : (
           <div className="text-center py-8 text-slate-500 text-xs">
             Bàn hiện chưa có đơn gọi món nào.
           </div>
         )}
-      </Modal>
+      </Drawer>
 
       {/* ================= PRE-BILL REVIEW MODAL ================= */}
       <Modal

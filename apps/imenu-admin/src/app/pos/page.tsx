@@ -182,6 +182,56 @@ export default function PosTerminalPage() {
 
     const unsubRealtime = realtimeHub.subscribe('*', (payload) => {
       const evt = payload.type as string;
+
+      // 1. Menu item 86 availability sync from Kitchen
+      if (evt === 'MENU_AVAILABILITY_CHANGED' || evt === 'menu:availability_changed') {
+        const menuItemId = payload.data?.menuItemId || payload.data?.id;
+        const isAvailable = payload.data?.effectiveIsAvailable ?? payload.data?.isAvailable ?? false;
+        if (menuItemId) {
+          setMenuItems((prev) =>
+            prev.map((item) =>
+              item.id === menuItemId
+                ? { ...item, isAvailable, effectiveIsAvailable: isAvailable }
+                : item
+            )
+          );
+          toast.info(
+            isAvailable
+              ? `Món ăn vừa được Bếp mở bán lại!`
+              : `Bếp vừa báo tạm hết món!`
+          );
+        }
+        return;
+      }
+
+      // 2. Kitchen order ready & item status sync
+      if (
+        evt === 'ORDER_STATUS_UPDATED' ||
+        evt === 'order:item_status_updated' ||
+        evt === 'ORDER_CONFIRMED' ||
+        evt === 'order:confirmed'
+      ) {
+        fetchPendingOrders();
+        const orderData = payload.data?.order || payload.data;
+        const status = orderData?.status || payload.data?.status;
+        const tableName = orderData?.table?.name || payload.data?.tableName || 'Bàn';
+
+        if (status === 'Ready') {
+          soundEngine.playItemReadyChime();
+          toast.success(
+            `🔔 Bếp đã nấu xong toàn bộ đơn của ${tableName}! Vui lòng mang ra bàn phục vụ.`,
+            { duration: 6000 }
+          );
+        } else if (payload.data?.status === 'Ready') {
+          soundEngine.playItemReadyChime();
+          toast.info(
+            `🍽️ Món "${payload.data?.itemName || 'Món'}" của ${tableName} đã nấu xong!`,
+            { duration: 4500 }
+          );
+        }
+      }
+
+      // 3. New QR orders and round additions
       if (
         evt === 'NEW_ORDER' ||
         evt === 'ROUND_ADDED' ||

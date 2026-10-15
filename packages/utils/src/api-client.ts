@@ -894,6 +894,109 @@ export const apiClient = {
       return request<Order>(`/orders/customer/${orderId}`);
     },
   },
+
+  kitchen: {
+    async getOrders(params?: {
+      branchId?: string;
+      zoneId?: string;
+      tableId?: string;
+      status?: string;
+      search?: string;
+      includeUnconfirmed?: boolean;
+    }) {
+      const q = new URLSearchParams();
+      if (params?.branchId) q.append('branchId', params.branchId);
+      if (params?.zoneId) q.append('zoneId', params.zoneId);
+      if (params?.tableId) q.append('tableId', params.tableId);
+      if (params?.status && params.status !== 'all') q.append('status', params.status);
+      if (params?.search && params.search.trim()) q.append('search', params.search.trim());
+      if (params?.includeUnconfirmed !== undefined) q.append('includeUnconfirmed', String(params.includeUnconfirmed));
+      const qs = q.toString();
+      return request<Order[]>(`/kitchen/orders${qs ? `?${qs}` : ''}`);
+    },
+
+    async getItemsSummary(params?: { branchId?: string }) {
+      const q = new URLSearchParams();
+      if (params?.branchId) q.append('branchId', params.branchId);
+      const qs = q.toString();
+      return request<{
+        totalWaitingItems: number;
+        totalCookingItems: number;
+        summary: Array<{
+          menuItemId: string;
+          name: string;
+          waitingQty: number;
+          cookingQty: number;
+          totalActiveQty: number;
+          notes: string[];
+          tables: string[];
+        }>;
+      }>(`/kitchen/items-summary${qs ? `?${qs}` : ''}`);
+    },
+
+    async startCookingItem(itemId: string, orderId?: string) {
+      if (orderId) {
+        return request<Order>(`/kitchen/orders/${orderId}/items/${itemId}/start-cooking`, {
+          method: 'POST',
+        });
+      }
+      return request<Order>(`/order-items/${itemId}/start-cooking`, {
+        method: 'POST',
+      });
+    },
+
+    async markItemReady(itemId: string, orderId?: string) {
+      if (orderId) {
+        return request<Order>(`/kitchen/orders/${orderId}/items/${itemId}/mark-ready`, {
+          method: 'POST',
+        });
+      }
+      return request<Order>(`/order-items/${itemId}/mark-ready`, {
+        method: 'POST',
+      });
+    },
+
+    async markItemServed(itemId: string, orderId?: string) {
+      if (orderId) {
+        return request<Order>(`/kitchen/orders/${orderId}/items/${itemId}/mark-served`, {
+          method: 'POST',
+        });
+      }
+      return request<Order>(`/order-items/${itemId}/mark-served`, {
+        method: 'POST',
+      });
+    },
+
+    async startCookingAll(orderId: string, roundNumber?: number) {
+      return request<Order>(`/kitchen/orders/${orderId}/start-cooking-all`, {
+        method: 'POST',
+        body: JSON.stringify(roundNumber ? { roundNumber } : {}),
+      });
+    },
+
+    async markReadyAll(orderId: string, roundNumber?: number) {
+      return request<Order>(`/kitchen/orders/${orderId}/mark-ready-all`, {
+        method: 'POST',
+        body: JSON.stringify(roundNumber ? { roundNumber } : {}),
+      });
+    },
+
+    async getMenuItems(params?: { branchId?: string; categoryId?: string; search?: string }) {
+      const q = new URLSearchParams();
+      if (params?.branchId) q.append('branchId', params.branchId);
+      if (params?.categoryId && params.categoryId !== 'all') q.append('categoryId', params.categoryId);
+      if (params?.search && params.search.trim()) q.append('search', params.search.trim());
+      const qs = q.toString();
+      return request<any>(`/kitchen/menu-items${qs ? `?${qs}` : ''}`);
+    },
+
+    async toggleItemAvailability(itemId: string, isAvailable: boolean, branchId?: string) {
+      return request<any>(`/kitchen/menu-items/${itemId}/availability`, {
+        method: 'PATCH',
+        body: JSON.stringify({ isAvailable, ...(branchId ? { branchId } : {}) }),
+      });
+    },
+  },
 };
 
 

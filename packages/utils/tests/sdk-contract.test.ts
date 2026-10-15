@@ -253,6 +253,121 @@ async function runSdkContractTests() {
       failed++;
     }
 
+    // -------------------------------------------------------------------------
+    // TEST 8: kitchen.getOrders route and query parameters verification
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.kitchen.getOrders({
+      branchId: 'b-1',
+      status: 'Cooking',
+      search: 'Phở',
+    });
+
+    const reqKOrders = capturedRequests[0];
+    if (
+      reqKOrders?.method === 'GET' &&
+      reqKOrders?.url?.includes('/api/kitchen/orders') &&
+      reqKOrders?.url?.includes('branchId=b-1') &&
+      reqKOrders?.url?.includes('status=Cooking') &&
+      reqKOrders?.url?.includes('search=')
+    ) {
+      pass('SDK-08: kitchen.getOrders map chính xác GET /api/kitchen/orders với query parameters (branchId, status, search)');
+      passed++;
+    } else {
+      fail('SDK-08: kitchen.getOrders sai route hoặc query params', reqKOrders);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 9: kitchen.getItemsSummary route verification
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.kitchen.getItemsSummary({ branchId: 'b-1' });
+
+    const reqKSummary = capturedRequests[0];
+    if (
+      reqKSummary?.method === 'GET' &&
+      reqKSummary?.url === '/api/kitchen/items-summary?branchId=b-1'
+    ) {
+      pass('SDK-09: kitchen.getItemsSummary map chính xác GET /api/kitchen/items-summary?branchId=b-1');
+      passed++;
+    } else {
+      fail('SDK-09: kitchen.getItemsSummary sai route', reqKSummary);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 10: kitchen.startCookingItem dual routes (flat & nested)
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.kitchen.startCookingItem('item-101');
+    await apiClient.kitchen.startCookingItem('item-101', 'order-202');
+
+    const [reqCookFlat, reqCookNested] = capturedRequests;
+    if (
+      reqCookFlat?.method === 'POST' &&
+      reqCookFlat?.url === '/api/order-items/item-101/start-cooking' &&
+      reqCookNested?.method === 'POST' &&
+      reqCookNested?.url === '/api/kitchen/orders/order-202/items/item-101/start-cooking'
+    ) {
+      pass('SDK-10: kitchen.startCookingItem hỗ trợ cả Flat route (/order-items/:id/start-cooking) và Nested route');
+      passed++;
+    } else {
+      fail('SDK-10: kitchen.startCookingItem sai route', { reqCookFlat, reqCookNested });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 11: kitchen.markItemReady & markItemServed routes
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.kitchen.markItemReady('item-101');
+    await apiClient.kitchen.markItemServed('item-101');
+
+    const [reqReady, reqServed] = capturedRequests;
+    if (
+      reqReady?.method === 'POST' &&
+      reqReady?.url === '/api/order-items/item-101/mark-ready' &&
+      reqServed?.method === 'POST' &&
+      reqServed?.url === '/api/order-items/item-101/mark-served'
+    ) {
+      pass('SDK-11: kitchen.markItemReady & markItemServed map chính xác POST /api/order-items/:id/mark-ready và mark-served');
+      passed++;
+    } else {
+      fail('SDK-11: kitchen markItemReady/Served sai route', { reqReady, reqServed });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 12: kitchen.startCookingAll, markReadyAll & toggleItemAvailability
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.kitchen.startCookingAll('order-303', 2);
+    await apiClient.kitchen.markReadyAll('order-303');
+    await apiClient.kitchen.toggleItemAvailability('item-505', false, 'branch-999');
+
+    const [reqBatchCook, reqBatchReady, reqToggleAvail] = capturedRequests;
+    const bodyBatchCook = JSON.parse(reqBatchCook?.body || '{}');
+    const bodyToggle = JSON.parse(reqToggleAvail?.body || '{}');
+
+    if (
+      reqBatchCook?.method === 'POST' &&
+      reqBatchCook?.url === '/api/kitchen/orders/order-303/start-cooking-all' &&
+      bodyBatchCook.roundNumber === 2 &&
+      reqBatchReady?.method === 'POST' &&
+      reqBatchReady?.url === '/api/kitchen/orders/order-303/mark-ready-all' &&
+      reqToggleAvail?.method === 'PATCH' &&
+      reqToggleAvail?.url === '/api/kitchen/menu-items/item-505/availability' &&
+      bodyToggle.isAvailable === false &&
+      bodyToggle.branchId === 'branch-999'
+    ) {
+      pass('SDK-12: kitchen.startCookingAll, markReadyAll & toggleItemAvailability map chính xác POST batch và PATCH availability với branchId');
+      passed++;
+    } else {
+      fail('SDK-12: batch / availability methods sai route hoặc body', { reqBatchCook, reqBatchReady, reqToggleAvail });
+      failed++;
+    }
+
   } finally {
     await new Promise<void>((resolve) => mockServer.close(() => resolve()));
   }

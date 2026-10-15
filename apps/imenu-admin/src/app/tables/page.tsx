@@ -141,6 +141,31 @@ export default function TablesMapPage() {
     window.addEventListener('imenu:branch_changed', handleBranchChange);
 
     const unsub = realtimeHub.subscribe('*', (payload) => {
+      const evt = payload.type as string;
+      const orderData = payload.data?.order || payload.data;
+      const status = orderData?.status || payload.data?.status;
+      const tableName = orderData?.table?.name || payload.data?.tableName || 'Bàn';
+
+      if (
+        (evt === 'ORDER_STATUS_UPDATED' || evt === 'order:item_status_updated') &&
+        status === 'Ready'
+      ) {
+        soundEngine.playItemReadyChime();
+        toast.success(
+          `🔔 Bếp đã nấu xong toàn bộ món cho ${tableName}! Vui lòng mang ra bàn phục vụ.`,
+          { duration: 6000 },
+        );
+      } else if (
+        (evt === 'ORDER_STATUS_UPDATED' || evt === 'order:item_status_updated') &&
+        payload.data?.status === 'Ready'
+      ) {
+        soundEngine.playItemReadyChime();
+        toast.info(
+          `🍽️ Món "${payload.data?.itemName || 'Món'}" của ${tableName} đã nấu xong!`,
+          { duration: 4500 },
+        );
+      }
+
       loadData(true);
     });
     return () => {
@@ -454,6 +479,16 @@ export default function TablesMapPage() {
             const isPayment = tbl.status === 'PaymentRequested';
             const isReserved = tbl.status === 'Reserved';
 
+            const tblOrder = orders.find(
+              (o) =>
+                (o.tableId === tbl.id || o.tableId === (tbl as any)._id) &&
+                o.status !== 'Paid' &&
+                o.status !== 'Cancelled',
+            );
+            const hasReadyDish =
+              tblOrder?.status === 'Ready' ||
+              tblOrder?.items?.some((it) => it.status === 'Ready');
+
             return (
               <div
                 key={tbl.id}
@@ -465,7 +500,9 @@ export default function TablesMapPage() {
                   setCashGiven(0);
                 }}
                 className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between min-h-[120px] shadow-sm hover:shadow-md hover:-translate-y-0.5 ${
-                  isPayment
+                  hasReadyDish
+                    ? 'bg-emerald-50/90 border-emerald-400 ring-2 ring-emerald-400 shadow-emerald-100'
+                    : isPayment
                     ? 'bg-rose-50/80 border-rose-300 ring-2 ring-rose-400 animate-pulse'
                     : isOccupied
                     ? 'bg-amber-50/70 border-amber-300'
@@ -475,14 +512,26 @@ export default function TablesMapPage() {
                 }`}
               >
                 <div className="flex items-start justify-between">
-                  <strong className="text-sm font-extrabold text-slate-900">{tbl.name}</strong>
+                  <div>
+                    <strong className="text-sm font-extrabold text-slate-900 block">{tbl.name}</strong>
+                    {hasReadyDish && (
+                      <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md bg-emerald-600 text-white text-[9px] font-black animate-pulse shadow-sm">
+                        <span>🍽️</span> Món đã xong
+                      </span>
+                    )}
+                  </div>
                   <span className="text-[10px] text-slate-400 flex items-center gap-0.5 font-semibold">
                     <Users className="w-3 h-3" /> {tbl.capacity}
                   </span>
                 </div>
 
-                <div className="mt-4">
+                <div className="mt-4 flex items-center justify-between">
                   <StatusChip status={tbl.status} size="sm" />
+                  {tblOrder && (
+                    <span className="text-[10px] font-bold text-slate-500 font-mono">
+                      {tblOrder.items?.length || 0} món
+                    </span>
+                  )}
                 </div>
               </div>
             );
@@ -513,27 +562,74 @@ export default function TablesMapPage() {
 
                 {/* Items List */}
                 <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
-                  {selectedTableOrder.items?.map((it) => (
-                    <div
-                      key={it.id}
-                      className="p-2.5 bg-white rounded-xl border border-slate-200 flex justify-between text-xs"
-                    >
-                      <div>
-                        <strong className="text-slate-900 block">
-                          {it.quantity}x {it.name}
-                        </strong>
-                        {it.roundNumber && (
-                          <span className="text-[10px] text-slate-400 font-mono">
-                            Lượt #{it.roundNumber}
+                  {selectedTableOrder.items?.map((it) => {
+                    const isReady = it.status === 'Ready';
+                    return (
+                      <div
+                        key={it.id}
+                        className={`p-2.5 rounded-xl border flex items-center justify-between gap-2 text-xs transition-colors ${
+                          isReady ? 'bg-emerald-50/80 border-emerald-300' : 'bg-white border-slate-200'
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <strong className="text-slate-900 block truncate">
+                            {it.quantity}x {it.name}
+                          </strong>
+                          {it.roundNumber && (
+                            <span className="text-[10px] text-slate-400 font-mono block">
+                              Lượt #{it.roundNumber}
+                            </span>
+                          )}
+                          {it.note && <small className="text-[10px] text-amber-700 block">{it.note}</small>}
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                              it.status === 'Ready'
+                                ? 'bg-emerald-600 text-white'
+                                : it.status === 'Cooking'
+                                ? 'bg-orange-100 text-orange-800'
+                                : it.status === 'Served'
+                                ? 'bg-blue-100 text-blue-800'
+                                : it.status === 'Cancelled'
+                                ? 'bg-rose-100 text-rose-800'
+                                : 'bg-slate-100 text-slate-700'
+                            }`}
+                          >
+                            {it.status === 'Ready'
+                              ? '✓ Đã xong'
+                              : it.status === 'Cooking'
+                              ? '♨ Đang nấu'
+                              : it.status === 'Served'
+                              ? 'Đã phục vụ'
+                              : it.status === 'Cancelled'
+                              ? 'Đã hủy'
+                              : 'Chờ nấu'}
                           </span>
-                        )}
-                        {it.note && <small className="text-[10px] text-amber-700 block">{it.note}</small>}
+                          {isReady && (
+                            <button
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                try {
+                                  await apiClient.kitchen.markItemServed(it.id);
+                                  toast.success(`Đã phục vụ món "${it.name}"!`);
+                                  loadData(true);
+                                } catch (err: any) {
+                                  toast.error(err.message || 'Lỗi khi phục vụ món');
+                                }
+                              }}
+                              className="px-2 py-0.5 bg-[#176044] hover:bg-[#124a36] text-white text-[10px] font-bold rounded-lg shadow-sm"
+                            >
+                              Phục vụ
+                            </button>
+                          )}
+                          <span className="font-bold text-[#176044] shrink-0">
+                            {formatCurrencyVND(it.itemTotal)}
+                          </span>
+                        </div>
                       </div>
-                      <span className="font-bold text-[#176044]">
-                        {formatCurrencyVND(it.itemTotal)}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 {/* Bill Adjustments & Preview */}

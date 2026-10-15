@@ -6,6 +6,7 @@ class SocketClient {
   private isConnecting: boolean = false;
   private currentRestaurantId?: string;
   private currentBranchId?: string;
+  private currentTableId?: string;
 
   private getSocketUrl(): string {
     if (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_WS_URL) {
@@ -17,15 +18,19 @@ class SocketClient {
     return 'http://localhost:3001';
   }
 
-  public connect(restaurantId?: string, branchId?: string): Socket | null {
+  public connect(restaurantId?: string, branchId?: string, tableId?: string): Socket | null {
     if (typeof window === 'undefined') return null;
 
     this.currentRestaurantId = restaurantId || this.currentRestaurantId;
     this.currentBranchId = branchId || this.currentBranchId;
+    this.currentTableId = tableId || this.currentTableId;
 
     if (this.socket && this.socket.connected) {
       if (this.currentRestaurantId) {
         this.joinRestaurant(this.currentRestaurantId, this.currentBranchId);
+      }
+      if (this.currentTableId) {
+        this.joinTable(this.currentTableId, this.currentRestaurantId);
       }
       return this.socket;
     }
@@ -45,6 +50,11 @@ class SocketClient {
       auth: {
         token: token ? `Bearer ${token}` : undefined,
       },
+      query: {
+        ...(this.currentRestaurantId ? { restaurantId: this.currentRestaurantId } : {}),
+        ...(this.currentBranchId ? { branchId: this.currentBranchId } : {}),
+        ...(this.currentTableId ? { tableId: this.currentTableId } : {}),
+      },
     });
 
     this.socket.on('connect', () => {
@@ -52,6 +62,9 @@ class SocketClient {
       console.log(`[SocketClient] Connected successfully: ${this.socket?.id}`);
       if (this.currentRestaurantId) {
         this.joinRestaurant(this.currentRestaurantId, this.currentBranchId);
+      }
+      if (this.currentTableId) {
+        this.joinTable(this.currentTableId, this.currentRestaurantId);
       }
     });
 
@@ -76,8 +89,10 @@ class SocketClient {
   }
 
   public joinTable(tableId: string, restaurantId?: string) {
+    this.currentTableId = tableId;
+    if (restaurantId) this.currentRestaurantId = restaurantId;
     if (this.socket && this.socket.connected) {
-      this.socket.emit('join:table', { tableId, restaurantId });
+      this.socket.emit('join:table', { tableId, restaurantId: this.currentRestaurantId });
     }
   }
 
