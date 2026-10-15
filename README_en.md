@@ -26,6 +26,7 @@ imenu-menudientu/
 │
 ├── scripts/
 │   ├── e2e-order-lifecycle.mjs # Cross-App Browser E2E Order Lifecycle Test Suite using Puppeteer (9 Checkpoints)
+│   ├── e2e-kds-lifecycle.mjs   # Real Browser E2E KDS Dish Dispatching Test Suite (6 Checkpoints)
 │   └── capture-guide-screenshots.mjs # Documentation screenshot capture utility
 │
 ├── test-artifacts/             # Test artifact directory for E2E failure traces and screenshots
@@ -414,7 +415,7 @@ npm run build
 ```
 
 ### SDK Contract Test Suite (`npm run test:sdk`)
-The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory HTTP mock server to verify API contract parity:
+The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory HTTP mock server to verify API contract parity across 14 tests:
 - **SDK-01**: `customerOrders.getTableContext` properly passes query parameters (`restaurantSlug`, `tableCode`, `qrToken`).
 - **SDK-02 & SDK-02b**: `customerOrders.create` invokes public endpoint `POST /api/orders/customer` and transmits `idempotency-key` header.
 - **SDK-03 & SDK-03b**: `customerOrders.addItems` invokes public endpoint `POST /api/orders/customer/items` and transmits `idempotency-key` header.
@@ -422,6 +423,11 @@ The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory 
 - **SDK-05**: `orders.pay` targets `POST /api/orders/:id/pay` and transmits `idempotency-key` header.
 - **SDK-06**: Table operations (`transfer`, `merge`, `moveItems`) map correctly to their respective backend endpoints.
 - **SDK-07**: Round management (`confirmRound`, `cancelRound`) routes map accurately to backend endpoints.
+- **SDK-08**: `kitchen.getOrders` correctly maps to `GET /api/kitchen/orders` with query parameters (`branchId`, `zoneId`, `status`, `search`).
+- **SDK-09**: `kitchen.getItemsSummary` correctly maps to `GET /api/kitchen/items-summary` with branch aggregation.
+- **SDK-10**: `kitchen.startCookingItem` supports both Flat route (`/order-items/:id/start-cooking`) and Nested route (`/orders/:orderId/items/:id/start-cooking`).
+- **SDK-11**: `kitchen.markItemReady` and `markItemServed` map accurately to `POST /api/order-items/:id/mark-ready` and `mark-served`.
+- **SDK-12**: `kitchen.startCookingAll`, `markReadyAll`, and `toggleItemAvailability` map accurately to batch POST and PATCH availability routes.
 
 ### Cross-App Browser E2E Suite (`npm run test:e2e`)
 The script `scripts/e2e-order-lifecycle.mjs` connects via `puppeteer-core` to Google Chrome, simultaneously simulating two concurrent browser contexts: **Guest Mobile (Viewport: 390x844)** and **Cashier POS Desktop (Viewport: 1440x900)** across 9 comprehensive checkpoints:
@@ -437,6 +443,18 @@ The script `scripts/e2e-order-lifecycle.mjs` connects via `puppeteer-core` to Go
 | **E2E-07** | POS Cash Payment | Cashier completes cash payment; verifies order transitions to `Paid` inside a single MongoDB Transaction. |
 | **E2E-08** | Customer UI State Reflection | Guest page reloads; verifies order is marked Paid, active tracking banner clears, and table session is released. |
 | **E2E-09** | Table Release & Idempotency Invariants | Database verifies table status is `Available` (`currentOrderId: null`) and payment replay triggers `x-idempotent-replay: true`. |
+
+### Browser E2E Kitchen Display System (KDS) Suite (`node scripts/e2e-kds-lifecycle.mjs`)
+The script `scripts/e2e-kds-lifecycle.mjs` verifies the complete 3-way kitchen dish dispatching lifecycle:
+
+| Checkpoint | Checkpoint Name | Real-world Simulation & Acceptance Verification |
+| :---: | :--- | :--- |
+| **KDS-E2E-01** | Kitchen Login & Navigate `/kitchen` | Chef accesses `/kitchen`; verifies high-contrast Dark Mode screen and Header Summary Bar. |
+| **KDS-E2E-02** | Customer Places Order via QR | Diner places an order; verifies order ticket immediately appears on the kitchen screen via WebSocket. |
+| **KDS-E2E-03** | Kitchen Starts Cooking | Chef clicks "Start Cooking"; verifies item badge switches to amber `Cooking` and Order advances to `Preparing`. |
+| **KDS-E2E-04** | Kitchen Marks Dish Ready | Chef clicks "Mark Ready"; verifies audible Chime Alert and item badge turns green `Ready`. |
+| **KDS-E2E-05** | Customer Realtime Tracking | Diner's tracking drawer reflects dish progress in real-time without manual page reload. |
+| **KDS-E2E-06** | Table Delivery & Completion | Chef marks all items "Served"; verifies order ticket cleanly clears from the active cooking queue. |
 
 ---
 
@@ -454,6 +472,16 @@ To preserve architectural precision and avoid assumptions regarding Phase 6:
 
 ---
 
-## 📄 10. License & Attribution
+## 📄 10. Project Status & Acceptance
+
+### Phase 7: Kitchen Display System (KDS) & Realtime Dispatching — ✅ ACCEPTED
+- **Kitchen KDS Screen (`/kitchen`)**: High-contrast Dark Mode interface, visual order cards, elapsed timers with 15-minute delay warnings.
+- **Frontend SDK Contract (`@imenu/utils`)**: 14/14 SDK contract tests (`SDK-01` through `SDK-12`) at 100% PASS.
+- **3-Way Real-time Synchronization**: Seamless WebSocket updates across Kitchen KDS, POS, and Diner Mobile QR Menu.
+- **Security & Hardening**: Guest socket room isolation, optimistic UI rollback on backend failure, branch-isolated 86 stockouts.
+
+---
+
+## 📄 11. License & Attribution
 
 Proprietary software developed for the **iMenu Digital Restaurant Ecosystem**. All rights reserved.
