@@ -80,6 +80,18 @@ class SoundEngine {
   public playItemReadyChime() {
     this.playReadyChime();
   }
+
+  public playNewOrderNotification() {
+    this.playNewOrderChime();
+  }
+
+  public playRoundNotification() {
+    this.playNewOrderChime();
+  }
+
+  public playSuccessChime() {
+    this.playReadyChime();
+  }
 }
 
 export const soundEngine = new SoundEngine();

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 import { CheckCircle2, AlertCircle, Info, X } from 'lucide-react';
 
-export type ToastType = 'success' | 'error' | 'info';
+export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 export interface ToastItem {
   id: string;
@@ -20,11 +20,13 @@ interface ToastContextValue {
   success: (message: string, options?: ToastOptions) => void;
   error: (message: string, options?: ToastOptions) => void;
   info: (message: string, options?: ToastOptions) => void;
+  warning: (message: string, options?: ToastOptions) => void;
   removeToast: (id: string) => void;
   toast: {
     success: (message: string, options?: ToastOptions) => void;
     error: (message: string, options?: ToastOptions) => void;
     info: (message: string, options?: ToastOptions) => void;
+    warning: (message: string, options?: ToastOptions) => void;
   };
 }
 
@@ -39,11 +41,13 @@ export const useToast = () => {
       success: (msg: string) => console.log('[SUCCESS]', msg),
       error: (msg: string) => console.error('[ERROR]', msg),
       info: (msg: string) => console.info('[INFO]', msg),
+      warning: (msg: string) => console.warn('[WARNING]', msg),
       removeToast: () => {},
       toast: {
         success: (msg: string) => console.log('[SUCCESS]', msg),
         error: (msg: string) => console.error('[ERROR]', msg),
         info: (msg: string) => console.info('[INFO]', msg),
+        warning: (msg: string) => console.warn('[WARNING]', msg),
       },
     };
   }
@@ -81,18 +85,23 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     (msg: string, options?: ToastOptions) => showToast(msg, 'info', options),
     [showToast],
   );
+  const warning = useCallback(
+    (msg: string, options?: ToastOptions) => showToast(msg, 'warning', options),
+    [showToast],
+  );
 
   const toastObj = useMemo(
     () => ({
       success,
       error,
       info,
+      warning,
     }),
-    [success, error, info]
+    [success, error, info, warning]
   );
 
   return (
-    <ToastContext.Provider value={{ showToast, success, error, info, removeToast, toast: toastObj }}>
+    <ToastContext.Provider value={{ showToast, success, error, info, warning, removeToast, toast: toastObj }}>
       {children}
       {/* Toast Container */}
       <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0">
@@ -104,12 +113,15 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 ? 'bg-white/95 border-emerald-200 text-slate-800'
                 : t.type === 'error'
                 ? 'bg-white/95 border-rose-200 text-slate-800'
+                : t.type === 'warning'
+                ? 'bg-amber-50/95 border-amber-300 text-slate-900'
                 : 'bg-white/95 border-blue-200 text-slate-800'
             }`}
           >
             <div className="shrink-0 mt-0.5">
               {t.type === 'success' && <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600" />}
               {t.type === 'error' && <AlertCircle className="w-4.5 h-4.5 text-rose-600" />}
+              {t.type === 'warning' && <AlertCircle className="w-4.5 h-4.5 text-amber-600" />}
               {t.type === 'info' && <Info className="w-4.5 h-4.5 text-blue-600" />}
             </div>
             <div className="flex-1 text-xs font-semibold leading-relaxed">{t.message}</div>
