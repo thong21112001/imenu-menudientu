@@ -672,7 +672,7 @@ export default function CustomerTableMenuPage() {
   }
 
   return (
-    <div className="w-full bg-[#f7f5ef] min-h-screen pb-28 lg:pb-16 selection:bg-emerald-200 selection:text-emerald-900">
+    <div className="w-full max-w-full overflow-x-hidden bg-[#f7f5ef] min-h-screen pb-28 lg:pb-16 selection:bg-emerald-200 selection:text-emerald-900">
       {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
 
       {/* ================= HEADER ================= */}

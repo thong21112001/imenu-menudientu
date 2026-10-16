@@ -14,6 +14,11 @@
     --amber: #eab867;
   }
 
+  html, body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+
   body {
     background-color: #f7f5ef;
     color: #17211d;

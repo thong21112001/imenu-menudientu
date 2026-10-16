@@ -82,7 +82,7 @@ export default function CustomerIndexPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f2f7f4] via-[#eaf3ee] to-[#dfeee5] flex flex-col justify-between selection:bg-emerald-200 selection:text-emerald-900">
+    <div className="min-h-screen bg-gradient-to-b from-[#f2f7f4] via-[#eaf3ee] to-[#dfeee5] flex flex-col justify-between selection:bg-emerald-200 selection:text-emerald-900 overflow-x-hidden w-full max-w-full">
       {/* MAIN RESPONSIVE WRAPPER */}
       <main className="w-full max-w-lg sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 lg:py-10 space-y-6 sm:space-y-8 flex-1">
         
