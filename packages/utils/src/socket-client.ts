@@ -82,7 +82,9 @@ class SocketClient {
       autoConnect: true,
       reconnection: true,
       reconnectionAttempts: 15,
-      reconnectionDelay: 2000,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      randomizationFactor: 0.5,
       auth: {
         token: token ? `Bearer ${token}` : undefined,
       },

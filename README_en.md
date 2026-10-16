@@ -415,7 +415,7 @@ npm run build
 ```
 
 ### SDK Contract Test Suite (`npm run test:sdk`)
-The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory HTTP mock server to verify API contract parity across all 31 tests covering Phases 6, 7, 8 & 9:
+The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory HTTP mock server to verify API contract parity across all 34 tests covering Phases 6, 7, 8, 9 & 10:
 - **SDK-01**: `customerOrders.getTableContext` properly passes query parameters (`restaurantSlug`, `tableCode`, `qrToken`).
 - **SDK-02 & SDK-02b**: `customerOrders.create` invokes public endpoint `POST /api/orders/customer` and transmits `idempotency-key` header.
 - **SDK-03 & SDK-03b**: `customerOrders.addItems` invokes public endpoint `POST /api/orders/customer/items` and transmits `idempotency-key` header.
@@ -445,6 +445,18 @@ The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory 
 - **SDK-27**: `reports.getRevenue` properly maps `GET /api/reports/revenue` with all query filters.
 - **SDK-28**: `reports.getTopItems` properly maps `GET /api/reports/top-items` with all query filters.
 - **SDK-29**: `tables.listPublicBySlug` properly maps `GET /api/tables/public/by-restaurant/:restaurantSlug`.
+- **SDK-30**: `tables.callStaff` properly maps `POST /api/tables/:tableId/call-staff` with payload.
+- **SDK-31**: `tables.acknowledgeCall` properly maps `POST /api/tables/:tableId/acknowledge-call`.
+- **SDK-32**: `customerOrders.callStaff` properly maps `POST /api/tables/:tableId/call-staff`.
+
+### Realtime Multi-Tab Browser E2E Suite (`node scripts/e2e-realtime-ecosystem.mjs`)
+The script `scripts/e2e-realtime-ecosystem.mjs` verifies multi-tab realtime synchronization in real Google Chrome (3 Checkpoints):
+
+| Checkpoint | Checkpoint Name | Real-world Simulation & Acceptance Verification |
+| :---: | :--- | :--- |
+| **E2E-P10-01** | Customer Calls Staff at Table | Diner clicks "Call Staff" ("Need ice"); verifies `AdminHeader` in Admin tab displays notification badge and request without reload. |
+| **E2E-P10-02** | Two-Way Staff Acknowledgment | Staff clicks "Acknowledge" on Admin popup; verifies diner tab immediately receives confirmation toast without reload. |
+| **E2E-P10-03** | Zero-Reload Operational Lifecycle | Customer orders $\rightarrow$ POS approves $\rightarrow$ KDS cooks & completes $\rightarrow$ Customer requests payment $\rightarrow$ Cashier settles bill seamlessly. |
 
 ### Dashboard, Reports & Responsive Browser E2E Suite (`node scripts/e2e-dashboard-reports.mjs`)
 The script `scripts/e2e-dashboard-reports.mjs` verifies the complete Phase 9 UI and responsiveness lifecycle (4 Checkpoints):
@@ -511,6 +523,14 @@ To preserve architectural precision and avoid assumptions regarding Phase 9:
 ---
 
 ## 📄 10. Project Status & Acceptance
+
+### Phase 10: Realtime WebSocket Gateway, Room Security & Ecosystem Finalization — ✅ ACCEPTED & FULL 10/10 PHASES ROADMAP COMPLETED
+- **Customer Call Staff & Two-Way Acknowledgment**: Real-time table request flow (`callStaff`) and staff acknowledgment on Admin POS (`acknowledgeCall`) with audio chimes and diner toast feedback.
+- **WebSocket Room Security & Multi-Branch Isolation**: Strict hierarchical room structures (`restaurant_${id}`, `branch_${id}`, `table_${id}`), guest isolation preventing eavesdropping on staff channels, dynamic room migration on branch switch (`client.leave(r)`).
+- **Realtime Domain Events Matrix**: Standardized 7 core operational event groups (New Order, Order Updated, Dish Status, Table Status, Call Staff, Payment, 86 Stockout).
+- **Frontend SDK Contract & Client Resilience**: Extended SDK methods `SDK-30`, `SDK-31`, `SDK-32` (34/34 tests PASS), Socket Client Reconnection Backoff with Jitter, `CANONICAL_EVENT_MAP` deduplication preventing double chimes, FIFO 50-notification buffer.
+- **Multi-Tab Browser E2E Ecosystem**: Real browser Puppeteer orchestration verifying simultaneous diner and admin interactions (3/3 Checkpoints PASS, zero-reload full operational synchronization).
+- **Security & Adversarial Hardening (AUD-10.1 to AUD-10.6)**: Fully addressed all 6 adversarial audit findings (anti-spam cooldown, dynamic room cleanup, guest isolation, FIFO capping, canonical event deduplication, socket jitter).
 
 ### Phase 9: Dashboard, Revenue Reports & UI/UX Overhaul — ✅ ACCEPTED
 - **Admin Sidebar 4-Group Restructure**: Navigation restructured into 4 standard F&B logical groups (Operations & Sales, Menu & Tables, Reports & Analytics, System Configuration).

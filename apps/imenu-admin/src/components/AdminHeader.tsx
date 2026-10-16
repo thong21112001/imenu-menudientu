@@ -204,7 +204,7 @@ export const AdminHeader: React.FC = () => {
           actionUrl: `/pos`,
         };
 
-        setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id).slice(0, 49)]);
+        setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id)].slice(0, 50));
         toast.info(`🔔 ${callData.tableName || 'Bàn'}: "${callData.reason || 'Khách gọi nhân viên'}"`);
       } else if (payload.type === 'CALL_STAFF_ACKNOWLEDGED' || payload.type === 'table:call_acknowledged') {
         const ackData = payload.data || {};
@@ -233,7 +233,7 @@ export const AdminHeader: React.FC = () => {
           isRead: false,
           actionUrl: `/pos`,
         };
-        setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id).slice(0, 49)]);
+        setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id)].slice(0, 50));
         toast.info(`💵 Yêu cầu thanh toán từ ${newNotif.tableName}`);
       } else if (payload.type === 'NEW_ORDER' || payload.type === 'order:created') {
         soundEngine.playNewOrderChime();
@@ -254,7 +254,7 @@ export const AdminHeader: React.FC = () => {
           isRead: false,
           actionUrl: `/pos`,
         };
-        setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id).slice(0, 49)]);
+        setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id)].slice(0, 50));
       } else if (payload.type === 'ROUND_ADDED' || payload.type === 'order:round_added') {
         soundEngine.playNewOrderChime();
         const roundData = payload.data || {};
@@ -273,7 +273,7 @@ export const AdminHeader: React.FC = () => {
           isRead: false,
           actionUrl: `/pos`,
         };
-        setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id).slice(0, 49)]);
+        setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id)].slice(0, 50));
       } else if (payload.type === 'ORDER_STATUS_UPDATED' || payload.type === 'order:item_status_updated') {
         if (payload.data?.status === 'Ready') {
           soundEngine.playReadyChime();

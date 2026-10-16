@@ -415,7 +415,7 @@ npm run build
 ```
 
 ### Chi Tiết Bộ Kiểm Thử SDK Contract (`npm run test:sdk`)
-Tệp `packages/utils/tests/sdk-contract.test.ts` tự động dựng một Mock HTTP Server tại cổng nội bộ, thực thi gọi các hàm của `apiClient` và xác minh tính chính xác của toàn bộ 31 ca test Phase 6, 7, 8 & 9:
+Tệp `packages/utils/tests/sdk-contract.test.ts` tự động dựng một Mock HTTP Server tại cổng nội bộ, thực thi gọi các hàm của `apiClient` và xác minh tính chính xác của toàn bộ 34 ca test Phase 6, 7, 8, 9 & 10:
 - **SDK-01**: `customerOrders.getTableContext` khớp chính xác query params (`restaurantSlug`, `tableCode`, `qrToken`).
 - **SDK-02 & SDK-02b**: `customerOrders.create` gọi đúng endpoint công khai `POST /api/orders/customer` và truyền đúng header `idempotency-key`.
 - **SDK-03 & SDK-03b**: `customerOrders.addItems` gọi đúng endpoint `POST /api/orders/customer/items` và truyền đúng header `idempotency-key`.
@@ -445,6 +445,18 @@ Tệp `packages/utils/tests/sdk-contract.test.ts` tự động dựng một Mock
 - **SDK-27**: `reports.getRevenue` map chính xác `GET /api/reports/revenue` với đầy đủ bộ lọc thời gian và phân rã.
 - **SDK-28**: `reports.getTopItems` map chính xác `GET /api/reports/top-items` với đầy đủ bộ lọc chi nhánh và số lượng món.
 - **SDK-29**: `tables.listPublicBySlug` map chính xác `GET /api/tables/public/by-restaurant/:restaurantSlug`.
+- **SDK-30**: `tables.callStaff` map chính xác `POST /api/tables/:tableId/call-staff` với payload.
+- **SDK-31**: `tables.acknowledgeCall` map chính xác `POST /api/tables/:tableId/acknowledge-call`.
+- **SDK-32**: `customerOrders.callStaff` map chính xác `POST /api/tables/:tableId/call-staff`.
+
+### Chi Tiết Kịch Bản E2E Trình Duyệt Đa Tab Thời Gian Thực (`node scripts/e2e-realtime-ecosystem.mjs`)
+Tệp `scripts/e2e-realtime-ecosystem.mjs` kiểm chứng chu trình đồng bộ thời gian thực đa tab trên Google Chrome (3 Checkpoints):
+
+| Checkpoint | Tên Checkpoint | Thao tác thực tế & Tiêu chí nghiệm thu |
+| :---: | :--- | :--- |
+| **E2E-P10-01** | Khách gọi nhân viên tại bàn | Khách bấm "Gọi nhân viên" ("Xin thêm đá lạnh"); xác minh trên `AdminHeader` tab Admin xuất hiện ngay huy hiệu chuông reo và nội dung yêu cầu mà không reload. |
+| **E2E-P10-02** | Nhân viên tiếp nhận hai chiều | Nhân viên bấm "Đã hỗ trợ" trên chuông Admin; xác minh tab khách nhận ngay thông báo toast xác nhận nhân viên đang tới hỗ trợ. |
+| **E2E-P10-03** | Đồng bộ vòng đời thời gian thực | Khách gửi món $\rightarrow$ POS duyệt $\rightarrow$ KDS nấu & xong món $\rightarrow$ Khách yêu cầu thanh toán $\rightarrow$ Thu ngân chốt bill; toàn bộ đồng bộ mượt mà không reload. |
 
 ### Chi Tiết Kịch Bản E2E Trình Duyệt Dashboard, Báo Cáo & UI Responsive (`node scripts/e2e-dashboard-reports.mjs`)
 Tệp `scripts/e2e-dashboard-reports.mjs` kiểm chứng chu trình Dashboard, Báo cáo và UI Responsive (4 Checkpoints):
@@ -511,6 +523,14 @@ Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai 
 ---
 
 ## 📄 10. Trạng Thái Dự Án & Nghiệm Thu (Project Status)
+
+### Phase 10: Thời Gian Thực, Phân Lập Phòng WebSocket & Hoàn Thiện Hệ Sinh Thái — ✅ ĐÃ NGHIỆM THU & HOÀN TẤT TOÀN BỘ LỘ TRÌNH 10/10 PHASES
+- **Khách Gọi Nhân Viên & Tiếp Nhận Hai Chiều**: Luồng gửi yêu cầu từ bàn ăn (`callStaff`) và tiếp nhận trên Admin POS (`acknowledgeCall`) kèm phát âm thanh chuông reo và thông báo Toast phản hồi thời gian thực tới bàn khách.
+- **Bảo Mật Phòng WebSocket & Phân Lập Chi Nhánh**: Phân cấp phòng nghiêm ngặt (`restaurant_${id}`, `branch_${id}`, `table_${id}`), cô lập tuyệt đối khách vãng lai khỏi các kênh nội bộ, dọn sạch phòng cũ khi nhân viên đổi chi nhánh (`client.leave(r)`).
+- **Ma Trận Sự Kiện Miền Thời Gian Thực**: Chuẩn hóa 7 nhóm sự kiện miền phủ kín toàn bộ chu trình F&B: Đơn hàng mới, Cập nhật đơn hàng, Trạng thái món ăn, Sơ đồ bàn ăn, Gọi nhân viên, Thanh toán & Hóa đơn, Báo hết món (86).
+- **Hợp Đồng SDK Frontend & Khả Năng Phục Hồi Client**: Bổ sung `SDK-30`, `SDK-31`, `SDK-32` (34/34 ca test PASS), Socket Client bền bỉ với Reconnection Backoff có Jitter, bản đồ khử trùng `CANONICAL_EVENT_MAP` chống chuông đúp, FIFO buffer 50 thông báo trên Admin Header.
+- **Kiểm Thử E2E Đa Tab Hệ Sinh Thái**: Kịch bản kiểm thử Puppeteer trên trình duyệt thật điều phối đồng thời tab Khách và tab Admin (3/3 Checkpoints PASS, đồng bộ chu trình vận hành không cần reload).
+- **Bảo Mật & Gia Cố Đối Kháng (AUD-10.1 đến AUD-10.6)**: Giải quyết triệt để 6 phát hiện kiểm toán đối kháng (chống spam cooldown bàn ăn, dọn phòng WebSocket, cô lập khách vãng lai, FIFO buffer, khử trùng sự kiện, socket jitter).
 
 ### Phase 9: Dashboard, Báo Cáo Doanh Thu & Tối Ưu Giao Diện UI/UX — ✅ ĐÃ NGHIỆM THU
 - **Tái cấu trúc Admin Sidebar 4 Nhóm**: Tổ chức thanh điều hướng thành 4 nhóm nghiệp vụ logic (Vận Hành & Bán Hàng, Quản Lý Thực Đơn & Bàn, Báo Cáo & Thống Kê, Cấu Hình Hệ Thống).
