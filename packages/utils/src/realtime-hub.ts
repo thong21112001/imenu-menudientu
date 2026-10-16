@@ -1,4 +1,4 @@
-import { RealtimeEventType, RealtimePayload } from '@imenu/types';
+import { RealtimeEventType, RealtimePayload, ConnectionStatus } from '@imenu/types';
 import { socketClient } from './socket-client';
 
 type EventHandler = (payload: RealtimePayload) => void;
@@ -7,6 +7,8 @@ class RealtimeHub {
   private channel: BroadcastChannel | null = null;
   private listeners: Map<string, Set<EventHandler>> = new Map();
   private socketInitialized: boolean = false;
+  // Deduplication cache: key -> timestamp
+  private recentEvents: Map<string, number> = new Map();
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -47,7 +49,12 @@ class RealtimeHub {
       { wsEvent: 'order:payment_completed', localType: 'PAYMENT_COMPLETED' },
       { wsEvent: 'order:updated', localType: 'ORDER_STATUS_UPDATED' },
       { wsEvent: 'table:status_updated', localType: 'TABLE_STATUS_UPDATED' },
+      { wsEvent: 'table:call_staff', localType: 'CALL_STAFF' },
+      { wsEvent: 'CALL_STAFF', localType: 'CALL_STAFF' },
+      { wsEvent: 'table:call_acknowledged', localType: 'CALL_STAFF_ACKNOWLEDGED' },
+      { wsEvent: 'table:qr_updated', localType: 'TABLE_QR_UPDATED' },
       { wsEvent: 'menu:availability_changed', localType: 'MENU_AVAILABILITY_CHANGED' },
+      { wsEvent: 'SOCKET_RECONNECTED', localType: 'SOCKET_RECONNECTED' },
     ];
 
     eventMapping.forEach(({ wsEvent, localType }) => {
@@ -56,29 +63,82 @@ class RealtimeHub {
           type: localType,
           restaurantId: payload?.restaurantId || 'rest-bep-nha',
           branchId: payload?.branchId,
-          timestamp: Date.now(),
+          timestamp: payload?.timestamp || Date.now(),
           data: payload?.order || payload?.table || payload?.item || payload?.data || payload,
         };
         this.handleIncoming(normalizedPayload);
 
-        // Cũng dispatch theo tên event gốc
-        this.handleIncoming({
-          ...normalizedPayload,
-          type: wsEvent,
-        });
+        // Cũng dispatch theo tên event gốc nếu khác localType
+        if (wsEvent !== localType) {
+          this.handleIncoming({
+            ...normalizedPayload,
+            type: wsEvent,
+          });
+        }
       });
     });
   }
 
+  /**
+   * Kiểm tra và loại bỏ sự kiện trùng lặp (Deduplication Window 300ms)
+   */
+  private isDuplicate(payload: RealtimePayload): boolean {
+    const dataId =
+      payload.data?.notificationId ||
+      payload.data?.id ||
+      payload.data?._id ||
+      payload.data?.tableId ||
+      payload.data?.orderId ||
+      '';
+    const key = `${payload.type}_${dataId}`;
+    const now = Date.now();
+    const lastTime = this.recentEvents.get(key);
+
+    if (lastTime && now - lastTime < 300) {
+      return true;
+    }
+
+    this.recentEvents.set(key, now);
+
+    // Dọn dẹp cache sau mỗi 100 sự kiện
+    if (this.recentEvents.size > 200) {
+      for (const [k, t] of this.recentEvents.entries()) {
+        if (now - t > 5000) {
+          this.recentEvents.delete(k);
+        }
+      }
+    }
+
+    return false;
+  }
+
   private handleIncoming(payload: RealtimePayload) {
     if (!payload || !payload.type) return;
+
+    if (this.isDuplicate(payload)) {
+      return;
+    }
+
     const handlers = this.listeners.get(payload.type);
     if (handlers) {
-      handlers.forEach((fn) => fn(payload));
+      handlers.forEach((fn) => {
+        try {
+          fn(payload);
+        } catch (err) {
+          console.error(`[RealtimeHub] Error executing handler for ${payload.type}:`, err);
+        }
+      });
     }
+
     const allHandlers = this.listeners.get('*');
     if (allHandlers) {
-      allHandlers.forEach((fn) => fn(payload));
+      allHandlers.forEach((fn) => {
+        try {
+          fn(payload);
+        } catch (err) {
+          console.error(`[RealtimeHub] Error executing wildcard handler for ${payload.type}:`, err);
+        }
+      });
     }
   }
 
@@ -96,7 +156,11 @@ class RealtimeHub {
 
     // Broadcast to other tabs
     if (this.channel) {
-      this.channel.postMessage(payload);
+      try {
+        this.channel.postMessage(payload);
+      } catch (e) {
+        console.warn('[RealtimeHub] BroadcastChannel postMessage error:', e);
+      }
     }
 
     // Emit qua Socket.IO nếu cần
@@ -121,8 +185,24 @@ class RealtimeHub {
     socketClient.joinRestaurant(restaurantId, branchId);
   }
 
+  public switchBranch(restaurantId: string, branchId?: string | null) {
+    socketClient.switchBranch(restaurantId, branchId);
+  }
+
   public joinTable(tableId: string, restaurantId?: string) {
     socketClient.joinTable(tableId, restaurantId);
+  }
+
+  public leaveTable(tableId: string) {
+    socketClient.leaveTable(tableId);
+  }
+
+  public getConnectionStatus(): ConnectionStatus {
+    return socketClient.getConnectionStatus();
+  }
+
+  public onConnectionStatusChange(listener: (status: ConnectionStatus) => void): () => void {
+    return socketClient.onConnectionStatusChange(listener);
   }
 }
 

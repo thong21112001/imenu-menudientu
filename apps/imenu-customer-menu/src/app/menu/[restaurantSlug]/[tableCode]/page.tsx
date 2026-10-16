@@ -103,6 +103,10 @@ export default function CustomerTableMenuPage() {
   const [isTrackerOpen, setIsTrackerOpen] = useState<boolean>(false);
   const [isPreBillOpen, setIsPreBillOpen] = useState<boolean>(false);
   const [isCallStaffOpen, setIsCallStaffOpen] = useState<boolean>(false);
+  const [customCallReason, setCustomCallReason] = useState<string>('');
+  const [isSendingCallStaff, setIsSendingCallStaff] = useState<boolean>(false);
+  const [callStaffCooldown, setCallStaffCooldown] = useState<number>(0);
+  const [isQrRevoked, setIsQrRevoked] = useState<boolean>(false);
   const [isVietQROpen, setIsVietQROpen] = useState<boolean>(false);
   const [isPaidSuccessOpen, setIsPaidSuccessOpen] = useState<boolean>(false);
   const [paidSummary, setPaidSummary] = useState<any>(null);
@@ -117,6 +121,15 @@ export default function CustomerTableMenuPage() {
 
   // Logical idempotency key: maintained across retries of the same cart submission attempt
   const [currentIdempotencyKey, setCurrentIdempotencyKey] = useState<string | null>(null);
+
+  // 15s Cooldown counter for Call Staff action
+  useEffect(() => {
+    if (callStaffCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCallStaffCooldown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [callStaffCooldown]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -318,6 +331,46 @@ export default function CustomerTableMenuPage() {
             })
             .catch(() => {});
         }
+        return;
+      }
+
+      // 3. Staff Call Acknowledged (Nhân viên tiếp nhận yêu cầu hỗ trợ)
+      if (evt === 'CALL_STAFF_ACKNOWLEDGED' || evt === 'table:call_acknowledged') {
+        const ackTableId =
+          payload.data?.tableId ||
+          payload.data?.table?._id ||
+          payload.data?.table?.id;
+        if (ackTableId === table.id || ackTableId === (table as any)._id) {
+          soundEngine.playSuccessChime();
+          const responderName = payload.data?.responder?.name ? ` bởi ${payload.data.responder.name}` : '';
+          showToast(`👨‍🍳 Nhân viên đã tiếp nhận yêu cầu${responderName} và đang tới bàn của bạn!`);
+        }
+        return;
+      }
+
+      // 4. Table QR Updated / Revoked (Đổi hoặc thu hồi mã QR bàn)
+      if (evt === 'TABLE_QR_UPDATED' || evt === 'table:qr_updated') {
+        const updatedTableId = payload.data?.tableId || payload.data?.id;
+        if (updatedTableId === table.id || updatedTableId === (table as any)._id) {
+          if (payload.data?.qrStatus === 'revoked') {
+            setIsQrRevoked(true);
+            showToast('⚠️ Mã QR của bàn đã bị thu hồi hoặc đổi mới. Vui lòng quét lại mã QR tại bàn!');
+          }
+        }
+        return;
+      }
+
+      // 5. Socket Reconnected event -> resync active order
+      if (evt === 'SOCKET_RECONNECTED') {
+        if (activeOrder?.id) {
+          apiClient.customerOrders
+            .getActiveOrder(activeOrder.id)
+            .then((res) => {
+              if (res.data) setActiveOrder(res.data);
+            })
+            .catch(() => {});
+        }
+        return;
       }
     });
 
@@ -593,20 +646,48 @@ export default function CustomerTableMenuPage() {
   };
 
   // Call Staff action
-  const handleSendCallStaff = (reason: string) => {
+  const handleSendCallStaff = async (quickReason?: string) => {
     if (!table || !restaurant) return;
-    realtimeHub.publish(
-      'CALL_STAFF',
-      {
-        tableId: table.id,
-        tableName: table.name,
-        reason,
-        timestamp: Date.now(),
-      },
-      restaurant.id,
-    );
-    setIsCallStaffOpen(false);
-    showToast(`🔔 Đã gửi yêu cầu "${reason}" đến nhân viên!`);
+    if (callStaffCooldown > 0) {
+      showToast(`⏳ Vui lòng chờ ${callStaffCooldown}s trước khi gửi tiếp.`);
+      return;
+    }
+
+    const finalReason = quickReason || customCallReason.trim() || 'Cần nhân viên hỗ trợ';
+    const note = customCallReason.trim() && quickReason ? customCallReason.trim() : (customCallReason.trim() ? customCallReason.trim() : undefined);
+
+    setIsSendingCallStaff(true);
+    try {
+      await apiClient.customerOrders.callStaff(table.id, {
+        reason: finalReason,
+        note,
+        qrToken: qrToken || undefined,
+        restaurantSlug,
+      });
+
+      // Local RealtimeHub publish for immediate cross-tab sync fallback
+      realtimeHub.publish(
+        'CALL_STAFF',
+        {
+          tableId: table.id,
+          tableName: table.name,
+          reason: finalReason,
+          note,
+          timestamp: Date.now(),
+        },
+        restaurant.id,
+      );
+
+      setCustomCallReason('');
+      setIsCallStaffOpen(false);
+      setCallStaffCooldown(15);
+      showToast(`🔔 Đã gửi yêu cầu "${finalReason}" đến nhân viên!`);
+    } catch (err: any) {
+      console.error('Lỗi gọi nhân viên:', err);
+      showToast(err.message || 'Không thể gửi yêu cầu hỗ trợ. Vui lòng thử lại!');
+    } finally {
+      setIsSendingCallStaff(false);
+    }
   };
 
   // Request payment action
@@ -1859,25 +1940,58 @@ export default function CustomerTableMenuPage() {
         isOpen={isCallStaffOpen}
         onClose={() => setIsCallStaffOpen(false)}
         title="Gọi nhân viên phục vụ"
-        subtitle="Chọn yêu cầu nhanh bên dưới để nhân viên hỗ trợ ngay"
+        subtitle="Chọn yêu cầu nhanh hoặc nhập nội dung cần hỗ trợ"
       >
-        <div className="grid grid-cols-1 gap-2.5">
-          {[
-            'Xin thêm đá lạnh',
-            'Xin thêm nước lọc / Trà đá',
-            'Xin thêm chén dĩa / Đũa muỗng',
-            'Cần lau dọn bàn',
-            'Cần gọi nhân viên tư vấn',
-          ].map((reason) => (
-            <button
-              key={reason}
-              onClick={() => handleSendCallStaff(reason)}
-              className="p-3 rounded-xl bg-slate-50 hover:bg-[#edf6f1] border border-slate-200 hover:border-[#176044] text-xs font-semibold text-slate-800 hover:text-[#176044] text-left transition-colors flex items-center justify-between"
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-2">
+            {[
+              'Xin thêm đá lạnh',
+              'Xin thêm nước lọc / Trà đá',
+              'Xin thêm chén dĩa / Đũa muỗng',
+              'Cần lau dọn bàn',
+              'Cần gọi nhân viên tư vấn',
+            ].map((reason) => (
+              <button
+                key={reason}
+                disabled={isSendingCallStaff || callStaffCooldown > 0}
+                onClick={() => handleSendCallStaff(reason)}
+                className="p-3 rounded-xl bg-slate-50 hover:bg-[#edf6f1] border border-slate-200 hover:border-[#176044] text-xs font-semibold text-slate-800 hover:text-[#176044] text-left transition-colors flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span>{reason}</span>
+                <ChevronRight className="w-4 h-4 text-slate-400" />
+              </button>
+            ))}
+          </div>
+
+          <div className="pt-3 border-t border-slate-100 space-y-2">
+            <label className="text-xs font-semibold text-slate-700">Yêu cầu khác hoặc ghi chú chi tiết:</label>
+            <input
+              type="text"
+              value={customCallReason}
+              onChange={(e) => setCustomCallReason(e.target.value)}
+              placeholder="VD: Cần ghế trẻ em, thêm tương ớt..."
+              maxLength={200}
+              disabled={isSendingCallStaff || callStaffCooldown > 0}
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#176044] transition-colors"
+            />
+            <Button
+              variant="primary"
+              className="w-full py-2.5"
+              disabled={isSendingCallStaff || callStaffCooldown > 0 || !customCallReason.trim()}
+              onClick={() => handleSendCallStaff()}
             >
-              <span>{reason}</span>
-              <ChevronRight className="w-4 h-4 text-slate-400" />
-            </button>
-          ))}
+              {isSendingCallStaff ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Đang gửi yêu cầu...</span>
+                </div>
+              ) : callStaffCooldown > 0 ? (
+                `Vui lòng chờ (${callStaffCooldown}s)`
+              ) : (
+                'Gửi yêu cầu hỗ trợ'
+              )}
+            </Button>
+          </div>
         </div>
       </Modal>
 
@@ -2054,6 +2168,30 @@ export default function CustomerTableMenuPage() {
           </Button>
         </div>
       </Modal>
+
+      {/* ================= QR REVOKED MODAL ================= */}
+      {isQrRevoked && (
+        <div className="fixed inset-0 z-50 bg-slate-900/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl border border-rose-100 animate-in fade-in zoom-in-95">
+            <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-base font-bold text-slate-900">Mã QR đã hết hiệu lực</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">
+                Mã QR tại bàn này vừa được cập nhật hoặc thu hồi. Quý khách vui lòng quét lại mã QR mới dán trên bàn để tiếp tục sử dụng thực đơn.
+              </p>
+            </div>
+            <Button
+              variant="primary"
+              className="w-full py-2.5"
+              onClick={() => window.location.reload()}
+            >
+              Quét lại / Tải lại trang
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

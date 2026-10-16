@@ -735,6 +735,34 @@ export const apiClient = {
     async listPublicBySlug(restaurantSlug: string) {
       return request<PublicRestaurantTablesData>(`/tables/public/by-restaurant/${encodeURIComponent(restaurantSlug)}`);
     },
+
+    async callStaff(
+      tableId: string,
+      payload: {
+        reason: string;
+        note?: string;
+        qrToken?: string;
+        restaurantSlug?: string;
+      },
+    ) {
+      return request<{
+        notificationId: string;
+        tableId: string;
+        tableName: string;
+        cooldownActive?: boolean;
+        remainingSeconds?: number;
+        message?: string;
+      }>(`/tables/${tableId}/call-staff`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async acknowledgeCall(tableId: string) {
+      return request<any>(`/tables/${tableId}/acknowledge-call`, {
+        method: 'POST',
+      });
+    },
   },
 
   tableZones: {
@@ -1016,6 +1044,28 @@ export const apiClient = {
       q.append('tableCode', params.tableCode);
       if (params.qrToken) q.append('qrToken', params.qrToken);
       return request<ReceiptData>(`/orders/customer/${orderId}/receipt?${q.toString()}`);
+    },
+
+    async callStaff(
+      tableId: string,
+      payload: {
+        reason: string;
+        note?: string;
+        qrToken?: string;
+        restaurantSlug?: string;
+      },
+    ) {
+      return request<{
+        notificationId: string;
+        tableId: string;
+        tableName: string;
+        cooldownActive?: boolean;
+        remainingSeconds?: number;
+        message?: string;
+      }>(`/tables/${tableId}/call-staff`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
     },
   },
 
