@@ -12,6 +12,10 @@ import {
   ReceiptData,
   Bill,
   VietQrPaymentInfo,
+  DashboardOverviewData,
+  RevenueReportData,
+  TopItemsResponseData,
+  PublicRestaurantTablesData,
 } from '@imenu/types';
 
 export interface ApiResponse<T = any> {
@@ -446,30 +450,78 @@ export const apiClient = {
   },
 
   dashboard: {
-    async getOverview(branchId?: string | null) {
-      const q = branchId ? `?branchId=${encodeURIComponent(branchId)}` : '';
-      return request<any>(`/dashboard/overview${q}`);
+    async getOverview(params?: { branchId?: string; date?: string } | string | null) {
+      const q = new URLSearchParams();
+      if (typeof params === 'string') {
+        if (params && params !== 'all') q.append('branchId', params);
+      } else if (params) {
+        if (params.branchId && params.branchId !== 'all') q.append('branchId', params.branchId);
+        if (params.date) q.append('date', params.date);
+      }
+      const qs = q.toString();
+      return request<DashboardOverviewData>(`/dashboard/overview${qs ? `?${qs}` : ''}`);
     },
   },
 
   reports: {
-    async getRevenue(params?: { startDate?: string; endDate?: string; branchId?: string | null }) {
+    async getRevenue(params?: {
+      startDate?: string;
+      endDate?: string;
+      period?: 'daily' | 'weekly' | 'monthly';
+      groupBy?: 'day' | 'week' | 'month';
+      branchId?: string | null;
+    }) {
       const q = new URLSearchParams();
       if (params?.startDate) q.append('startDate', params.startDate);
       if (params?.endDate) q.append('endDate', params.endDate);
-      if (params?.branchId) q.append('branchId', params.branchId);
-      const queryStr = q.toString();
-      return request<any>(`/reports/revenue${queryStr ? `?${queryStr}` : ''}`);
+      if (params?.period) q.append('period', params.period);
+      if (params?.groupBy) q.append('groupBy', params.groupBy);
+      if (params?.branchId && params.branchId !== 'all') q.append('branchId', params.branchId);
+      const qs = q.toString();
+      return request<RevenueReportData>(`/reports/revenue${qs ? `?${qs}` : ''}`);
     },
 
-    async getTopItems(params?: { startDate?: string; endDate?: string; branchId?: string | null; limit?: number }) {
+    async getTopItems(params?: {
+      startDate?: string;
+      endDate?: string;
+      branchId?: string | null;
+      limit?: number;
+    }) {
       const q = new URLSearchParams();
       if (params?.startDate) q.append('startDate', params.startDate);
       if (params?.endDate) q.append('endDate', params.endDate);
-      if (params?.branchId) q.append('branchId', params.branchId);
+      if (params?.branchId && params.branchId !== 'all') q.append('branchId', params.branchId);
       if (params?.limit) q.append('limit', String(params.limit));
-      const queryStr = q.toString();
-      return request<any>(`/reports/top-items${queryStr ? `?${queryStr}` : ''}`);
+      const qs = q.toString();
+      return request<TopItemsResponseData>(`/reports/top-items${qs ? `?${qs}` : ''}`);
+    },
+
+    async exportReport(params?: {
+      startDate?: string;
+      endDate?: string;
+      branchId?: string;
+      format?: 'csv' | 'json';
+    }): Promise<Blob> {
+      const q = new URLSearchParams();
+      if (params?.startDate) q.append('startDate', params.startDate);
+      if (params?.endDate) q.append('endDate', params.endDate);
+      if (params?.branchId && params.branchId !== 'all') q.append('branchId', params.branchId);
+      if (params?.format) q.append('format', params.format);
+      const qs = q.toString();
+
+      const baseUrl = getApiBaseUrl();
+      const url = `${baseUrl.replace(/\/$/, '')}/reports/export${qs ? `?${qs}` : ''}`;
+      const token = storageService.getAccessToken();
+      const res = await fetch(url, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData?.message || `Xuất báo cáo thất bại với mã lỗi ${res.status}`);
+      }
+      return await res.blob();
     },
   },
 
@@ -678,6 +730,10 @@ export const apiClient = {
       return request<any>(`/tables/seed-default${q}`, {
         method: 'POST',
       });
+    },
+
+    async listPublicBySlug(restaurantSlug: string) {
+      return request<PublicRestaurantTablesData>(`/tables/public/by-restaurant/${encodeURIComponent(restaurantSlug)}`);
     },
   },
 
@@ -1135,6 +1191,7 @@ export const apiClient = {
       return request<any>(`/activity-logs${qs ? `?${qs}` : ''}`);
     },
   },
+
 };
 
 
