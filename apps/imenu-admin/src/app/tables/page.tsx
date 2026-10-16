@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   storageService,
   formatCurrencyVND,
@@ -8,8 +8,10 @@ import {
   soundEngine,
   apiClient,
   generateVietQRUrl,
+  resolveEffectiveBankAccount,
+  buildReceiptData,
 } from '@imenu/utils';
-import { Table, Order, TableStatus, PaymentMethod } from '@imenu/types';
+import { Table, Order, TableStatus, PaymentMethod, Restaurant } from '@imenu/types';
 import { Card, Button, StatusChip, Drawer, Modal, useToast } from '@imenu/ui';
 import {
   Grid3X3,
@@ -32,6 +34,7 @@ import {
   Minus,
   Loader2,
   DollarSign,
+  Printer,
 } from 'lucide-react';
 
 export default function TablesMapPage() {
@@ -71,7 +74,15 @@ export default function TablesMapPage() {
   const [cashGiven, setCashGiven] = useState<number>(0);
   const [paymentNote, setPaymentNote] = useState<string>('');
   const [isProcessingPayment, setIsProcessingPayment] = useState<boolean>(false);
+  const checkoutIdempotencyKeyRef = useRef<string | null>(null);
   const [showVietQRModal, setShowVietQRModal] = useState<boolean>(false);
+  const [isPreBillPreviewOpen, setIsPreBillPreviewOpen] = useState<boolean>(false);
+  const [restaurant, setRestaurant] = useState<Restaurant>(storageService.getRestaurant());
+
+  // Reset idempotency key when changing selected table
+  useEffect(() => {
+    checkoutIdempotencyKeyRef.current = null;
+  }, [selectedTable?.id]);
 
   const loadData = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true);
@@ -134,9 +145,11 @@ export default function TablesMapPage() {
 
   useEffect(() => {
     loadData();
+    setRestaurant(storageService.getRestaurant());
 
     const handleBranchChange = () => {
       loadData(true);
+      setRestaurant(storageService.getRestaurant());
     };
     window.addEventListener('imenu:branch_changed', handleBranchChange);
 
@@ -147,6 +160,18 @@ export default function TablesMapPage() {
       const tableName = orderData?.table?.name || payload.data?.tableName || 'Bàn';
 
       if (
+        evt === 'PAYMENT_REQUESTED' ||
+        evt === 'order:payment_requested' ||
+        evt === 'order.payment_requested'
+      ) {
+        soundEngine.playNewOrderNotification();
+        const reqMethod = payload.data?.paymentMethod || orderData?.paymentMethod || 'VietQR';
+        const methodLabel = reqMethod === 'VietQR' ? 'VietQR' : 'Tiền mặt';
+        toast.warning(
+          `🔔 Bàn ${tableName} yêu cầu thanh toán bằng ${methodLabel}!`,
+          { duration: 8000 },
+        );
+      } else if (
         (evt === 'ORDER_STATUS_UPDATED' || evt === 'order:item_status_updated') &&
         status === 'Ready'
       ) {
@@ -222,13 +247,16 @@ export default function TablesMapPage() {
 
   // Complete Payment for table
   const handleCompletePayment = async () => {
-    if (!selectedTable || !selectedTableOrder) return;
+    if (!selectedTable || !selectedTableOrder || isProcessingPayment) return;
     setIsProcessingPayment(true);
 
     try {
-      const idempotencyKey = `pay-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      if (!checkoutIdempotencyKeyRef.current) {
+        checkoutIdempotencyKeyRef.current = `pay-${selectedTableOrder.id}-${Date.now()}`;
+      }
+      const idempotencyKey = checkoutIdempotencyKeyRef.current;
 
-      await apiClient.orders.pay(
+      await apiClient.orders.completePayment(
         selectedTableOrder.id,
         {
           paymentMethod,
@@ -242,6 +270,9 @@ export default function TablesMapPage() {
         },
         { idempotencyKey },
       );
+
+      // Reset idempotency key on success
+      checkoutIdempotencyKeyRef.current = null;
 
       soundEngine.playReadyChime();
       toast.success(
@@ -775,6 +806,15 @@ export default function TablesMapPage() {
                   </a>
                 </div>
 
+                <Button
+                  variant="outline"
+                  onClick={() => setIsPreBillPreviewOpen(true)}
+                  className="w-full py-2.5 text-xs font-bold border-slate-300 text-slate-800 hover:bg-slate-50 flex items-center justify-center gap-1.5"
+                >
+                  <Receipt className="w-4 h-4 text-[#176044]" />
+                  <span>Xem & In Phiếu Tạm Tính 80mm</span>
+                </Button>
+
                 {paymentMethod === 'VietQR' && (
                   <Button
                     variant="amber"
@@ -1047,46 +1087,170 @@ export default function TablesMapPage() {
       </Modal>
 
       {/* VietQR Modal */}
-      {showVietQRModal && selectedTableOrder && (
-        <Modal
-          isOpen={true}
-          onClose={() => setShowVietQRModal(false)}
-          title="Quét Mã VietQR Napas 24/7"
-          subtitle={`${selectedTable?.name} · Số tiền: ${formatCurrencyVND(billCalculation.finalAmount)}`}
-        >
-          <div className="text-center space-y-4">
-            <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
-              <img
-                src={generateVietQRUrl({
-                  bankId: 'MB',
-                  accountNo: '0908123456',
-                  accountName: 'BEP NHA RESTAURANT',
-                  amount: billCalculation.finalAmount,
-                  memo: `BAN ${selectedTable?.name} ${selectedTableOrder.orderCode}`,
-                })}
-                alt="VietQR Payment"
-                className="w-56 h-auto rounded-lg shadow-sm"
-              />
-              <div className="mt-3 text-xs space-y-1">
-                <strong className="text-sm text-[#176044] block">
-                  {formatCurrencyVND(billCalculation.finalAmount)}
-                </strong>
-                <p className="text-[11px] text-slate-500 font-mono">
-                  Nội dung: BAN {selectedTable?.name} {selectedTableOrder.orderCode}
-                </p>
+      {showVietQRModal && selectedTableOrder && (() => {
+        const activeBranchId = storageService.getActiveBranchId();
+        const activeBranch =
+          restaurant?.branches?.find((b: any) => b.id === activeBranchId || b._id === activeBranchId) ||
+          restaurant?.branches?.[0];
+        const bankAcc = resolveEffectiveBankAccount(restaurant, activeBranch);
+
+        return (
+          <Modal
+            isOpen={true}
+            onClose={() => setShowVietQRModal(false)}
+            title="Quét Mã VietQR Napas 24/7"
+            subtitle={`${selectedTable?.name} · Số tiền: ${formatCurrencyVND(billCalculation.finalAmount)}`}
+          >
+            <div className="text-center space-y-4">
+              <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
+                <img
+                  src={generateVietQRUrl({
+                    bankId: bankAcc?.bankId || 'MB',
+                    accountNo: bankAcc?.accountNo || '0901234567',
+                    accountName: bankAcc?.accountName || restaurant?.name || 'IMENU RESTAURANT',
+                    amount: billCalculation.finalAmount,
+                    memo: `IMENU ${(selectedTableOrder.orderCode || '').replace(/[^a-zA-Z0-9-]/g, '')}`,
+                    template: 'compact2',
+                  })}
+                  alt="VietQR Payment"
+                  className="w-56 h-auto rounded-lg shadow-sm"
+                />
+                <div className="mt-3 text-xs space-y-1">
+                  <strong className="text-sm text-[#176044] block">
+                    {formatCurrencyVND(billCalculation.finalAmount)}
+                  </strong>
+                  <p className="text-[11px] text-slate-500 font-mono">
+                    Nội dung: IMENU {selectedTableOrder.orderCode}
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    {bankAcc?.bankName || 'Ngân hàng thụ hưởng'} - STK: {bankAcc?.accountNo || ''}
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                variant="primary"
+                onClick={() => setShowVietQRModal(false)}
+                className="w-full"
+              >
+                Đóng cửa sổ mã QR
+              </Button>
+            </div>
+          </Modal>
+        );
+      })()}
+
+      {/* 80mm Pre-Bill Modal */}
+      {isPreBillPreviewOpen && selectedTableOrder && (() => {
+        const activeBranchId = storageService.getActiveBranchId();
+        const activeBranch =
+          restaurant?.branches?.find((b: any) => b.id === activeBranchId || b._id === activeBranchId) ||
+          restaurant?.branches?.[0];
+        const receipt = buildReceiptData(selectedTableOrder, restaurant, {
+          branch: activeBranch,
+          cashierName: storageService.getCurrentUser()?.fullName || 'Thu ngân',
+          receiptType: 'PRE_BILL',
+          paymentMethod,
+          cashGiven,
+          cashChange: billCalculation.cashChange,
+        });
+
+        return (
+          <Modal
+            isOpen={true}
+            onClose={() => setIsPreBillPreviewOpen(false)}
+            title="Phiếu Tạm Tính Hóa Đơn 80mm"
+            subtitle={`${selectedTable?.name} · Mã đơn: ${selectedTableOrder.orderCode}`}
+          >
+            <div className="space-y-4">
+              <div
+                id="thermal-print-area"
+                className="bg-white p-4 border border-slate-300 rounded-lg shadow-inner font-mono text-xs max-h-[60vh] overflow-y-auto space-y-2 text-slate-900"
+              >
+                <div className="text-center pb-2 border-b border-dashed border-slate-800 space-y-0.5">
+                  <h4 className="font-bold text-sm uppercase">{receipt.header.restaurantName}</h4>
+                  {receipt.header.branchName && <p className="text-[10px]">CN: {receipt.header.branchName}</p>}
+                  {receipt.header.address && <p className="text-[10px] text-slate-600">{receipt.header.address}</p>}
+                  {receipt.header.hotline && <p className="text-[10px] text-slate-600">Hotline: {receipt.header.hotline}</p>}
+                </div>
+
+                <div className="text-center py-1">
+                  <strong className="block font-sans text-xs uppercase font-extrabold text-slate-950">
+                    PHIẾU TẠM TÍNH TIỀN
+                  </strong>
+                  <div className="flex justify-between text-[10px] text-slate-600 pt-1">
+                    <span>Bàn: <strong>{receipt.metadata.tableName}</strong></span>
+                    <span>Đơn: <strong>{receipt.metadata.orderCode}</strong></span>
+                  </div>
+                </div>
+
+                <div className="border-t border-b border-dashed border-slate-800 py-1 space-y-1">
+                  {receipt.items.map((it, idx) => (
+                    <div key={idx} className="flex justify-between items-start text-[11px]">
+                      <div className="w-1/2 pr-1">
+                        <span className="font-bold block leading-tight">{it.name}</span>
+                        {it.selectedOptionsNote && (
+                          <span className="text-[9px] text-slate-500 block leading-tight">+ {it.selectedOptionsNote}</span>
+                        )}
+                      </div>
+                      <span className="w-1/6 text-center font-bold">{it.quantity}</span>
+                      <span className="w-1/3 text-right font-bold">{formatCurrencyVND(it.amount)}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-1 text-xs pt-1">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Tạm tính:</span>
+                    <span>{formatCurrencyVND(receipt.financials.subTotal)}</span>
+                  </div>
+                  {receipt.financials.discountAmount > 0 && (
+                    <div className="flex justify-between text-rose-600">
+                      <span>Giảm giá:</span>
+                      <span>-{formatCurrencyVND(receipt.financials.discountAmount)}</span>
+                    </div>
+                  )}
+                  {receipt.financials.vatAmount > 0 && (
+                    <div className="flex justify-between text-slate-600">
+                      <span>VAT ({receipt.financials.vatPercent}%):</span>
+                      <span>+{formatCurrencyVND(receipt.financials.vatAmount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between font-extrabold text-sm border-t border-dashed border-slate-800 pt-1 text-slate-950">
+                    <span>TỔNG CỘNG:</span>
+                    <span>{formatCurrencyVND(receipt.financials.totalAmount)}</span>
+                  </div>
+                </div>
+
+                {receipt.paymentQr?.vietQrPayloadUrl && (
+                  <div className="text-center pt-2 border-t border-dashed border-slate-300">
+                    <p className="text-[10px] font-bold text-slate-700 mb-1">Quét mã VietQR chuyển khoản:</p>
+                    <img
+                      src={receipt.paymentQr.vietQrPayloadUrl}
+                      alt="VietQR"
+                      className="w-28 h-28 mx-auto border p-1 rounded bg-white"
+                    />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={() => setIsPreBillPreviewOpen(false)}>
+                  Đóng
+                </Button>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => window.print()}
+                  icon={<Printer className="w-4 h-4 mr-1" />}
+                >
+                  In Phiếu Tạm Tính 80mm
+                </Button>
               </div>
             </div>
-
-            <Button
-              variant="primary"
-              onClick={() => setShowVietQRModal(false)}
-              className="w-full"
-            >
-              Đóng cửa sổ mã QR
-            </Button>
-          </div>
-        </Modal>
-      )}
+          </Modal>
+        );
+      })()}
     </div>
   );
 }

@@ -96,6 +96,9 @@ export default function CustomerTableMenuPage() {
   const [isPreBillOpen, setIsPreBillOpen] = useState<boolean>(false);
   const [isCallStaffOpen, setIsCallStaffOpen] = useState<boolean>(false);
   const [isVietQROpen, setIsVietQROpen] = useState<boolean>(false);
+  const [isPaidSuccessOpen, setIsPaidSuccessOpen] = useState<boolean>(false);
+  const [paidSummary, setPaidSummary] = useState<any>(null);
+  const [effectiveBankAccount, setEffectiveBankAccount] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Active orders for this table
@@ -138,6 +141,9 @@ export default function CustomerTableMenuPage() {
       const ctx = ctxRes.data;
       setRestaurant(ctx.restaurant as any);
       setTable(ctx.table as any);
+      if (ctx.bankAccount || (ctx.restaurant as any)?.bankAccount) {
+        setEffectiveBankAccount(ctx.bankAccount || (ctx.restaurant as any).bankAccount);
+      }
       if (ctx.activeOrder) {
         setActiveOrder(ctx.activeOrder);
       } else {
@@ -253,7 +259,21 @@ export default function CustomerTableMenuPage() {
         }
 
         // Notification sound & message
-        if (payload.data?.status === 'Ready') {
+        if (evt === 'PAYMENT_COMPLETED' || evt === 'order:payment_completed' || incomingOrder?.status === 'Paid') {
+          soundEngine.playRoundNotification();
+          showToast('✅ Đơn hàng đã được thanh toán thành công — Cảm ơn quý khách!');
+          setIsPreBillOpen(false);
+          setIsVietQROpen(false);
+          const billInfo = payload.data?.bill;
+          setPaidSummary({
+            orderCode: incomingOrder?.orderCode || activeOrder?.orderCode || '',
+            billCode: billInfo?.billCode || '',
+            finalAmount: billInfo?.finalAmount ?? incomingOrder?.finalAmount ?? incomingOrder?.totalAmount ?? 0,
+            paymentMethod: billInfo?.paymentMethod || incomingOrder?.paymentMethod || 'Cash',
+            paidAt: billInfo?.paidAt || new Date().toISOString(),
+          });
+          setIsPaidSuccessOpen(true);
+        } else if (payload.data?.status === 'Ready') {
           soundEngine.playItemReadyChime();
           showToast('🍽️ Món ăn của bàn bạn đã được Bếp nấu xong!');
         } else if (evt === 'ORDER_CONFIRMED' || evt === 'order:confirmed') {
@@ -271,7 +291,14 @@ export default function CustomerTableMenuPage() {
           apiClient.customerOrders
             .getActiveOrder(activeOrder.id)
             .then((res) => {
-              if (res.data) setActiveOrder(res.data);
+              if (res.data) {
+                setActiveOrder(res.data);
+                if (res.data.status === 'Paid') {
+                  setIsPreBillOpen(false);
+                  setIsVietQROpen(false);
+                  setIsPaidSuccessOpen(true);
+                }
+              }
             })
             .catch(() => {});
         } else if (table.id) {
@@ -502,7 +529,12 @@ export default function CustomerTableMenuPage() {
     if (isRequestingPayment || !activeOrder || !table) return;
     setIsRequestingPayment(true);
     try {
-      const res = await apiClient.orders.requestPayment(activeOrder.id, method);
+      const res = await apiClient.customerOrders.requestPayment(activeOrder.id, {
+        restaurantSlug,
+        tableCode,
+        qrToken: qrToken || '',
+        paymentMethod: method,
+      });
       if (res.data) {
         setActiveOrder(res.data);
       }
@@ -1219,57 +1251,109 @@ export default function CustomerTableMenuPage() {
         title="Phiếu tạm tính hóa đơn"
         subtitle={`${restaurant.name} · ${table.name}`}
       >
-        {activeOrder ? (
-          <div className="space-y-4">
-            <div className="p-4 bg-[#fff9ed] border border-[#f0dbb5] rounded-2xl space-y-3 font-mono text-xs">
-              <div className="text-center pb-3 border-b border-dashed border-[#dbc89f]">
-                <strong className="text-sm font-sans block text-slate-900">{restaurant.name}</strong>
-                <span className="text-[11px] text-slate-600">
-                  {table.name} · {activeOrder.orderCode}
-                </span>
-              </div>
+        {activeOrder ? (() => {
+          const validItems = activeOrder.items?.filter((it) => it.status !== 'Cancelled') || [];
+          const subTotal = activeOrder.subTotal ?? validItems.reduce((sum, it) => sum + (it.itemTotal || 0), 0);
+          const discount = activeOrder.discountAmount || 0;
+          const serviceFee = activeOrder.serviceFee || 0;
+          const vat = activeOrder.vatAmount || 0;
+          const total = activeOrder.totalAmount;
 
-              <div className="space-y-1.5 py-1">
-                {activeOrder.items?.map((it) => (
-                  <div key={it.id} className="flex justify-between items-start text-[11px]">
-                    <span className="text-slate-800">
-                      {it.quantity}x {it.name}
-                    </span>
-                    <span className="font-bold text-slate-900">
-                      {formatCurrencyVND(it.itemTotal)}
-                    </span>
+          return (
+            <div className="space-y-4">
+              <div className="p-4 bg-[#fff9ed] border border-[#f0dbb5] rounded-2xl space-y-3 font-mono text-xs">
+                <div className="text-center pb-3 border-b border-dashed border-[#dbc89f]">
+                  <strong className="text-sm font-sans block text-slate-900">{restaurant.name}</strong>
+                  <span className="text-[11px] text-slate-600">
+                    {table.name} · {activeOrder.orderCode}
+                  </span>
+                </div>
+
+                <div className="space-y-2 py-1">
+                  {validItems.length > 0 ? (
+                    validItems.map((it) => (
+                      <div key={it.id || it._id} className="border-b border-[#f3e6cf] pb-1.5 last:border-b-0">
+                        <div className="flex justify-between items-start text-[11px]">
+                          <span className="text-slate-800 font-semibold">
+                            {it.quantity}x {it.name}
+                          </span>
+                          <span className="font-bold text-slate-900">
+                            {formatCurrencyVND(it.itemTotal)}
+                          </span>
+                        </div>
+                        {it.selectedOptions && it.selectedOptions.length > 0 && (
+                          <div className="text-[10px] text-slate-500 pl-4 mt-0.5">
+                            {it.selectedOptions.map((opt) => opt.valueName || opt.groupName).join(', ')}
+                          </div>
+                        )}
+                        {it.note && (
+                          <div className="text-[10px] text-amber-700 italic pl-4 mt-0.5">
+                            Ghi chú: {it.note}
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-slate-500 text-xs py-2">
+                      Không có món hợp lệ nào
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-2 border-t border-dashed border-[#dbc89f] space-y-1 text-[11px]">
+                  <div className="flex justify-between text-slate-600">
+                    <span>Tạm tính món:</span>
+                    <span>{formatCurrencyVND(subTotal)}</span>
                   </div>
-                ))}
+                  {discount > 0 && (
+                    <div className="flex justify-between text-rose-600">
+                      <span>Giảm giá / Ưu đãi:</span>
+                      <span>-{formatCurrencyVND(discount)}</span>
+                    </div>
+                  )}
+                  {serviceFee > 0 && (
+                    <div className="flex justify-between text-slate-600">
+                      <span>Phí dịch vụ:</span>
+                      <span>+{formatCurrencyVND(serviceFee)}</span>
+                    </div>
+                  )}
+                  {vat > 0 && (
+                    <div className="flex justify-between text-slate-600">
+                      <span>Thuế VAT:</span>
+                      <span>+{formatCurrencyVND(vat)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-2 border-t-2 border-slate-900 flex justify-between items-center text-sm font-bold font-sans">
+                  <span>TỔNG CỘNG:</span>
+                  <span className="text-base text-[#176044]">
+                    {formatCurrencyVND(total)}
+                  </span>
+                </div>
               </div>
 
-              <div className="pt-2 border-t-2 border-slate-900 flex justify-between items-center text-sm font-bold font-sans">
-                <span>TỔNG CỘNG:</span>
-                <span className="text-base text-[#176044]">
-                  {formatCurrencyVND(activeOrder.totalAmount)}
-                </span>
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <Button
+                  variant="secondary"
+                  onClick={() => handleRequestPayment('Cash')}
+                  disabled={isRequestingPayment}
+                  className="py-3"
+                >
+                  💵 Tiền mặt
+                </Button>
+                <Button
+                  variant="amber"
+                  onClick={() => handleRequestPayment('VietQR')}
+                  disabled={isRequestingPayment}
+                  className="py-3"
+                >
+                  <QrCode className="w-4 h-4 mr-1.5" /> Quét VietQR
+                </Button>
               </div>
             </div>
-
-            <div className="grid grid-cols-2 gap-3 pt-2">
-              <Button
-                variant="secondary"
-                onClick={() => handleRequestPayment('Cash')}
-                disabled={isRequestingPayment}
-                className="py-3"
-              >
-                💵 Tiền mặt
-              </Button>
-              <Button
-                variant="amber"
-                onClick={() => handleRequestPayment('VietQR')}
-                disabled={isRequestingPayment}
-                className="py-3"
-              >
-                <QrCode className="w-4 h-4 mr-1.5" /> Quét VietQR
-              </Button>
-            </div>
-          </div>
-        ) : null}
+          );
+        })() : null}
       </Modal>
 
       {/* ================= CALL STAFF MODAL ================= */}
@@ -1306,46 +1390,171 @@ export default function CustomerTableMenuPage() {
         title="Thanh toán VietQR Napas 24/7"
         subtitle="Mở app ngân hàng bất kỳ để quét mã thanh toán chính xác"
       >
-        {activeOrder && (
-          <div className="text-center space-y-4">
-            <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
-              <img
-                src={generateVietQRUrl({
-                  bankId: restaurant.bankAccount?.bankId || 'MB',
-                  accountNo: restaurant.bankAccount?.accountNo || '0908123456',
-                  accountName: restaurant.bankAccount?.accountName || 'BEP NHA RESTAURANT',
-                  amount: activeOrder.totalAmount,
-                  memo: `${restaurant.slug} ${table.name} ${activeOrder.orderCode}`,
-                })}
-                alt="VietQR Payment"
-                className="w-56 h-auto rounded-lg shadow-sm"
-              />
-              <div className="mt-3 text-xs space-y-1">
-                <strong className="text-sm text-[#176044] block">
-                  {formatCurrencyVND(activeOrder.totalAmount)}
-                </strong>
-                <p className="text-[11px] text-slate-500 font-mono">
-                  Nội dung: {restaurant.slug} {table.name}
+        {activeOrder && (() => {
+          const bank = effectiveBankAccount || restaurant.bankAccount;
+          const bankId = bank?.bankId || 'MB';
+          const accountNo = bank?.accountNo || '';
+          const accountName = bank?.accountName || restaurant.name || 'NHA HANG';
+          const memo = `IMENU ${activeOrder.orderCode}`;
+
+          if (!accountNo) {
+            return (
+              <div className="text-center p-6 space-y-4">
+                <div className="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+                <h4 className="text-sm font-bold text-slate-800">Chưa cấu hình tài khoản ngân hàng</h4>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  Nhà hàng chưa cập nhật số tài khoản nhận tiền chuyển khoản. Quý khách vui lòng chọn thanh toán bằng Tiền mặt hoặc gọi nhân viên phục vụ hỗ trợ.
                 </p>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setIsVietQROpen(false);
+                    handleRequestPayment('Cash');
+                  }}
+                  className="w-full"
+                >
+                  Đổi sang Thanh toán Tiền mặt
+                </Button>
+              </div>
+            );
+          }
+
+          const qrUrl = generateVietQRUrl({
+            bankId,
+            accountNo,
+            accountName,
+            amount: activeOrder.totalAmount,
+            memo,
+          });
+
+          return (
+            <div className="text-center space-y-4">
+              <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
+                <img
+                  src={qrUrl}
+                  alt="VietQR Payment"
+                  className="w-56 h-auto rounded-lg shadow-sm"
+                />
+                <div className="mt-3 text-xs space-y-1 w-full max-w-xs text-left bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                  <div className="flex justify-between text-slate-600 text-[11px]">
+                    <span>Ngân hàng:</span>
+                    <span className="font-bold text-slate-900">{bankId}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600 text-[11px]">
+                    <span>Số tài khoản:</span>
+                    <span className="font-mono font-bold text-slate-900">{accountNo}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600 text-[11px]">
+                    <span>Chủ tài khoản:</span>
+                    <span className="font-semibold text-slate-900">{accountName}</span>
+                  </div>
+                  <div className="flex justify-between text-slate-600 text-[11px]">
+                    <span>Nội dung CK:</span>
+                    <span className="font-mono font-bold text-[#176044]">{memo}</span>
+                  </div>
+                  <div className="pt-1.5 border-t border-slate-200 flex justify-between items-center text-sm font-bold">
+                    <span>Số tiền:</span>
+                    <span className="text-base text-[#176044]">{formatCurrencyVND(activeOrder.totalAmount)}</span>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-500">
+                Sau khi chuyển khoản thành công, hệ thống thu ngân sẽ tự động xác nhận đơn hàng tại bàn của bạn.
+              </p>
+
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={() => setIsVietQROpen(false)}
+                  className="w-full"
+                >
+                  Đóng
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    setIsVietQROpen(false);
+                    showToast('Đang chờ thu ngân xác nhận đã nhận tiền...');
+                  }}
+                  className="w-full"
+                >
+                  Đã chuyển khoản
+                </Button>
               </div>
             </div>
+          );
+        })()}
+      </Modal>
 
-            <p className="text-xs text-slate-500">
-              Sau khi chuyển khoản thành công, hệ thống thu ngân sẽ xác nhận và hoàn tất đơn hàng tự động.
-            </p>
-
-            <Button
-              variant="primary"
-              onClick={() => {
-                setIsVietQROpen(false);
-                showToast('Đang chờ thu ngân xác nhận đã nhận tiền...');
-              }}
-              className="w-full"
-            >
-              Tôi đã chuyển khoản xong
-            </Button>
+      {/* ================= PAYMENT COMPLETED SUCCESS MODAL ================= */}
+      <Modal
+        isOpen={isPaidSuccessOpen}
+        onClose={() => {
+          setIsPaidSuccessOpen(false);
+          setActiveOrder(null);
+          setCart([]);
+          loadData();
+        }}
+        title="Thanh toán thành công"
+        subtitle="Hóa đơn đã được hoàn tất"
+      >
+        <div className="text-center space-y-4 py-2">
+          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-sm">
+            <CheckCircle2 className="w-9 h-9" />
           </div>
-        )}
+
+          <div>
+            <h3 className="text-lg font-bold text-slate-900">
+              Cảm ơn quý khách!
+            </h3>
+            <p className="text-xs text-slate-500 mt-1">
+              Đơn hàng tại bàn {table?.name || ''} đã được thu ngân xác nhận thanh toán thành công.
+            </p>
+          </div>
+
+          {paidSummary && (
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-left font-mono text-xs space-y-2">
+              <div className="flex justify-between text-slate-600">
+                <span>Mã đơn:</span>
+                <span className="font-bold text-slate-800">{paidSummary.orderCode}</span>
+              </div>
+              {paidSummary.billCode && (
+                <div className="flex justify-between text-slate-600">
+                  <span>Mã hóa đơn:</span>
+                  <span className="font-bold text-slate-800">{paidSummary.billCode}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-slate-600">
+                <span>Phương thức:</span>
+                <span className="font-semibold text-slate-800">
+                  {paidSummary.paymentMethod === 'VietQR' ? 'Chuyển khoản VietQR' : paidSummary.paymentMethod === 'Card' ? 'Thẻ' : 'Tiền mặt'}
+                </span>
+              </div>
+              <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-sm font-bold font-sans">
+                <span>Đã thanh toán:</span>
+                <span className="text-emerald-700 text-base">
+                  {formatCurrencyVND(paidSummary.finalAmount)}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <Button
+            variant="primary"
+            onClick={() => {
+              setIsPaidSuccessOpen(false);
+              setActiveOrder(null);
+              setCart([]);
+              loadData();
+            }}
+            className="w-full py-3"
+          >
+            Tiếp tục gọi món mới / Đóng
+          </Button>
+        </div>
       </Modal>
     </div>
   );

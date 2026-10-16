@@ -9,6 +9,9 @@ import {
   BillPreviewResult,
   MergeTablesPayload,
   MoveTableItemsPayload,
+  ReceiptData,
+  Bill,
+  VietQrPaymentInfo,
 } from '@imenu/types';
 
 export interface ApiResponse<T = any> {
@@ -849,6 +852,34 @@ export const apiClient = {
       });
     },
 
+    async completePayment(
+      id: string,
+      payload?: PayOrderPayload,
+      options?: { idempotencyKey?: string },
+    ) {
+      return request<any>(`/orders/${id}/complete-payment`, {
+        method: 'POST',
+        body: JSON.stringify(payload || {}),
+        headers: options?.idempotencyKey ? { 'idempotency-key': options.idempotencyKey } : undefined,
+      });
+    },
+
+    async getReceipt(id: string, query?: BillPreviewQuery) {
+      const q = new URLSearchParams();
+      if (query?.discountAmount !== undefined) q.append('discountAmount', String(query.discountAmount));
+      if (query?.discountPercent !== undefined) q.append('discountPercent', String(query.discountPercent));
+      if (query?.serviceFee !== undefined) q.append('serviceFee', String(query.serviceFee));
+      if (query?.serviceFeePercent !== undefined) q.append('serviceFeePercent', String(query.serviceFeePercent));
+      if (query?.vatAmount !== undefined) q.append('vatAmount', String(query.vatAmount));
+      if (query?.vatPercent !== undefined) q.append('vatPercent', String(query.vatPercent));
+      const qs = q.toString();
+      return request<ReceiptData>(`/orders/${id}/receipt${qs ? `?${qs}` : ''}`);
+    },
+
+    async getVietQr(id: string) {
+      return request<VietQrPaymentInfo>(`/orders/${id}/vietqr`);
+    },
+
     async cancel(id: string, reason?: string) {
       return request<any>(`/orders/${id}/cancel`, {
         method: 'POST',
@@ -892,6 +923,43 @@ export const apiClient = {
 
     async getActiveOrder(orderId: string) {
       return request<Order>(`/orders/customer/${orderId}`);
+    },
+
+    async requestPayment(
+      orderId: string,
+      payload: {
+        restaurantSlug: string;
+        tableCode: string;
+        qrToken: string;
+        paymentMethod: 'VietQR' | 'Cash';
+      },
+    ) {
+      return request<Order>(`/orders/customer/${orderId}/request-payment`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async getVietQr(
+      orderId: string,
+      params: { restaurantSlug: string; tableCode: string; qrToken?: string },
+    ) {
+      const q = new URLSearchParams();
+      q.append('restaurantSlug', params.restaurantSlug);
+      q.append('tableCode', params.tableCode);
+      if (params.qrToken) q.append('qrToken', params.qrToken);
+      return request<VietQrPaymentInfo>(`/orders/customer/${orderId}/vietqr?${q.toString()}`);
+    },
+
+    async getReceipt(
+      orderId: string,
+      params: { restaurantSlug: string; tableCode: string; qrToken?: string },
+    ) {
+      const q = new URLSearchParams();
+      q.append('restaurantSlug', params.restaurantSlug);
+      q.append('tableCode', params.tableCode);
+      if (params.qrToken) q.append('qrToken', params.qrToken);
+      return request<ReceiptData>(`/orders/customer/${orderId}/receipt?${q.toString()}`);
     },
   },
 
@@ -995,6 +1063,76 @@ export const apiClient = {
         method: 'PATCH',
         body: JSON.stringify({ isAvailable, ...(branchId ? { branchId } : {}) }),
       });
+    },
+  },
+
+  bills: {
+    async list(params?: {
+      branchId?: string;
+      paymentMethod?: string;
+      paymentStatus?: string;
+      fromDate?: string;
+      toDate?: string;
+      search?: string;
+      page?: number;
+      limit?: number;
+    }) {
+      const q = new URLSearchParams();
+      if (params?.branchId && params.branchId !== 'all') q.append('branchId', params.branchId);
+      if (params?.paymentMethod && params.paymentMethod !== 'all') q.append('paymentMethod', params.paymentMethod);
+      if (params?.paymentStatus && params.paymentStatus !== 'all') q.append('paymentStatus', params.paymentStatus);
+      if (params?.fromDate) q.append('fromDate', params.fromDate);
+      if (params?.toDate) q.append('toDate', params.toDate);
+      if (params?.search) q.append('search', params.search);
+      if (params?.page) q.append('page', String(params.page));
+      if (params?.limit) q.append('limit', String(params.limit));
+      const qs = q.toString();
+      return request<{
+        data: Bill[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
+      }>(`/bills${qs ? `?${qs}` : ''}`);
+    },
+
+    async get(id: string) {
+      return request<{ bill: Bill; receiptData: ReceiptData }>(`/bills/${id}`);
+    },
+
+    async getByOrder(orderId: string) {
+      return request<{ bill: Bill; receiptData: ReceiptData }>(`/bills/by-order/${orderId}`);
+    },
+
+    async logPrint(id: string) {
+      return request<{ bill: Bill; receiptData: ReceiptData; base64EscPos?: string }>(`/bills/${id}/print`, {
+        method: 'POST',
+      });
+    },
+  },
+
+  activityLogs: {
+    async list(params?: {
+      module?: string;
+      action?: string;
+      branchId?: string;
+      targetId?: string;
+      fromDate?: string;
+      toDate?: string;
+      page?: number;
+      limit?: number;
+    }) {
+      const q = new URLSearchParams();
+      if (params?.module && params.module !== 'all') q.append('module', params.module);
+      if (params?.action && params.action !== 'all') q.append('action', params.action);
+      if (params?.branchId && params.branchId !== 'all') q.append('branchId', params.branchId);
+      if (params?.targetId) q.append('targetId', params.targetId);
+      if (params?.fromDate) q.append('fromDate', params.fromDate);
+      if (params?.toDate) q.append('toDate', params.toDate);
+      if (params?.page) q.append('page', String(params.page));
+      if (params?.limit) q.append('limit', String(params.limit));
+      const qs = q.toString();
+      return request<any>(`/activity-logs${qs ? `?${qs}` : ''}`);
     },
   },
 };

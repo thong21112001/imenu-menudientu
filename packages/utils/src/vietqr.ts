@@ -40,3 +40,65 @@ export function generateVietQRUrl(options: VietQROptions): string {
   
   return `https://img.vietqr.io/image/${bankId}-${accountNo}-${template}.png?amount=${amount}&addInfo=${encodedMemo}&accountName=${encodedName}`;
 }
+
+/**
+ * Phân giải tài khoản ngân hàng thụ hưởng theo thứ bậc ưu tiên:
+ * 1. Ưu tiên Chi nhánh (branch.bankAccount) nếu có số tài khoản
+ * 2. Fallback về Nhà hàng (restaurant.bankAccount) nếu chi nhánh không cấu hình
+ */
+export function resolveEffectiveBankAccount(
+  restaurant: any,
+  branch?: any,
+): {
+  bankId: string;
+  bankName: string;
+  accountNo: string;
+  accountName: string;
+  template?: string;
+  resolvedFrom: 'BRANCH' | 'RESTAURANT';
+} | null {
+  if (branch?.bankAccount?.accountNo?.trim()) {
+    return {
+      bankId: branch.bankAccount.bankId || 'MB',
+      bankName: branch.bankAccount.bankName || 'Ngân hàng thụ hưởng',
+      accountNo: branch.bankAccount.accountNo.trim(),
+      accountName: branch.bankAccount.accountName || restaurant?.name || 'IMENU',
+      template: branch.bankAccount.template || 'compact2',
+      resolvedFrom: 'BRANCH',
+    };
+  }
+
+  if (restaurant?.bankAccount?.accountNo?.trim()) {
+    return {
+      bankId: restaurant.bankAccount.bankId || 'MB',
+      bankName: restaurant.bankAccount.bankName || 'Ngân hàng thụ hưởng',
+      accountNo: restaurant.bankAccount.accountNo.trim(),
+      accountName: restaurant.bankAccount.accountName || restaurant?.name || 'IMENU',
+      template: restaurant.bankAccount.template || 'compact2',
+      resolvedFrom: 'RESTAURANT',
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Sinh nội dung chuyển khoản chuẩn hóa cho VietQR Napas 24/7
+ * Định dạng: IMENU <orderCode> (loại bỏ ký tự đặc biệt)
+ */
+export function generateVietQRMemo(orderCode: string): string {
+  const cleanCode = (orderCode || '').replace(/[^a-zA-Z0-9-]/g, '').trim();
+  return `IMENU ${cleanCode}`.trim();
+}
+
+/**
+ * Che mặt nạ số tài khoản ngân hàng bảo vệ an toàn tài chính (Mục 19 Blueprint)
+ * Giữ 4 số cuối: ví dụ "0901234567" -> "***4567"
+ */
+export function maskBankAccount(accountNo: string): string {
+  if (!accountNo) return '';
+  const clean = accountNo.trim();
+  if (clean.length <= 4) return clean;
+  return `***${clean.slice(-4)}`;
+}
+

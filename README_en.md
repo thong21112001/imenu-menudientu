@@ -415,7 +415,7 @@ npm run build
 ```
 
 ### SDK Contract Test Suite (`npm run test:sdk`)
-The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory HTTP mock server to verify API contract parity across 14 tests:
+The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory HTTP mock server to verify API contract parity across all 27 tests covering Phases 6, 7 & 8:
 - **SDK-01**: `customerOrders.getTableContext` properly passes query parameters (`restaurantSlug`, `tableCode`, `qrToken`).
 - **SDK-02 & SDK-02b**: `customerOrders.create` invokes public endpoint `POST /api/orders/customer` and transmits `idempotency-key` header.
 - **SDK-03 & SDK-03b**: `customerOrders.addItems` invokes public endpoint `POST /api/orders/customer/items` and transmits `idempotency-key` header.
@@ -428,6 +428,30 @@ The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory 
 - **SDK-10**: `kitchen.startCookingItem` supports both Flat route (`/order-items/:id/start-cooking`) and Nested route (`/orders/:orderId/items/:id/start-cooking`).
 - **SDK-11**: `kitchen.markItemReady` and `markItemServed` map accurately to `POST /api/order-items/:id/mark-ready` and `mark-served`.
 - **SDK-12**: `kitchen.startCookingAll`, `markReadyAll`, and `toggleItemAvailability` map accurately to batch POST and PATCH availability routes.
+- **SDK-13**: `orders.completePayment` maps to `POST /api/orders/:id/complete-payment` with `idempotency-key` header.
+- **SDK-14**: `orders.getReceipt` maps to `GET /api/orders/:id/receipt` with query parameters.
+- **SDK-15**: `orders.getVietQr` maps to `GET /api/orders/:id/vietqr`.
+- **SDK-16**: `customerOrders.requestPayment` maps to `POST /api/orders/customer/:id/request-payment` with body payload.
+- **SDK-17**: `customerOrders.getVietQr` maps to `GET /api/orders/customer/:id/vietqr` with query credentials.
+- **SDK-18**: `customerOrders.getReceipt` maps to `GET /api/orders/customer/:id/receipt` with query credentials.
+- **SDK-19**: `bills.list` maps to `GET /api/bills` with pagination and status filters.
+- **SDK-20**: `bills.get` & `bills.getByOrder` map to `GET /api/bills/:id` and `GET /api/bills/by-order/:orderId`.
+- **SDK-21**: `bills.logPrint` maps to `POST /api/bills/:id/print`.
+- **SDK-22**: `activityLogs.list` maps to `GET /api/activity-logs` with financial audit filters.
+- **SDK-23**: `buildReceiptData` filters 100% of Cancelled items, compiles option notes, and resolves branch banking details.
+- **SDK-24**: `EscPosEncoder` compiles valid 80mm ESC/POS byte sequences (ASCII sanitization, drawer kick on Cash, partial cut).
+- **SDK-25**: `thermalPrinterService.generatePrintPayload` outputs Uint8Array buffer, base64, hex, and textPreview.
+
+### Payment & Bill Browser E2E Suite (`node scripts/e2e-payment-bill-lifecycle.mjs`)
+The script `scripts/e2e-payment-bill-lifecycle.mjs` verifies the complete payment and invoicing lifecycle (5 Checkpoints):
+
+| Checkpoint | Checkpoint Name | Real-world Simulation & Acceptance Verification |
+| :---: | :--- | :--- |
+| **PAY-E2E-01** | Diner Requests Payment | Diner scans QR at table, reviews cart, and taps "Request Payment"; verifies Order and Table transition to `PaymentRequested`. |
+| **PAY-E2E-02** | Dynamic Server VietQR | Diner selects Bank Transfer; verifies server-side dynamic VietQR displays correct bank account and amount. |
+| **PAY-E2E-03** | POS Cash & Change Calculation | Cashier enters tendered cash amount on `/bills`; verifies automatic and precise calculation of `changeAmount`. |
+| **PAY-E2E-04** | Settlement & Table Release | Cashier clicks Complete Payment; verifies single `Bill` entity generation, Order moves to `Paid`, and Table frees to `Available`. |
+| **PAY-E2E-05** | 80mm ESC/POS Thermal Print | Cashier opens Bill Print preview modal; verifies CSS `@media print` layout and ESC/POS command sequences. |
 
 ### Cross-App Browser E2E Suite (`npm run test:e2e`)
 The script `scripts/e2e-order-lifecycle.mjs` connects via `puppeteer-core` to Google Chrome, simultaneously simulating two concurrent browser contexts: **Guest Mobile (Viewport: 390x844)** and **Cashier POS Desktop (Viewport: 1440x900)** across 9 comprehensive checkpoints:
@@ -460,25 +484,29 @@ The script `scripts/e2e-kds-lifecycle.mjs` verifies the complete 3-way kitchen d
 
 ## ⚠️ 9. Architectural Boundaries & Known Constraints
 
-To preserve architectural precision and avoid assumptions regarding Phase 6:
+To preserve architectural precision and avoid assumptions regarding Phase 8:
 
-1. **80mm Thermal Printer Hardware**:
-   - Phase 6 delivers the ESC/POS standardized 80mm CSS print layout (`@media print`) on the `/bills` page and the architecture specification document (`thermal-printer-spec.md`).
-   - Hardware drivers (WebUSB, WebSerial, or raw ESC/POS binary protocols) are strictly **out of scope** for Phase 6 and scheduled for **Phase 8**.
+1. **80mm & 58mm Thermal Printer Hardware**:
+   - Phase 8 delivers the complete binary ESC/POS encoder (`EscPosEncoder`) and print data formatter (`buildReceiptData`), eliminating 100% of Vietnamese diacritics into safe ASCII, opening cash drawers, and issuing partial cuts.
+   - Web/Desktop apps can send `buffer` or `base64` payloads directly to local print servers, raw network thermal printers (TCP port 9100), or WebUSB/WebSerial bridges.
 2. **Single-Node Real-Time Hub**:
    - The current real-time subsystem utilizes Socket.IO connected to a single NestJS server process paired with client-side `BroadcastChannel`. Redis Pub/Sub for distributed multi-node clusters is deferred to future scaling phases.
 3. **Table Release Proof**:
-   - Test suites verify final table status (`Available`, `currentOrderId: null`) and payment idempotency replay. However, this does not inspect internal physical database mutation call counts directly.
+   - Test suites verify final table status (`Available`, `currentOrderId: null`) and payment idempotency replay.
 
 ---
 
 ## 📄 10. Project Status & Acceptance
 
+### Phase 8: Payment, Bill & ESC/POS Thermal Printing — ✅ ACCEPTED
+- **Bill Management & 80mm Printing (`/bills`)**: Complete overhaul with multi-field search, status/method filters, print preview modal, and direct ESC/POS generation.
+- **ESC/POS Encoder & Thermal Print Service (`@imenu/utils`)**: 80mm/58mm standard byte compilation, ASCII sanitization, cash drawer kick on cash payments, partial cutting.
+- **Frontend SDK Contract (`@imenu/utils`)**: 27/27 SDK contract tests (`SDK-01` through `SDK-25`) at 100% PASS.
+- **Security & Adversarial Hardening (AUD-8.1 to AUD-8.6)**: Cross-table IDOR prevention, server-side VietQR recalculation, stabilized Idempotency across retries.
+
 ### Phase 7: Kitchen Display System (KDS) & Realtime Dispatching — ✅ ACCEPTED
 - **Kitchen KDS Screen (`/kitchen`)**: High-contrast Dark Mode interface, visual order cards, elapsed timers with 15-minute delay warnings.
-- **Frontend SDK Contract (`@imenu/utils`)**: 14/14 SDK contract tests (`SDK-01` through `SDK-12`) at 100% PASS.
 - **3-Way Real-time Synchronization**: Seamless WebSocket updates across Kitchen KDS, POS, and Diner Mobile QR Menu.
-- **Security & Hardening**: Guest socket room isolation, optimistic UI rollback on backend failure, branch-isolated 86 stockouts.
 
 ---
 

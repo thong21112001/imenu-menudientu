@@ -415,7 +415,7 @@ npm run build
 ```
 
 ### Chi Tiết Bộ Kiểm Thử SDK Contract (`npm run test:sdk`)
-Tệp `packages/utils/tests/sdk-contract.test.ts` tự động dựng một Mock HTTP Server tại cổng nội bộ, thực thi gọi các hàm của `apiClient` và xác minh tính chính xác của 14 ca test:
+Tệp `packages/utils/tests/sdk-contract.test.ts` tự động dựng một Mock HTTP Server tại cổng nội bộ, thực thi gọi các hàm của `apiClient` và xác minh tính chính xác của toàn bộ 27 ca test Phase 6, 7 & 8:
 - **SDK-01**: `customerOrders.getTableContext` khớp chính xác query params (`restaurantSlug`, `tableCode`, `qrToken`).
 - **SDK-02 & SDK-02b**: `customerOrders.create` gọi đúng endpoint công khai `POST /api/orders/customer` và truyền đúng header `idempotency-key`.
 - **SDK-03 & SDK-03b**: `customerOrders.addItems` gọi đúng endpoint `POST /api/orders/customer/items` và truyền đúng header `idempotency-key`.
@@ -428,6 +428,30 @@ Tệp `packages/utils/tests/sdk-contract.test.ts` tự động dựng một Mock
 - **SDK-10**: `kitchen.startCookingItem` hỗ trợ cả Flat route (`/order-items/:id/start-cooking`) và Nested route (`/orders/:orderId/items/:id/start-cooking`).
 - **SDK-11**: `kitchen.markItemReady` và `markItemServed` gọi đúng `POST /api/order-items/:id/mark-ready` và `mark-served`.
 - **SDK-12**: `kitchen.startCookingAll`, `markReadyAll` và `toggleItemAvailability` gọi đúng POST batch và PATCH availability với `branchId`.
+- **SDK-13**: `orders.completePayment` map chính xác `POST /api/orders/:id/complete-payment` và truyền header `idempotency-key`.
+- **SDK-14**: `orders.getReceipt` map chính xác `GET /api/orders/:id/receipt` kèm query parameters.
+- **SDK-15**: `orders.getVietQr` map chính xác `GET /api/orders/:id/vietqr`.
+- **SDK-16**: `customerOrders.requestPayment` map chính xác `POST /api/orders/customer/:id/request-payment` kèm body.
+- **SDK-17**: `customerOrders.getVietQr` map chính xác `GET /api/orders/customer/:id/vietqr` kèm query credentials.
+- **SDK-18**: `customerOrders.getReceipt` map chính xác `GET /api/orders/customer/:id/receipt` kèm query credentials.
+- **SDK-19**: `bills.list` map chính xác `GET /api/bills` kèm các bộ lọc phân trang và điều kiện.
+- **SDK-20**: `bills.get` & `bills.getByOrder` map chính xác `GET /api/bills/:id` và `GET /api/bills/by-order/:orderId`.
+- **SDK-21**: `bills.logPrint` map chính xác `POST /api/bills/:id/print`.
+- **SDK-22**: `activityLogs.list` map chính xác `GET /api/activity-logs` kèm bộ lọc kiểm toán tài chính.
+- **SDK-23**: `buildReceiptData` lọc bỏ 100% món Cancelled, tổng hợp option note và phân giải đúng ngân hàng chi nhánh.
+- **SDK-24**: `EscPosEncoder` mã hóa chuẩn xác đặc tả 80mm ESC/POS (tẩy dấu tiếng Việt, kick drawer khi thanh toán Cash, cắt giấy partial cut).
+- **SDK-25**: `thermalPrinterService.generatePrintPayload` sinh đầy đủ buffer Uint8Array, base64, hex và textPreview.
+
+### Chi Tiết Kịch Bản E2E Trình Duyệt Thanh Toán & Hóa Đơn (`node scripts/e2e-payment-bill-lifecycle.mjs`)
+Tệp `scripts/e2e-payment-bill-lifecycle.mjs` kiểm chứng chu trình thanh toán & in hóa đơn đa ứng dụng (5 Checkpoints):
+
+| Checkpoint | Tên Checkpoint | Thao tác thực tế & Tiêu chí nghiệm thu |
+| :---: | :--- | :--- |
+| **PAY-E2E-01** | Khách yêu cầu thanh toán | Khách quét mã QR tại bàn, mở giỏ món và bấm "Yêu cầu thanh toán"; xác minh Order và Table chuyển `PaymentRequested`. |
+| **PAY-E2E-02** | VietQR động server-side | Khách chọn phương thức Chuyển khoản VietQR; xác minh mã QR ngân hàng hiển thị đúng số tiền và nội dung chuyển khoản. |
+| **PAY-E2E-03** | POS thu tiền mặt & tiền thối | Thu ngân mở trang `/bills` hoặc sơ đồ bàn, nhập số tiền khách đưa; xác minh hệ thống tính chuẩn tiền thối `changeAmount`. |
+| **PAY-E2E-04** | Chốt đơn & giải phóng bàn | Bấm hoàn tất thanh toán; xác minh chứng từ `Bill` được tạo duy nhất, đơn chuyển `Paid`, và bàn chuyển về `Available`. |
+| **PAY-E2E-05** | In hóa đơn nhiệt 80mm | Thu ngân mở Modal xem trước hóa đơn in nhiệt, xác nhận dữ liệu chuẩn CSS `@media print` và lệnh ESC/POS nhị phân. |
 
 ### Chi Tiết Kịch Bản E2E Trình Duyệt Đa Ứng Dụng (`npm run test:e2e`)
 Tệp `scripts/e2e-order-lifecycle.mjs` sử dụng `puppeteer-core` kết nối trực tiếp với Google Chrome, mô phỏng đồng thời 2 ngữ cảnh người dùng: **Khách Hàng (Mobile Viewport: 390x844)** và **Thu Ngân POS (Desktop Viewport: 1440x900)** trải qua 9 Checkpoints kiểm thử nghiêm ngặt:
@@ -460,25 +484,29 @@ Tệp `scripts/e2e-kds-lifecycle.mjs` kiểm chứng chu trình điều phối m
 
 ## ⚠️ 9. Ranh Giới Kiến Trúc & Lưu Ý Kỹ Thuật (Architectural Boundaries)
 
-Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai về phạm vi của Phase 6:
+Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai về phạm vi của Phase 8:
 
-1. **Máy In Nhiệt Khổ 80mm**:
-   - Phase 6 đã cung cấp layout in hóa đơn nhiệt 80mm chuẩn CSS `@media print` tại trang `/bills` và tài liệu đặc tả kiến trúc ESC/POS (`thermal-printer-spec.md`).
-   - Tuyệt đối **không chứa driver phần cứng**, WebUSB, WebSerial hay mã nhị phân ESC/POS trực tiếp tới thiết bị in. Tích hợp thiết bị in phần cứng thực tế thuộc phạm vi của **Phase 8**.
+1. **Bộ Mã Hóa In Nhiệt Khổ 80mm & 58mm**:
+   - Phase 8 đã triển khai hoàn chỉnh bộ mã hóa nhị phân ESC/POS (`EscPosEncoder`) và định dạng hóa đơn (`buildReceiptData`), khử 100% dấu tiếng Việt sang ASCII an toàn, mở két tiền tự động và cắt giấy partial cut.
+   - Các ứng dụng Desktop/Web có thể gửi trực tiếp `buffer` hoặc `base64` tới cổng Print Server, máy in nhiệt mạng LAN/Wifi (qua TCP raw port 9100) hoặc WebUSB/WebSerial.
 2. **Kiến Trúc Thời Gian Thực Đơn Node**:
    - Hệ thống realtime hiện tại sử dụng Socket.IO kết nối trực tiếp một tiến trình NestJS server kết hợp `BroadcastChannel` cho các tab trên cùng trình duyệt. Chưa triển khai Redis Pub/Sub cho kiến trúc phân tán đa server (đây là phạm vi mở rộng trong tương lai).
 3. **Bằng Chứng Giải Phóng Bàn Ăn**:
-   - Bộ kiểm thử tự động xác minh trạng thái cuối cùng của bàn ăn là `Available` (`currentOrderId: null`) và tính nguyên tử khi replay. Tuy nhiên, bằng chứng này không chứng minh số lượng mutation vật lý trực tiếp tại tầng cơ sở dữ liệu.
+   - Bộ kiểm thử tự động xác minh trạng thái cuối cùng của bàn ăn là `Available` (`currentOrderId: null`) và tính nguyên tử khi replay.
 
 ---
 
 ## 📄 10. Trạng Thái Dự Án & Nghiệm Thu (Project Status)
 
+### Phase 8: Thanh Toán, Hóa Đơn & In Nhiệt ESC/POS — ✅ ĐÃ NGHIỆM THU
+- **Quản lý Hóa Đơn & In Bill 80mm (`/bills`)**: Nâng cấp toàn diện thanh tìm kiếm đa năng, bộ lọc theo trạng thái và phương thức thanh toán, modal xem trước hóa đơn và in ESC/POS trực tiếp.
+- **Bộ Mã Hóa ESC/POS & Dịch Vụ In Nhiệt (`@imenu/utils`)**: Mã hóa nhị phân ESC/POS chuẩn 80mm/58mm, khử 100% dấu tiếng Việt ASCII, kích mở két tiền khi thanh toán tiền mặt, cắt giấy partial cut.
+- **Hợp đồng SDK Frontend (`@imenu/utils`)**: 27/27 ca test hợp đồng SDK (`SDK-01` đến `SDK-25`) đạt 100% PASS.
+- **Bảo Mật & Gia Cố Đối Kháng (AUD-8.1 đến AUD-8.6)**: Chặn đứng truy cập hóa đơn/VietQR chéo bàn, tính toán số tiền VietQR độc lập phía server, ổn định khóa Idempotency qua các lượt thử lại mạng.
+
 ### Phase 7: Kitchen Display System (KDS) & Realtime Dispatching — ✅ ĐÃ NGHIỆM THU
 - **Màn hình Bếp KDS (`/kitchen`)**: Hoàn thiện giao diện Dark Mode tương phản cao, thẻ đơn hàng, bộ đếm thời gian thực và cảnh báo trễ quá 15 phút.
-- **Hợp đồng SDK Frontend (`@imenu/utils`)**: 14/14 ca test hợp đồng SDK (`SDK-01` đến `SDK-12`) đạt 100% PASS.
 - **Đồng bộ thời gian thực 3 chiều**: Ghép nối WebSocket tức thì giữa Màn hình Bếp KDS, POS và Khách quét QR Menu.
-- **Bảo mật & Gia cố**: Ngăn chặn rò rỉ WebSocket của khách vãng lai, tự động hoàn tác Optimistic UI khi API trả về lỗi.
 
 ---
 

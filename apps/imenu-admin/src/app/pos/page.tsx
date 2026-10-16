@@ -248,6 +248,23 @@ export default function PosTerminalPage() {
           soundEngine.playNewOrderChime();
         }
       }
+
+      // 4. Payment requested notification
+      if (
+        evt === 'PAYMENT_REQUESTED' ||
+        evt === 'order:payment_requested' ||
+        evt === 'order.payment_requested'
+      ) {
+        soundEngine.playNewOrderNotification();
+        const tableName = payload.data?.tableName || payload.data?.order?.tableName || 'Bàn';
+        const method = payload.data?.paymentMethod || 'VietQR';
+        const methodLabel = method === 'VietQR' ? 'VietQR' : 'Tiền mặt';
+        toast.warning(
+          `🔔 Bàn ${tableName} yêu cầu thanh toán bằng ${methodLabel}!`,
+          { duration: 8000 }
+        );
+        fetchPendingOrders();
+      }
     });
 
     return () => {
