@@ -415,7 +415,7 @@ npm run build
 ```
 
 ### Chi Tiết Bộ Kiểm Thử SDK Contract (`npm run test:sdk`)
-Tệp `packages/utils/tests/sdk-contract.test.ts` tự động dựng một Mock HTTP Server tại cổng nội bộ, thực thi gọi các hàm của `apiClient` và xác minh tính chính xác của toàn bộ 27 ca test Phase 6, 7 & 8:
+Tệp `packages/utils/tests/sdk-contract.test.ts` tự động dựng một Mock HTTP Server tại cổng nội bộ, thực thi gọi các hàm của `apiClient` và xác minh tính chính xác của toàn bộ 34 ca test Phase 6, 7, 8, 9 & 10:
 - **SDK-01**: `customerOrders.getTableContext` khớp chính xác query params (`restaurantSlug`, `tableCode`, `qrToken`).
 - **SDK-02 & SDK-02b**: `customerOrders.create` gọi đúng endpoint công khai `POST /api/orders/customer` và truyền đúng header `idempotency-key`.
 - **SDK-03 & SDK-03b**: `customerOrders.addItems` gọi đúng endpoint `POST /api/orders/customer/items` và truyền đúng header `idempotency-key`.
@@ -441,6 +441,32 @@ Tệp `packages/utils/tests/sdk-contract.test.ts` tự động dựng một Mock
 - **SDK-23**: `buildReceiptData` lọc bỏ 100% món Cancelled, tổng hợp option note và phân giải đúng ngân hàng chi nhánh.
 - **SDK-24**: `EscPosEncoder` mã hóa chuẩn xác đặc tả 80mm ESC/POS (tẩy dấu tiếng Việt, kick drawer khi thanh toán Cash, cắt giấy partial cut).
 - **SDK-25**: `thermalPrinterService.generatePrintPayload` sinh đầy đủ buffer Uint8Array, base64, hex và textPreview.
+- **SDK-26**: `dashboard.getOverview` map chính xác `GET /api/dashboard/overview?branchId=...&date=...`.
+- **SDK-27**: `reports.getRevenue` map chính xác `GET /api/reports/revenue` với đầy đủ bộ lọc thời gian và phân rã.
+- **SDK-28**: `reports.getTopItems` map chính xác `GET /api/reports/top-items` với đầy đủ bộ lọc chi nhánh và số lượng món.
+- **SDK-29**: `tables.listPublicBySlug` map chính xác `GET /api/tables/public/by-restaurant/:restaurantSlug`.
+- **SDK-30**: `tables.callStaff` map chính xác `POST /api/tables/:tableId/call-staff` với payload.
+- **SDK-31**: `tables.acknowledgeCall` map chính xác `POST /api/tables/:tableId/acknowledge-call`.
+- **SDK-32**: `customerOrders.callStaff` map chính xác `POST /api/tables/:tableId/call-staff`.
+
+### Chi Tiết Kịch Bản E2E Trình Duyệt Đa Tab Thời Gian Thực (`node scripts/e2e-realtime-ecosystem.mjs`)
+Tệp `scripts/e2e-realtime-ecosystem.mjs` kiểm chứng chu trình đồng bộ thời gian thực đa tab trên Google Chrome (3 Checkpoints):
+
+| Checkpoint | Tên Checkpoint | Thao tác thực tế & Tiêu chí nghiệm thu |
+| :---: | :--- | :--- |
+| **E2E-P10-01** | Khách gọi nhân viên tại bàn | Khách bấm "Gọi nhân viên" ("Xin thêm đá lạnh"); xác minh trên `AdminHeader` tab Admin xuất hiện ngay huy hiệu chuông reo và nội dung yêu cầu mà không reload. |
+| **E2E-P10-02** | Nhân viên tiếp nhận hai chiều | Nhân viên bấm "Đã hỗ trợ" trên chuông Admin; xác minh tab khách nhận ngay thông báo toast xác nhận nhân viên đang tới hỗ trợ. |
+| **E2E-P10-03** | Đồng bộ vòng đời thời gian thực | Khách gửi món $\rightarrow$ POS duyệt $\rightarrow$ KDS nấu & xong món $\rightarrow$ Khách yêu cầu thanh toán $\rightarrow$ Thu ngân chốt bill; toàn bộ đồng bộ mượt mà không reload. |
+
+### Chi Tiết Kịch Bản E2E Trình Duyệt Dashboard, Báo Cáo & UI Responsive (`node scripts/e2e-dashboard-reports.mjs`)
+Tệp `scripts/e2e-dashboard-reports.mjs` kiểm chứng chu trình Dashboard, Báo cáo và UI Responsive (4 Checkpoints):
+
+| Checkpoint | Tên Checkpoint | Thao tác thực tế & Tiêu chí nghiệm thu |
+| :---: | :--- | :--- |
+| **E2E-P9-01** | Tái Cấu Trúc Admin Sidebar 4 Nhóm | Xác minh thanh điều hướng Admin tổ chức chuẩn 4 nhóm: Vận Hành & Bán Hàng, Quản Lý Thực Đơn & Bàn, Báo Cáo & Thống Kê, Cấu Hình Hệ Thống. |
+| **E2E-P9-02** | Dashboard KPI Thời Gian Thực | Mở trang chủ Quản trị (`/`), xác minh hiển thị đầy đủ các thẻ KPI: Doanh thu hôm nay, tỷ lệ tăng trưởng, bàn đang phục vụ, AOV. |
+| **E2E-P9-03** | Báo Cáo Doanh Thu, Top Món & Xuất CSV | Mở `/reports`, chuyển đổi bộ lọc thời gian (`day`, `week`, `month`), kiểm tra biểu đồ thanh toán, danh sách món bán chạy và xuất file CSV UTF-8 BOM. |
+| **E2E-P9-04** | Thực Đơn Khách Hàng Responsive Đa Thiết Bị | Mở trang chọn bàn thực tế (`/`) và thực đơn (`/menu/bep-nha/ban-01`), mô phỏng Mobile (390px), Tablet (768px-1024px) và Desktop (1280px+), xác nhận 0 lỗi tràn ngang CSS. |
 
 ### Chi Tiết Kịch Bản E2E Trình Duyệt Thanh Toán & Hóa Đơn (`node scripts/e2e-payment-bill-lifecycle.mjs`)
 Tệp `scripts/e2e-payment-bill-lifecycle.mjs` kiểm chứng chu trình thanh toán & in hóa đơn đa ứng dụng (5 Checkpoints):
@@ -484,10 +510,10 @@ Tệp `scripts/e2e-kds-lifecycle.mjs` kiểm chứng chu trình điều phối m
 
 ## ⚠️ 9. Ranh Giới Kiến Trúc & Lưu Ý Kỹ Thuật (Architectural Boundaries)
 
-Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai về phạm vi của Phase 8:
+Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai về phạm vi của Phase 9:
 
 1. **Bộ Mã Hóa In Nhiệt Khổ 80mm & 58mm**:
-   - Phase 8 đã triển khai hoàn chỉnh bộ mã hóa nhị phân ESC/POS (`EscPosEncoder`) và định dạng hóa đơn (`buildReceiptData`), khử 100% dấu tiếng Việt sang ASCII an toàn, mở két tiền tự động và cắt giấy partial cut.
+   - Đã triển khai hoàn chỉnh bộ mã hóa nhị phân ESC/POS (`EscPosEncoder`) và định dạng hóa đơn (`buildReceiptData`), khử 100% dấu tiếng Việt sang ASCII an toàn, mở két tiền tự động và cắt giấy partial cut.
    - Các ứng dụng Desktop/Web có thể gửi trực tiếp `buffer` hoặc `base64` tới cổng Print Server, máy in nhiệt mạng LAN/Wifi (qua TCP raw port 9100) hoặc WebUSB/WebSerial.
 2. **Kiến Trúc Thời Gian Thực Đơn Node**:
    - Hệ thống realtime hiện tại sử dụng Socket.IO kết nối trực tiếp một tiến trình NestJS server kết hợp `BroadcastChannel` cho các tab trên cùng trình duyệt. Chưa triển khai Redis Pub/Sub cho kiến trúc phân tán đa server (đây là phạm vi mở rộng trong tương lai).
@@ -498,10 +524,25 @@ Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai 
 
 ## 📄 10. Trạng Thái Dự Án & Nghiệm Thu (Project Status)
 
+### Phase 10: Thời Gian Thực, Phân Lập Phòng WebSocket & Hoàn Thiện Hệ Sinh Thái — ✅ ĐÃ NGHIỆM THU & HOÀN TẤT TOÀN BỘ LỘ TRÌNH 10/10 PHASES
+- **Khách Gọi Nhân Viên & Tiếp Nhận Hai Chiều**: Luồng gửi yêu cầu từ bàn ăn (`callStaff`) và tiếp nhận trên Admin POS (`acknowledgeCall`) kèm phát âm thanh chuông reo và thông báo Toast phản hồi thời gian thực tới bàn khách.
+- **Bảo Mật Phòng WebSocket & Phân Lập Chi Nhánh**: Phân cấp phòng nghiêm ngặt (`restaurant_${id}`, `branch_${id}`, `table_${id}`), cô lập tuyệt đối khách vãng lai khỏi các kênh nội bộ, dọn sạch phòng cũ khi nhân viên đổi chi nhánh (`client.leave(r)`).
+- **Ma Trận Sự Kiện Miền Thời Gian Thực**: Chuẩn hóa 7 nhóm sự kiện miền phủ kín toàn bộ chu trình F&B: Đơn hàng mới, Cập nhật đơn hàng, Trạng thái món ăn, Sơ đồ bàn ăn, Gọi nhân viên, Thanh toán & Hóa đơn, Báo hết món (86).
+- **Hợp Đồng SDK Frontend & Khả Năng Phục Hồi Client**: Bổ sung `SDK-30`, `SDK-31`, `SDK-32` (34/34 ca test PASS), Socket Client bền bỉ với Reconnection Backoff có Jitter, bản đồ khử trùng `CANONICAL_EVENT_MAP` chống chuông đúp, FIFO buffer 50 thông báo trên Admin Header.
+- **Kiểm Thử E2E Đa Tab Hệ Sinh Thái**: Kịch bản kiểm thử Puppeteer trên trình duyệt thật điều phối đồng thời tab Khách và tab Admin (3/3 Checkpoints PASS, đồng bộ chu trình vận hành không cần reload).
+- **Bảo Mật & Gia Cố Đối Kháng (AUD-10.1 đến AUD-10.6)**: Giải quyết triệt để 6 phát hiện kiểm toán đối kháng (chống spam cooldown bàn ăn, dọn phòng WebSocket, cô lập khách vãng lai, FIFO buffer, khử trùng sự kiện, socket jitter).
+
+### Phase 9: Dashboard, Báo Cáo Doanh Thu & Tối Ưu Giao Diện UI/UX — ✅ ĐÃ NGHIỆM THU
+- **Tái cấu trúc Admin Sidebar 4 Nhóm**: Tổ chức thanh điều hướng thành 4 nhóm nghiệp vụ logic (Vận Hành & Bán Hàng, Quản Lý Thực Đơn & Bàn, Báo Cáo & Thống Kê, Cấu Hình Hệ Thống).
+- **Dashboard KPI Thời Gian Thực (`/`)**: Giao diện tổng quan KPI trực quan với cơ chế tương thích khóa kép (Dual-Key), theo dõi doanh thu hôm nay/hôm qua, tỷ lệ lấp đầy bàn ăn.
+- **Báo Cáo Doanh Thu & Món Bán Chạy (`/reports`)**: Phân rã 4 phương thức thanh toán (`Cash`, `VietQR`, `Card`, `Transfer`), phân tích tùy chọn món ăn, xuất file CSV UTF-8 BOM chuẩn Microsoft Excel.
+- **Đại Tu Thực Đơn Khách Hàng Responsive**: Trang chủ chọn bàn thực tế nạp từ Backend API, giao diện responsive mượt mà trên Mobile (390px), Tablet (768px-1024px) và Desktop (1280px+), triệt tiêu lỗi tràn ngang CSS.
+- **Hợp Đồng SDK Frontend (`@imenu/utils`)**: 31/31 ca test hợp đồng SDK (`SDK-01` đến `SDK-29`) đạt 100% PASS tuyệt đối.
+- **Bảo Mật & Gia Cố Đối Kháng (AUD-9.1 đến AUD-9.6)**: Chặn đứng rò rỉ doanh thu chéo chi nhánh, bảo vệ quyền xuất CSV `perm-rep-export`, loại trừ bàn xóa mềm, tính đúng options price delta.
+
 ### Phase 8: Thanh Toán, Hóa Đơn & In Nhiệt ESC/POS — ✅ ĐÃ NGHIỆM THU
 - **Quản lý Hóa Đơn & In Bill 80mm (`/bills`)**: Nâng cấp toàn diện thanh tìm kiếm đa năng, bộ lọc theo trạng thái và phương thức thanh toán, modal xem trước hóa đơn và in ESC/POS trực tiếp.
 - **Bộ Mã Hóa ESC/POS & Dịch Vụ In Nhiệt (`@imenu/utils`)**: Mã hóa nhị phân ESC/POS chuẩn 80mm/58mm, khử 100% dấu tiếng Việt ASCII, kích mở két tiền khi thanh toán tiền mặt, cắt giấy partial cut.
-- **Hợp đồng SDK Frontend (`@imenu/utils`)**: 27/27 ca test hợp đồng SDK (`SDK-01` đến `SDK-25`) đạt 100% PASS.
 - **Bảo Mật & Gia Cố Đối Kháng (AUD-8.1 đến AUD-8.6)**: Chặn đứng truy cập hóa đơn/VietQR chéo bàn, tính toán số tiền VietQR độc lập phía server, ổn định khóa Idempotency qua các lượt thử lại mạng.
 
 ### Phase 7: Kitchen Display System (KDS) & Realtime Dispatching — ✅ ĐÃ NGHIỆM THU
@@ -513,3 +554,4 @@ Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai 
 ## 📄 11. Bản Quyền & Giấy Phép (License)
 
 Bản quyền thuộc về **Hệ sinh thái iMenu — Nền tảng Quản lý F&B Toàn diện**. Tất cả các quyền được bảo lưu.
+

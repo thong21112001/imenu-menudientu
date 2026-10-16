@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Logo, Button } from '@imenu/ui';
-import { storageService } from '@imenu/utils';
+import { storageService, apiClient } from '@imenu/utils';
 import { Table } from '@imenu/types';
 import {
   QrCode,
@@ -16,30 +16,73 @@ import {
   Smartphone,
   ShieldCheck,
   CheckCircle2,
+  Wifi,
 } from 'lucide-react';
 
 export default function CustomerIndexPage() {
   const [tables, setTables] = useState<Table[]>([]);
   const [activeZone, setActiveZone] = useState<string>('all');
-
-  useEffect(() => {
-    setTables(storageService.getTables());
-  }, []);
-
-  const zones = [
+  const [zones, setZones] = useState<{ id: string; name: string }[]>([
     { id: 'all', name: 'Tất cả bàn' },
     { id: 'zone-1', name: 'Tầng 1' },
     { id: 'zone-2', name: 'Tầng 2 (Máy Lạnh)' },
     { id: 'zone-3', name: 'Sân Vườn' },
     { id: 'zone-vip', name: 'Phòng VIP' },
-  ];
+  ]);
+  const [restaurantName, setRestaurantName] = useState<string>('Bếp Nhà');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadPublicTables() {
+      try {
+        setIsLoading(true);
+        const res = await apiClient.tables.listPublicBySlug('bep-nha');
+        if (isMounted && res?.data?.tables && res.data.tables.length > 0) {
+          setTables(res.data.tables as any);
+          if (res.data.zones && res.data.zones.length > 0) {
+            setZones([
+              { id: 'all', name: 'Tất cả bàn' },
+              ...res.data.zones.map((z: any) => ({
+                id: z.id || z._id,
+                name: z.name,
+              })),
+            ]);
+          }
+          if (res.data.restaurant?.name) {
+            setRestaurantName(res.data.restaurant.name);
+          }
+          setIsLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.warn('API listPublicBySlug failed, falling back to storage:', err);
+      }
+
+      if (isMounted) {
+        const localTables = storageService.getTables();
+        setTables(localTables);
+        setIsLoading(false);
+      }
+    }
+
+    loadPublicTables();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const ban08Table = tables.find((t) => t.code === 'ban-08');
+  const ban08Href = `/menu/bep-nha/ban-08${ban08Table?.qrToken ? `?t=${encodeURIComponent(ban08Table.qrToken)}` : ''}`;
 
   const filteredTables = tables.filter(
     (t) => activeZone === 'all' || t.zoneId === activeZone
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f2f7f4] via-[#eaf3ee] to-[#dfeee5] flex flex-col justify-between selection:bg-emerald-200 selection:text-emerald-900">
+    <div className="min-h-screen bg-gradient-to-b from-[#f2f7f4] via-[#eaf3ee] to-[#dfeee5] flex flex-col justify-between selection:bg-emerald-200 selection:text-emerald-900 overflow-x-hidden w-full max-w-full">
       {/* MAIN RESPONSIVE WRAPPER */}
       <main className="w-full max-w-lg sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 lg:py-10 space-y-6 sm:space-y-8 flex-1">
         
@@ -116,11 +159,11 @@ export default function CustomerIndexPage() {
                 </div>
               </div>
 
-              <Link href="/menu/bep-nha/ban-08" className="block w-full">
+              <Link href={ban08Href} className="block w-full">
                 <Button
                   variant="amber"
                   size="lg"
-                  className="w-full py-3 sm:py-3.5 text-sm sm:text-base font-black shadow-xl hover:shadow-amber-500/30 active:scale-[0.99] transition-all flex items-center justify-center gap-2"
+                  className="w-full py-3 sm:py-3.5 text-sm sm:text-base font-black shadow-xl hover:shadow-amber-500/30 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Vào Trải Nghiệm Bàn 08 Ngay</span>
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-1" />
@@ -195,9 +238,10 @@ export default function CustomerIndexPage() {
             {filteredTables.map((tbl) => {
               const isBan08 = tbl.code === 'ban-08';
               const isOccupied = tbl.status === 'Occupied' || isBan08;
+              const tableHref = `/menu/bep-nha/${tbl.code}${(tbl as any).qrToken ? `?t=${encodeURIComponent((tbl as any).qrToken)}` : ''}`;
 
               return (
-                <Link key={tbl.id} href={`/menu/bep-nha/${tbl.code}`}>
+                <Link key={tbl.id || tbl.code} href={tableHref}>
                   <div
                     className={`p-4 sm:p-4.5 rounded-2xl border-2 transition-all flex flex-col justify-between min-h-[110px] sm:min-h-[120px] group cursor-pointer shadow-xs hover:shadow-lg hover:-translate-y-1 ${
                       isBan08

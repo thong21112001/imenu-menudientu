@@ -53,3 +53,40 @@ export interface MoveTableItemsPayload {
   reason?: string;
 }
 
+export interface PublicRestaurantInfo {
+  id: string;
+  name: string;
+  slug: string;
+  phone: string;
+  address: string;
+  logoUrl?: string;
+  isOpen?: boolean;
+  wifiSsid?: string | null;
+  wifiPassword?: string | null;
+  branches?: any[];
+}
+
+export interface PublicTableItem {
+  id: string;
+  code: string;
+  name: string;
+  capacity: number;
+  status: TableStatus | string;
+  zoneId?: string;
+  zoneName?: string;
+  branchId?: string;
+  qrToken: string;
+  wifiSsid?: string | null;
+  wifiPassword?: string | null;
+  currentOrderId?: string | null;
+}
+
+export interface PublicRestaurantTablesData {
+  restaurant: PublicRestaurantInfo;
+  zones: {
+    id: string;
+    name: string;
+    branchId?: string;
+  }[];
+  tables: PublicTableItem[];
+}

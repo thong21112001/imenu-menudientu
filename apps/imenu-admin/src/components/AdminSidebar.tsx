@@ -33,73 +33,103 @@ interface NavItemConfig {
   requireMainBranch?: boolean;
 }
 
-const NAV_ITEMS_CONFIG: NavItemConfig[] = [
+interface NavGroupConfig {
+  id: string;
+  label: string;
+  items: NavItemConfig[];
+}
+
+const NAV_GROUPS_CONFIG: NavGroupConfig[] = [
   {
-    name: 'Tổng quan',
-    href: '/',
-    icon: LayoutDashboard,
-    permissions: ['perm-rep-view'],
+    id: 'operations',
+    label: 'Vận hành trực tiếp',
+    items: [
+      {
+        name: 'Sơ đồ Bàn',
+        href: '/tables',
+        icon: Grid3X3,
+        permissions: ['perm-pos-view'],
+      },
+      {
+        name: 'POS Bán hàng',
+        href: '/pos',
+        icon: Smartphone,
+        permissions: ['perm-pos-order', 'perm-pos-view'],
+      },
+      {
+        name: 'Màn hình Bếp KDS',
+        href: '/kitchen',
+        icon: ChefHat,
+        permissions: ['perm-kds-view', 'perm-kds-cook'],
+      },
+      {
+        name: 'Hóa đơn & In Bill',
+        href: '/bills',
+        icon: Receipt,
+        permissions: ['perm-pos-pay'],
+      },
+    ],
   },
   {
-    name: 'Sơ đồ Bàn',
-    href: '/tables',
-    icon: Grid3X3,
-    permissions: ['perm-pos-view'],
+    id: 'menu_qr',
+    label: 'Thực đơn & Mã QR',
+    items: [
+      {
+        name: 'Quản lý Thực đơn',
+        href: '/menu',
+        icon: UtensilsCrossed,
+        permissions: ['perm-menu-view'],
+      },
+      {
+        name: 'Tạo mã QR Bàn',
+        href: '/qr-codes',
+        icon: QrCode,
+        permissions: ['perm-qr-print', 'perm-pos-table'],
+      },
+    ],
   },
   {
-    name: 'POS Bán hàng',
-    href: '/pos',
-    icon: Smartphone,
-    permissions: ['perm-pos-order', 'perm-pos-view'],
+    id: 'analytics',
+    label: 'Phân tích & Doanh thu',
+    items: [
+      {
+        name: 'Tổng quan',
+        href: '/',
+        icon: LayoutDashboard,
+        permissions: ['perm-rep-view', 'perm-dash-view'],
+      },
+      {
+        name: 'Báo cáo & Doanh thu',
+        href: '/reports',
+        icon: BarChart3,
+        permissions: ['perm-rep-view'],
+      },
+    ],
   },
   {
-    name: 'Màn hình Bếp KDS',
-    href: '/kitchen',
-    icon: ChefHat,
-    permissions: ['perm-kds-view', 'perm-kds-cook'],
-  },
-  {
-    name: 'Quản lý Thực đơn',
-    href: '/menu',
-    icon: UtensilsCrossed,
-    permissions: ['perm-menu-view'],
-  },
-  {
-    name: 'Tạo mã QR Bàn',
-    href: '/qr-codes',
-    icon: QrCode,
-    permissions: ['perm-qr-print', 'perm-pos-table'],
-  },
-  {
-    name: 'Hóa đơn & In Bill',
-    href: '/bills',
-    icon: Receipt,
-    permissions: ['perm-pos-pay'],
-  },
-  {
-    name: 'Báo cáo & Doanh thu',
-    href: '/reports',
-    icon: BarChart3,
-    permissions: ['perm-rep-view'],
-  },
-  {
-    name: 'Nhân viên & Phân quyền',
-    href: '/staff',
-    icon: Users,
-    permissions: ['perm-staff-manage', 'perm-role-manage'],
-  },
-  {
-    name: 'Quản lý Chi nhánh',
-    href: '/branches',
-    icon: Building2,
-    requireMainBranch: true,
-    permissions: ['perm-settings', 'perm-staff-manage'],
-  },
-  {
-    name: 'Cài đặt Nhà hàng',
-    href: '/settings',
-    icon: Settings,
-    permissions: ['perm-settings'],
+    id: 'system',
+    label: 'Quản trị hệ thống',
+    items: [
+      {
+        name: 'Nhân viên & Phân quyền',
+        href: '/staff',
+        icon: Users,
+        permissions: ['perm-staff-manage', 'perm-role-manage'],
+      },
+      {
+        name: 'Quản lý Chi nhánh',
+        href: '/branches',
+        icon: Building2,
+        requireMainBranch: true,
+        permissions: ['perm-settings', 'perm-staff-manage'],
+      },
+      {
+        name: 'Cài đặt Nhà hàng',
+        href: '/settings',
+        icon: Settings,
+        permissions: ['perm-settings'],
+      },
+    ],
   },
 ];
 
@@ -133,38 +163,41 @@ export const AdminSidebar: React.FC = () => {
   const isOwner = roleSlug === 'restaurant_admin';
   const isMainBranchUser = isSuperAdmin || Boolean(user?.isMainBranch);
 
-  const navItems = NAV_ITEMS_CONFIG.filter((item) => {
-    // 1. Super Admin và Chủ Nhà Hàng (HQ) có toàn quyền
-    if (isSuperAdmin || isOwner) {
-      if (item.requireMainBranch && !isMainBranchUser) return false;
-      return true;
-    }
+  // Lọc quyền RBAC và tự động ẩn các nhóm không có mục nào hiển thị
+  const visibleGroups = NAV_GROUPS_CONFIG.map((group) => {
+    const filteredItems = group.items
+      .filter((item) => {
+        // 1. Super Admin và Chủ Nhà Hàng (HQ) có toàn quyền
+        if (isSuperAdmin || isOwner) {
+          if (item.requireMainBranch && !isMainBranchUser) return false;
+          return true;
+        }
 
-    // 2. Kiem tra dieu kien Chi nhanh chinh
-    if (item.requireMainBranch && !isMainBranchUser) {
-      return false;
-    }
+        // 2. Kiểm tra điều kiện Chi nhánh chính
+        if (item.requireMainBranch && !isMainBranchUser) {
+          return false;
+        }
 
-    // 3. An menu 'Tổng quan' ('/') doi voi cac vai tro tac nghiep van hanh hien truong
-    // Thu ngan, Bep, Phuc vu deu co man hinh lam viec chuyen trach (POS, KDS, Ban)
-    const operationalRoles = ['cashier', 'kitchen', 'waiter'];
-    if (item.href === '/' && operationalRoles.includes(roleSlug)) {
-      return false;
-    }
+        // 3. Kiểm tra permission của người dùng
+        if (item.permissions && item.permissions.length > 0) {
+          const hasPerm = item.permissions.some((p) => permissions.includes(p));
+          if (!hasPerm) return false;
+        }
 
-    // 4. Kiem tra permission cua nguoi dung
-    if (item.permissions && item.permissions.length > 0) {
-      const hasPerm = item.permissions.some((p) => permissions.includes(p));
-      if (!hasPerm) return false;
-    }
+        return true;
+      })
+      .map((item) => {
+        if (item.href === '/settings' && !isMainBranchUser) {
+          return { ...item, name: 'Cài đặt Chi nhánh' };
+        }
+        return item;
+      });
 
-    return true;
-  }).map((item) => {
-    if (item.href === '/settings' && !isMainBranchUser) {
-      return { ...item, name: 'Cài đặt Chi nhánh' };
-    }
-    return item;
-  });
+    return {
+      ...group,
+      items: filteredItems,
+    };
+  }).filter((group) => group.items.length > 0);
 
   const restaurantName = isSuperAdmin && !selectedRestaurantId
     ? 'iMenu Platform'
@@ -236,34 +269,50 @@ export const AdminSidebar: React.FC = () => {
         </div>
       )}
 
-      {/* Navigation Links */}
-      <nav className="flex-1 px-2.5 py-2 space-y-1 overflow-y-auto overflow-x-hidden">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = pathname === item.href;
+      {/* Navigation Groups & Links */}
+      <nav className="flex-1 px-2.5 py-2 space-y-3 overflow-y-auto overflow-x-hidden">
+        {visibleGroups.map((group, groupIdx) => {
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => {
-                if (isMobile) closeSidebar();
-              }}
-              title={isCollapsed && !isMobile ? item.name : undefined}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
-                isCollapsed && !isMobile ? 'justify-center px-0' : ''
-              } ${
-                isActive
-                  ? 'bg-white/10 text-white shadow-xs font-bold'
-                  : 'text-[#9eb2aa] hover:bg-white/5 hover:text-white'
-              }`}
-            >
-              <Icon
-                className={`w-4.5 h-4.5 shrink-0 transition-transform group-hover:scale-110 ${
-                  isActive ? 'text-[#eab867]' : 'text-slate-400 group-hover:text-slate-200'
-                }`}
-              />
-              {(!isCollapsed || isMobile) && <span className="truncate">{item.name}</span>}
-            </Link>
+            <div key={group.id} className="space-y-1">
+              {/* Tiêu đề nhóm khi mở rộng hoặc đường kẻ phân cách khi thu gọn */}
+              {(!isCollapsed || isMobile) ? (
+                <div className={`px-3 ${groupIdx > 0 ? 'pt-2' : 'pt-1'} pb-1 text-[10px] font-bold tracking-wider text-[#637d72] uppercase select-none`}>
+                  {group.label}
+                </div>
+              ) : (
+                groupIdx > 0 && <div className="my-2 border-t border-white/10 mx-2" />
+              )}
+
+              {/* Danh sách các mục trong nhóm */}
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                const isActive = pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => {
+                      if (isMobile) closeSidebar();
+                    }}
+                    title={isCollapsed && !isMobile ? `${group.label}: ${item.name}` : undefined}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
+                      isCollapsed && !isMobile ? 'justify-center px-0' : ''
+                    } ${
+                      isActive
+                        ? 'bg-white/10 text-white shadow-xs font-bold border-l-[3px] border-[#eab867] pl-2.5'
+                        : 'text-[#9eb2aa] hover:bg-white/5 hover:text-white border-l-[3px] border-transparent'
+                    }`}
+                  >
+                    <Icon
+                      className={`w-4.5 h-4.5 shrink-0 transition-transform group-hover:scale-110 ${
+                        isActive ? 'text-[#eab867]' : 'text-slate-400 group-hover:text-slate-200'
+                      }`}
+                    />
+                    {(!isCollapsed || isMobile) && <span className="truncate">{item.name}</span>}
+                  </Link>
+                );
+              })}
+            </div>
           );
         })}
       </nav>

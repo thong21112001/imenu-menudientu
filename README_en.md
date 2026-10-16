@@ -415,7 +415,7 @@ npm run build
 ```
 
 ### SDK Contract Test Suite (`npm run test:sdk`)
-The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory HTTP mock server to verify API contract parity across all 27 tests covering Phases 6, 7 & 8:
+The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory HTTP mock server to verify API contract parity across all 34 tests covering Phases 6, 7, 8, 9 & 10:
 - **SDK-01**: `customerOrders.getTableContext` properly passes query parameters (`restaurantSlug`, `tableCode`, `qrToken`).
 - **SDK-02 & SDK-02b**: `customerOrders.create` invokes public endpoint `POST /api/orders/customer` and transmits `idempotency-key` header.
 - **SDK-03 & SDK-03b**: `customerOrders.addItems` invokes public endpoint `POST /api/orders/customer/items` and transmits `idempotency-key` header.
@@ -441,6 +441,32 @@ The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory 
 - **SDK-23**: `buildReceiptData` filters 100% of Cancelled items, compiles option notes, and resolves branch banking details.
 - **SDK-24**: `EscPosEncoder` compiles valid 80mm ESC/POS byte sequences (ASCII sanitization, drawer kick on Cash, partial cut).
 - **SDK-25**: `thermalPrinterService.generatePrintPayload` outputs Uint8Array buffer, base64, hex, and textPreview.
+- **SDK-26**: `dashboard.getOverview` properly maps `GET /api/dashboard/overview?branchId=...&date=...`.
+- **SDK-27**: `reports.getRevenue` properly maps `GET /api/reports/revenue` with all query filters.
+- **SDK-28**: `reports.getTopItems` properly maps `GET /api/reports/top-items` with all query filters.
+- **SDK-29**: `tables.listPublicBySlug` properly maps `GET /api/tables/public/by-restaurant/:restaurantSlug`.
+- **SDK-30**: `tables.callStaff` properly maps `POST /api/tables/:tableId/call-staff` with payload.
+- **SDK-31**: `tables.acknowledgeCall` properly maps `POST /api/tables/:tableId/acknowledge-call`.
+- **SDK-32**: `customerOrders.callStaff` properly maps `POST /api/tables/:tableId/call-staff`.
+
+### Realtime Multi-Tab Browser E2E Suite (`node scripts/e2e-realtime-ecosystem.mjs`)
+The script `scripts/e2e-realtime-ecosystem.mjs` verifies multi-tab realtime synchronization in real Google Chrome (3 Checkpoints):
+
+| Checkpoint | Checkpoint Name | Real-world Simulation & Acceptance Verification |
+| :---: | :--- | :--- |
+| **E2E-P10-01** | Customer Calls Staff at Table | Diner clicks "Call Staff" ("Need ice"); verifies `AdminHeader` in Admin tab displays notification badge and request without reload. |
+| **E2E-P10-02** | Two-Way Staff Acknowledgment | Staff clicks "Acknowledge" on Admin popup; verifies diner tab immediately receives confirmation toast without reload. |
+| **E2E-P10-03** | Zero-Reload Operational Lifecycle | Customer orders $\rightarrow$ POS approves $\rightarrow$ KDS cooks & completes $\rightarrow$ Customer requests payment $\rightarrow$ Cashier settles bill seamlessly. |
+
+### Dashboard, Reports & Responsive Browser E2E Suite (`node scripts/e2e-dashboard-reports.mjs`)
+The script `scripts/e2e-dashboard-reports.mjs` verifies the complete Phase 9 UI and responsiveness lifecycle (4 Checkpoints):
+
+| Checkpoint | Checkpoint Name | Real-world Simulation & Acceptance Verification |
+| :---: | :--- | :--- |
+| **E2E-P9-01** | Admin Sidebar 4-Group Restructure | Verifies Admin navigation is structured into 4 standard F&B operational groups: Operations & Sales, Menu & Tables, Reports & Analytics, System Configuration. |
+| **E2E-P9-02** | Realtime KPI Dashboard | Cashier/Manager navigates to `/`; verifies today/yesterday revenue, growth rate, occupied tables, and AOV cards render properly. |
+| **E2E-P9-03** | Reports Analytics & CSV Export | Manager navigates to `/reports`, toggles date range (`day`, `week`, `month`), verifies payment breakdown chart, top dishes table, and triggers UTF-8 BOM CSV download. |
+| **E2E-P9-04** | Cross-Device Customer Menu Responsive | Diner opens demo table discovery page (`/`) and table menu (`/menu/bep-nha/ban-01`) on Mobile (390px), Tablet (768px-1024px), and Desktop (1280px+); verifies zero horizontal overflow. |
 
 ### Payment & Bill Browser E2E Suite (`node scripts/e2e-payment-bill-lifecycle.mjs`)
 The script `scripts/e2e-payment-bill-lifecycle.mjs` verifies the complete payment and invoicing lifecycle (5 Checkpoints):
@@ -484,10 +510,10 @@ The script `scripts/e2e-kds-lifecycle.mjs` verifies the complete 3-way kitchen d
 
 ## ⚠️ 9. Architectural Boundaries & Known Constraints
 
-To preserve architectural precision and avoid assumptions regarding Phase 8:
+To preserve architectural precision and avoid assumptions regarding Phase 9:
 
 1. **80mm & 58mm Thermal Printer Hardware**:
-   - Phase 8 delivers the complete binary ESC/POS encoder (`EscPosEncoder`) and print data formatter (`buildReceiptData`), eliminating 100% of Vietnamese diacritics into safe ASCII, opening cash drawers, and issuing partial cuts.
+   - Delivered complete binary ESC/POS encoder (`EscPosEncoder`) and print data formatter (`buildReceiptData`), eliminating 100% of Vietnamese diacritics into safe ASCII, opening cash drawers, and issuing partial cuts.
    - Web/Desktop apps can send `buffer` or `base64` payloads directly to local print servers, raw network thermal printers (TCP port 9100), or WebUSB/WebSerial bridges.
 2. **Single-Node Real-Time Hub**:
    - The current real-time subsystem utilizes Socket.IO connected to a single NestJS server process paired with client-side `BroadcastChannel`. Redis Pub/Sub for distributed multi-node clusters is deferred to future scaling phases.
@@ -498,10 +524,25 @@ To preserve architectural precision and avoid assumptions regarding Phase 8:
 
 ## 📄 10. Project Status & Acceptance
 
+### Phase 10: Realtime WebSocket Gateway, Room Security & Ecosystem Finalization — ✅ ACCEPTED & FULL 10/10 PHASES ROADMAP COMPLETED
+- **Customer Call Staff & Two-Way Acknowledgment**: Real-time table request flow (`callStaff`) and staff acknowledgment on Admin POS (`acknowledgeCall`) with audio chimes and diner toast feedback.
+- **WebSocket Room Security & Multi-Branch Isolation**: Strict hierarchical room structures (`restaurant_${id}`, `branch_${id}`, `table_${id}`), guest isolation preventing eavesdropping on staff channels, dynamic room migration on branch switch (`client.leave(r)`).
+- **Realtime Domain Events Matrix**: Standardized 7 core operational event groups (New Order, Order Updated, Dish Status, Table Status, Call Staff, Payment, 86 Stockout).
+- **Frontend SDK Contract & Client Resilience**: Extended SDK methods `SDK-30`, `SDK-31`, `SDK-32` (34/34 tests PASS), Socket Client Reconnection Backoff with Jitter, `CANONICAL_EVENT_MAP` deduplication preventing double chimes, FIFO 50-notification buffer.
+- **Multi-Tab Browser E2E Ecosystem**: Real browser Puppeteer orchestration verifying simultaneous diner and admin interactions (3/3 Checkpoints PASS, zero-reload full operational synchronization).
+- **Security & Adversarial Hardening (AUD-10.1 to AUD-10.6)**: Fully addressed all 6 adversarial audit findings (anti-spam cooldown, dynamic room cleanup, guest isolation, FIFO capping, canonical event deduplication, socket jitter).
+
+### Phase 9: Dashboard, Revenue Reports & UI/UX Overhaul — ✅ ACCEPTED
+- **Admin Sidebar 4-Group Restructure**: Navigation restructured into 4 standard F&B logical groups (Operations & Sales, Menu & Tables, Reports & Analytics, System Configuration).
+- **Realtime KPI Dashboard (`/`)**: Comprehensive KPI card overview with Dual-Key Engine, tracking today/yesterday revenue, occupancy rate, and AOV.
+- **Revenue Reports & Top Dishes (`/reports`)**: Itemized breakdown across 4 payment methods (`Cash`, `VietQR`, `Card`, `Transfer`), options price delta calculations, and UTF-8 BOM CSV exports for Excel.
+- **Customer Menu Responsive Overhaul**: Public table discovery loaded from backend API, responsive across Mobile (390px), Tablet (768px-1024px), and Desktop (1280px+) with zero horizontal overflow.
+- **Frontend SDK Contract (`@imenu/utils`)**: 31/31 SDK contract tests (`SDK-01` through `SDK-29`) at 100% PASS.
+- **Security & Adversarial Hardening (AUD-9.1 to AUD-9.6)**: Cross-branch revenue isolation, `perm-rep-export` RBAC enforcement, soft-deleted table exclusion, options price delta tracking.
+
 ### Phase 8: Payment, Bill & ESC/POS Thermal Printing — ✅ ACCEPTED
 - **Bill Management & 80mm Printing (`/bills`)**: Complete overhaul with multi-field search, status/method filters, print preview modal, and direct ESC/POS generation.
 - **ESC/POS Encoder & Thermal Print Service (`@imenu/utils`)**: 80mm/58mm standard byte compilation, ASCII sanitization, cash drawer kick on cash payments, partial cutting.
-- **Frontend SDK Contract (`@imenu/utils`)**: 27/27 SDK contract tests (`SDK-01` through `SDK-25`) at 100% PASS.
 - **Security & Adversarial Hardening (AUD-8.1 to AUD-8.6)**: Cross-table IDOR prevention, server-side VietQR recalculation, stabilized Idempotency across retries.
 
 ### Phase 7: Kitchen Display System (KDS) & Realtime Dispatching — ✅ ACCEPTED

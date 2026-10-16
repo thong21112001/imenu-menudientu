@@ -17,7 +17,8 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test:sdk": "npx ts-node packages/utils/tests/sdk-contract.test.ts",
-    "test:e2e": "node scripts/e2e-order-lifecycle.mjs"
+    "test:e2e": "node scripts/e2e-order-lifecycle.mjs",
+    "test:e2e:phase9": "node scripts/e2e-dashboard-reports.mjs"
   },
   "devDependencies": {
     "puppeteer-core": "^25.10.0",

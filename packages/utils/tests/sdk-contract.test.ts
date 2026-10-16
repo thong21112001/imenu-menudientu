@@ -768,7 +768,163 @@ async function runSdkContractTests() {
       failed++;
     }
 
+    // -------------------------------------------------------------------------
+    // TEST 26: Phase 9 - dashboard.getOverview route & query params
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.dashboard.getOverview({ branchId: 'branch-01', date: '2026-10-16' });
 
+    const reqDash = capturedRequests[0];
+    if (
+      reqDash?.method === 'GET' &&
+      reqDash?.url?.startsWith('/api/dashboard/overview') &&
+      reqDash?.url?.includes('branchId=branch-01') &&
+      reqDash?.url?.includes('date=2026-10-16')
+    ) {
+      pass('SDK-26: dashboard.getOverview map chính xác GET /api/dashboard/overview?branchId=...&date=...');
+      passed++;
+    } else {
+      fail('SDK-26: dashboard.getOverview sai route hoặc query params', reqDash);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 27: Phase 9 - reports.getRevenue route & query params
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.reports.getRevenue({
+      startDate: '2026-10-01',
+      endDate: '2026-10-16',
+      period: 'daily',
+      groupBy: 'day',
+      branchId: 'branch-01',
+    });
+
+    const reqRepRev = capturedRequests[0];
+    if (
+      reqRepRev?.method === 'GET' &&
+      reqRepRev?.url?.startsWith('/api/reports/revenue') &&
+      reqRepRev?.url?.includes('startDate=2026-10-01') &&
+      reqRepRev?.url?.includes('endDate=2026-10-16') &&
+      reqRepRev?.url?.includes('groupBy=day') &&
+      reqRepRev?.url?.includes('branchId=branch-01')
+    ) {
+      pass('SDK-27: reports.getRevenue map chính xác GET /api/reports/revenue với đầy đủ filters');
+      passed++;
+    } else {
+      fail('SDK-27: reports.getRevenue sai route hoặc filters', reqRepRev);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 28: Phase 9 - reports.getTopItems route & query params
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.reports.getTopItems({
+      startDate: '2026-10-01',
+      endDate: '2026-10-16',
+      branchId: 'branch-01',
+      limit: 10,
+    });
+
+    const reqRepTop = capturedRequests[0];
+    if (
+      reqRepTop?.method === 'GET' &&
+      reqRepTop?.url?.startsWith('/api/reports/top-items') &&
+      reqRepTop?.url?.includes('startDate=2026-10-01') &&
+      reqRepTop?.url?.includes('endDate=2026-10-16') &&
+      reqRepTop?.url?.includes('branchId=branch-01') &&
+      reqRepTop?.url?.includes('limit=10')
+    ) {
+      pass('SDK-28: reports.getTopItems map chính xác GET /api/reports/top-items với đầy đủ filters');
+      passed++;
+    } else {
+      fail('SDK-28: reports.getTopItems sai route hoặc query params', reqRepTop);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 29: Phase 9 - tables.listPublicBySlug route
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.tables.listPublicBySlug('nha-hang-phuong-nam');
+
+    const reqPublicTables = capturedRequests[0];
+    if (
+      reqPublicTables?.method === 'GET' &&
+      reqPublicTables?.url === '/api/tables/public/by-restaurant/nha-hang-phuong-nam'
+    ) {
+      pass('SDK-29: tables.listPublicBySlug map chính xác GET /api/tables/public/by-restaurant/:restaurantSlug');
+      passed++;
+    } else {
+      fail('SDK-29: tables.listPublicBySlug sai route', reqPublicTables);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 30: Phase 10 - tables.callStaff route & payload
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.tables.callStaff('table-123', {
+      reason: 'Xin thêm đá lạnh',
+      note: '2 ly đá to',
+      qrToken: 'token-abc',
+      restaurantSlug: 'quan-ngon',
+    });
+
+    const reqCallStaff = capturedRequests[0];
+    if (
+      reqCallStaff?.method === 'POST' &&
+      reqCallStaff?.url === '/api/tables/table-123/call-staff' &&
+      JSON.parse(reqCallStaff.body)?.reason === 'Xin thêm đá lạnh' &&
+      JSON.parse(reqCallStaff.body)?.qrToken === 'token-abc'
+    ) {
+      pass('SDK-30: tables.callStaff map chính xác POST /api/tables/:tableId/call-staff với payload');
+      passed++;
+    } else {
+      fail('SDK-30: tables.callStaff sai route hoặc payload', reqCallStaff);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 31: Phase 10 - tables.acknowledgeCall route
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.tables.acknowledgeCall('table-123');
+
+    const reqAckCall = capturedRequests[0];
+    if (
+      reqAckCall?.method === 'POST' &&
+      reqAckCall?.url === '/api/tables/table-123/acknowledge-call'
+    ) {
+      pass('SDK-31: tables.acknowledgeCall map chính xác POST /api/tables/:tableId/acknowledge-call');
+      passed++;
+    } else {
+      fail('SDK-31: tables.acknowledgeCall sai route', reqAckCall);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 32: Phase 10 - customerOrders.callStaff route & payload
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.customerOrders.callStaff('table-123', {
+      reason: 'Xin thêm chén dĩa',
+      restaurantSlug: 'quan-ngon',
+    });
+
+    const reqCustCall = capturedRequests[0];
+    if (
+      reqCustCall?.method === 'POST' &&
+      reqCustCall?.url === '/api/tables/table-123/call-staff' &&
+      JSON.parse(reqCustCall.body)?.reason === 'Xin thêm chén dĩa'
+    ) {
+      pass('SDK-32: customerOrders.callStaff map chính xác POST /api/tables/:tableId/call-staff');
+      passed++;
+    } else {
+      fail('SDK-32: customerOrders.callStaff sai route hoặc payload', reqCustCall);
+      failed++;
+    }
   } finally {
     await new Promise<void>((resolve) => mockServer.close(() => resolve()));
   }
