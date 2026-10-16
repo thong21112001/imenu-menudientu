@@ -51,6 +51,14 @@ import {
   RefreshCw,
   Loader2,
   Hourglass,
+  Wifi,
+  Copy,
+  Check,
+  Store,
+  Utensils,
+  ChefHat,
+  Trash2,
+  ShoppingCart,
 } from 'lucide-react';
 
 export default function CustomerTableMenuPage() {
@@ -100,6 +108,7 @@ export default function CustomerTableMenuPage() {
   const [paidSummary, setPaidSummary] = useState<any>(null);
   const [effectiveBankAccount, setEffectiveBankAccount] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [copiedWifi, setCopiedWifi] = useState<boolean>(false);
 
   // Active orders for this table
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
@@ -335,15 +344,91 @@ export default function CustomerTableMenuPage() {
     return () => clearInterval(interval);
   }, [activeOrder?.id, activeOrder?.status]);
 
-  // Filter items
+  // Counts per category & quick filter
+  const categoryCounts = React.useMemo(() => {
+    const counts: Record<string, number> = {
+      all: menuItems.length,
+      popular: menuItems.filter((i) => i.isPopular).length,
+    };
+    for (const cat of categories) {
+      counts[cat.id] = menuItems.filter((i) => i.categoryId === cat.id).length;
+    }
+    return counts;
+  }, [menuItems, categories]);
+
+  // Filter items (supporting 'all', 'popular', and specific categoryId)
   const filteredItems = menuItems.filter((item) => {
-    const matchesCategory = activeCategoryId === 'all' || item.categoryId === activeCategoryId;
+    let matchesCategory = true;
+    if (activeCategoryId === 'all') {
+      matchesCategory = true;
+    } else if (activeCategoryId === 'popular') {
+      matchesCategory = !!item.isPopular;
+    } else {
+      matchesCategory = item.categoryId === activeCategoryId;
+    }
     const matchesSearch =
       !searchQuery.trim() ||
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesCategory && matchesSearch;
   });
+
+  // Helpers for cart items and quantities
+  const getItemCartQuantity = (itemId: string) => {
+    return cart
+      .filter((c) => c.menuItemId === itemId)
+      .reduce((sum, c) => sum + c.quantity, 0);
+  };
+
+  const handleCartQuantityChange = (idx: number, delta: number) => {
+    if (idx < 0 || idx >= cart.length) return;
+    const item = cart[idx];
+    if (delta < 0 && item.quantity <= 1) {
+      setCart(cart.filter((_, i) => i !== idx));
+      return;
+    }
+    const unitP = item.itemTotal / item.quantity;
+    const newQty = item.quantity + delta;
+    if (newQty <= 0) {
+      setCart(cart.filter((_, i) => i !== idx));
+      return;
+    }
+    const updated = [...cart];
+    updated[idx] = {
+      ...item,
+      quantity: newQty,
+      itemTotal: unitP * newQty,
+    };
+    setCart(updated);
+  };
+
+  const wifiSsid =
+    (table as any)?.wifiSsid ||
+    (restaurant as any)?.wifiSsid ||
+    `${restaurant?.name || 'BepNha'}_Guest`;
+  const wifiPassword =
+    (table as any)?.wifiPassword ||
+    (restaurant as any)?.wifiPassword ||
+    'bepnha8888';
+
+  const handleCopyWifi = () => {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      navigator.clipboard.writeText(wifiPassword);
+      setCopiedWifi(true);
+      showToast(`🔑 Đã sao chép mật khẩu Wifi: ${wifiPassword}`);
+      setTimeout(() => setCopiedWifi(false), 3000);
+    }
+  };
+
+  const orderItemsList = activeOrder?.items || [];
+  const validOrderItems = orderItemsList.filter((i) => i.status !== 'Cancelled');
+  const readyOrServedCount = validOrderItems.filter(
+    (i) => i.status === 'Ready' || i.status === 'Served',
+  ).length;
+  const orderProgressPercent =
+    validOrderItems.length > 0
+      ? Math.round((readyOrServedCount / validOrderItems.length) * 100)
+      : 0;
 
   // Open item customization modal
   const handleOpenItemModal = (item: MenuItem) => {
@@ -587,16 +672,16 @@ export default function CustomerTableMenuPage() {
   }
 
   return (
-    <div className="max-w-lg mx-auto bg-[#f7f5ef] min-h-screen pb-28">
+    <div className="w-full bg-[#f7f5ef] min-h-screen pb-28 lg:pb-16 selection:bg-emerald-200 selection:text-emerald-900">
       {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
 
       {/* ================= HEADER ================= */}
       <header className="sticky top-0 z-40 bg-[#09271d] text-white shadow-md">
-        <div className="px-4 py-3 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Logo light size="sm" />
             <div className="border-l border-white/20 pl-2.5">
-              <strong className="text-xs font-bold block leading-tight">{restaurant.name}</strong>
+              <strong className="text-xs sm:text-sm font-bold block leading-tight">{restaurant.name}</strong>
               <small className="text-[10px] text-emerald-300 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 Đang mở cửa
@@ -604,179 +689,547 @@ export default function CustomerTableMenuPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            <div className="px-2.5 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-bold text-amber-300">
-              {table.name}
+          <div className="flex items-center gap-2">
+            <div className="px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-bold text-amber-300 flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <span>{table.name}</span>
+              {table.zoneName && (
+                <span className="text-[10px] text-emerald-200 hidden sm:inline">({table.zoneName})</span>
+              )}
             </div>
             <button
+              type="button"
               onClick={() => setIsCallStaffOpen(true)}
-              className="p-1.5 rounded-full bg-white/10 text-white hover:bg-white/20 active:scale-95"
-              title="Gọi nhân viên"
+              className="p-1.5 sm:px-3 sm:py-1.5 rounded-full bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-400/40 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
+              title="Gọi nhân viên phục vụ"
             >
-              <PhoneCall className="w-4 h-4 text-amber-400" />
+              <PhoneCall className="w-3.5 h-3.5 text-amber-400" />
+              <span className="text-xs font-bold hidden sm:inline">Gọi nhân viên</span>
             </button>
           </div>
         </div>
 
-        {/* Quick actions strip if active order exists */}
+        {/* Quick actions strip if active order exists (on Mobile / Tablet only) */}
         {activeOrder && (
-          <div className="bg-[#124a36] px-4 py-2 flex items-center justify-between text-xs border-t border-white/10">
-            <button
-              onClick={() => setIsTrackerOpen(true)}
-              className="flex items-center gap-1.5 text-amber-300 font-semibold"
-            >
-              <Clock className="w-3.5 h-3.5 animate-spin" />
-              <span>Tiến độ món ({activeOrder.items?.length || 0} món)</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setIsPreBillOpen(true)}
-              className="px-2 py-0.5 rounded bg-[#eab867] text-[#17211d] font-bold text-[11px]"
-            >
-              Tạm tính: {formatCurrencyVND(activeOrder.totalAmount)}
-            </button>
+          <div className="bg-[#124a36] px-4 py-2 border-t border-white/10 lg:hidden">
+            <div className="max-w-6xl mx-auto flex items-center justify-between text-xs">
+              <button
+                type="button"
+                onClick={() => setIsTrackerOpen(true)}
+                className="flex items-center gap-1.5 text-amber-300 font-semibold cursor-pointer"
+              >
+                <Clock className="w-3.5 h-3.5 animate-spin" />
+                <span>Tiến độ món ({readyOrServedCount}/{validOrderItems.length} món)</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPreBillOpen(true)}
+                className="px-2.5 py-0.5 rounded-md bg-[#eab867] text-[#17211d] font-bold text-[11px] shadow-xs cursor-pointer hover:bg-amber-400 transition-colors"
+              >
+                Tạm tính: {formatCurrencyVND(activeOrder.totalAmount)}
+              </button>
+            </div>
           </div>
         )}
       </header>
 
-      {/* ================= SEARCH & CATEGORIES ================= */}
-      <div className="sticky top-[53px] z-30 bg-[#f7f5ef] pt-3 pb-2 px-4 space-y-2.5 border-b border-[#e4e8e5]/80 backdrop-blur-md">
-        {/* Search Bar */}
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Tìm món ngon, đồ uống..."
-            className="w-full pl-10 pr-4 py-2 rounded-2xl bg-white border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#176044]"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
+      {/* ================= DẢI TIỆN ÍCH NHÀ HÀNG & WIFI TẠI BÀN ================= */}
+      <div className="bg-white/95 border-b border-[#e4e8e5] px-4 py-2 text-xs backdrop-blur-xs">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          {/* Restaurant Address & Status */}
+          <div className="flex items-center gap-2 text-slate-600">
+            <Store className="w-3.5 h-3.5 text-[#176044] shrink-0" />
+            <span className="text-xs truncate max-w-[200px] sm:max-w-none">
+              {restaurant?.address || 'Phục vụ tại bàn'} • Mở cửa 08:00 - 22:30
+            </span>
+            <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/70">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Đang kết nối
+            </span>
+          </div>
 
-        {/* Category Horizontal Chips */}
-        <div className="flex gap-2 overflow-x-auto no-scrollbar py-0.5">
-          <button
-            onClick={() => setActiveCategoryId('all')}
-            className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-              activeCategoryId === 'all'
-                ? 'bg-[#124a36] text-white shadow-sm'
-                : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            🔥 Tất cả món
-          </button>
-          {categories.map((cat) => (
+          {/* Wifi Info with 1-click copy */}
+          <div className="flex items-center gap-2 bg-[#f0f8f3] px-2.5 py-1 rounded-xl border border-emerald-200/80 text-slate-700">
+            <Wifi className="w-3.5 h-3.5 text-[#176044] shrink-0" />
+            <span className="text-[11px] font-medium">
+              Wifi: <strong className="font-bold text-slate-900">{wifiSsid}</strong>
+            </span>
+            <span className="text-slate-300">•</span>
+            <span className="text-[11px] text-slate-500">
+              MK: <code className="font-mono font-bold text-slate-900">{wifiPassword}</code>
+            </span>
             <button
-              key={cat.id}
-              onClick={() => setActiveCategoryId(cat.id)}
-              className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 ${
-                activeCategoryId === cat.id
-                  ? 'bg-[#124a36] text-white shadow-sm'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
-              }`}
+              type="button"
+              onClick={handleCopyWifi}
+              className="text-[10px] font-bold text-[#176044] hover:text-emerald-900 bg-white hover:bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-300 transition-colors shadow-xs cursor-pointer flex items-center gap-1"
+              title="Sao chép mật khẩu Wifi"
             >
-              <span>{cat.icon || '🍽️'}</span>
-              <span>{cat.name}</span>
+              {copiedWifi ? (
+                <>
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  <span>Đã chép</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3 text-[#176044]" />
+                  <span>Chép MK</span>
+                </>
+              )}
             </button>
-          ))}
+          </div>
         </div>
       </div>
 
-      {/* ================= MENU ITEMS LIST ================= */}
-      <main className="p-4 space-y-3">
-        {filteredItems.length === 0 ? (
-          <div className="text-center py-16 text-slate-400 space-y-2">
-            <p className="text-sm">Không tìm thấy món ăn phù hợp</p>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setSearchQuery('');
-                setActiveCategoryId('all');
-              }}
-            >
-              Xem tất cả thực đơn
-            </Button>
-          </div>
-        ) : (
-          filteredItems.map((item) => (
-            <div
-              key={item.id}
-              onClick={() => item.isAvailable && handleOpenItemModal(item)}
-              className={`p-3 bg-white rounded-2xl border border-[#e4e8e5] shadow-sm flex gap-3.5 transition-all ${
-                item.isAvailable
-                  ? 'hover:border-[#cbdad3] active:scale-[0.99] cursor-pointer'
-                  : 'opacity-60 grayscale cursor-not-allowed'
-              }`}
-            >
-              {/* Dish Photo */}
-              <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
-                <img
-                  src={item.imageUrl || '/placeholder-food.jpg'}
-                  alt={item.name}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
+      {/* ================= BỐ CỤC CHÍNH ĐA MÀN HÌNH (RESPONSIVE 12 COLS) ================= */}
+      <div className="max-w-lg sm:max-w-3xl lg:max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4">
+        <div className="lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
+          
+          {/* CỘT TRÁI (8 cols trên Desktop): Tìm kiếm, Bộ lọc & Lưới món ăn */}
+          <div className="lg:col-span-8 space-y-4">
+            {/* Search & Categories Bar */}
+            <div className="sticky top-[53px] z-30 bg-[#f7f5ef] pt-1 pb-3 space-y-2.5 border-b border-[#e4e8e5]/80 backdrop-blur-md">
+              {/* Search Bar */}
+              <div className="relative">
+                <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Tìm món ngon, đồ uống..."
+                  className="w-full pl-10 pr-4 py-2 rounded-2xl bg-white border border-slate-200 text-xs text-slate-800 placeholder:text-slate-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#176044]"
                 />
-                {item.isPopular && (
-                  <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-bold flex items-center gap-0.5 shadow-sm">
-                    <Flame className="w-2.5 h-2.5" /> Hot
-                  </span>
-                )}
-                {!item.isAvailable && (
-                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-[10px] font-bold">
-                    Hết món
-                  </div>
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 )}
               </div>
 
-              {/* Dish Content */}
-              <div className="flex-1 flex flex-col justify-between min-w-0">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 truncate">{item.name}</h3>
-                  <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
+              {/* Quick Filter Pills & Categories with Dish Counts */}
+              <div className="flex gap-2 overflow-x-auto no-scrollbar py-0.5 items-center">
+                <button
+                  type="button"
+                  onClick={() => setActiveCategoryId('all')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeCategoryId === 'all'
+                      ? 'bg-[#124a36] text-white shadow-sm'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>🔥 Tất cả món</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    activeCategoryId === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {categoryCounts.all || 0}
+                  </span>
+                </button>
 
-                <div className="flex items-center justify-between mt-2 pt-1 border-t border-slate-100">
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="text-sm font-extrabold text-[#176044]">
-                      {formatCurrencyVND(item.price)}
+                <button
+                  type="button"
+                  onClick={() => setActiveCategoryId('popular')}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                    activeCategoryId === 'popular'
+                      ? 'bg-[#124a36] text-white shadow-sm'
+                      : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  <span>⭐ Bán chạy</span>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                    activeCategoryId === 'popular' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                  }`}>
+                    {categoryCounts.popular || 0}
+                  </span>
+                </button>
+
+                {categories.map((cat) => (
+                  <button
+                    type="button"
+                    key={cat.id}
+                    onClick={() => setActiveCategoryId(cat.id)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+                      activeCategoryId === cat.id
+                        ? 'bg-[#124a36] text-white shadow-sm'
+                        : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    <span>{cat.icon || '🍽️'}</span>
+                    <span>{cat.name}</span>
+                    <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
+                      activeCategoryId === cat.id ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      {categoryCounts[cat.id] || 0}
                     </span>
-                    {item.originalPrice && (
-                      <span className="text-[10px] text-slate-400 line-through">
-                        {formatCurrencyVND(item.originalPrice)}
-                      </span>
-                    )}
-                  </div>
-
-                  {item.isAvailable && (
-                    <button
-                      onClick={(e) => handleQuickAdd(e, item)}
-                      className="w-7 h-7 rounded-lg bg-[#124a36] hover:bg-[#176044] text-white flex items-center justify-center shadow-sm active:scale-90 transition-transform"
-                    >
-                      <Plus className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
+                  </button>
+                ))}
               </div>
             </div>
-          ))
-        )}
-      </main>
 
-      {/* ================= FLOATING CART BOTTOM DRAWER TRIGGER ================= */}
+            {/* Dishes Grid: 1 col on Mobile, 2 cols on Tablet & Desktop */}
+            <main className="space-y-3">
+              {filteredItems.length === 0 ? (
+                <div className="text-center py-16 text-slate-400 space-y-2 bg-white rounded-2xl border border-slate-200/80 p-8 shadow-xs">
+                  <p className="text-sm">Không tìm thấy món ăn phù hợp</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setActiveCategoryId('all');
+                    }}
+                  >
+                    Xem tất cả thực đơn
+                  </Button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {filteredItems.map((item) => {
+                    const itemCartQty = getItemCartQuantity(item.id);
+
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => item.isAvailable && handleOpenItemModal(item)}
+                        className={`p-3 bg-white rounded-2xl border border-[#e4e8e5] shadow-xs flex gap-3.5 transition-all relative ${
+                          item.isAvailable
+                            ? 'hover:border-[#cbdad3] hover:shadow-md active:scale-[0.99] cursor-pointer'
+                            : 'opacity-60 grayscale cursor-not-allowed'
+                        }`}
+                      >
+                        {/* Dish Photo */}
+                        <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                          <img
+                            src={item.imageUrl || '/placeholder-food.jpg'}
+                            alt={item.name}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                          {item.isPopular && (
+                            <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded-md bg-amber-500 text-white text-[9px] font-bold flex items-center gap-0.5 shadow-sm">
+                              <Flame className="w-2.5 h-2.5" /> Hot
+                            </span>
+                          )}
+                          {!item.isAvailable && (
+                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white text-[10px] font-bold">
+                              Hết món
+                            </div>
+                          )}
+                          {/* Cart Quantity Badge on Photo */}
+                          {itemCartQty > 0 && (
+                            <span className="absolute bottom-1 right-1 px-1.5 py-0.5 rounded-md bg-[#124a36] text-amber-300 border border-white/40 text-[9px] font-black flex items-center gap-1 shadow-md">
+                              <CheckCircle2 className="w-2.5 h-2.5 text-amber-300" />
+                              Đang chọn: {itemCartQty}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Dish Content */}
+                        <div className="flex-1 flex flex-col justify-between min-w-0">
+                          <div>
+                            <h3 className="text-sm font-bold text-slate-900 truncate">{item.name}</h3>
+                            <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">
+                              {item.description}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center justify-between mt-2 pt-1 border-t border-slate-100">
+                            <div className="flex items-baseline gap-1.5">
+                              <span className="text-sm font-extrabold text-[#176044]">
+                                {formatCurrencyVND(item.price)}
+                              </span>
+                              {item.originalPrice && (
+                                <span className="text-[10px] text-slate-400 line-through">
+                                  {formatCurrencyVND(item.originalPrice)}
+                                </span>
+                              )}
+                            </div>
+
+                            {item.isAvailable && (
+                              <button
+                                type="button"
+                                onClick={(e) => handleQuickAdd(e, item)}
+                                className="w-7 h-7 rounded-lg bg-[#124a36] hover:bg-[#176044] text-white flex items-center justify-center shadow-sm active:scale-90 transition-transform cursor-pointer"
+                                title="Thêm nhanh vào giỏ"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </main>
+          </div>
+
+          {/* CỘT PHẢI (4 cols trên Desktop, sticky): LIVE TABLE SIDEBAR */}
+          <aside className="hidden lg:block lg:col-span-4 lg:sticky lg:top-20 space-y-4">
+            {/* 1. Table Info Card */}
+            <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-200 text-[#176044] grid place-items-center font-bold">
+                  <Utensils className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="text-sm font-black text-slate-900">{table.name}</div>
+                  <div className="text-xs text-slate-500">{table.zoneName || 'Khu vực chung'}</div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsCallStaffOpen(true)}
+                className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <PhoneCall className="w-3.5 h-3.5 text-amber-600" />
+                <span>Gọi phục vụ</span>
+              </button>
+            </div>
+
+            {/* 2. Live Cart Section (when cart has items) */}
+            {cart.length > 0 && (
+              <div className="bg-white rounded-2xl p-4 border-2 border-emerald-600/30 shadow-md space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <ShoppingCart className="w-4 h-4 text-[#176044]" />
+                    <strong className="text-sm font-black text-slate-900">Giỏ món ăn</strong>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 text-xs font-black">
+                      {totalCartCount}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCart([])}
+                    className="text-xs text-rose-500 hover:text-rose-700 flex items-center gap-1 font-semibold cursor-pointer"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Xóa hết</span>
+                  </button>
+                </div>
+
+                {/* Cart Items list */}
+                <div className="space-y-2.5 max-h-[280px] overflow-y-auto pr-1">
+                  {cart.map((c, idx) => (
+                    <div
+                      key={c.id}
+                      className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-start justify-between gap-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <strong className="text-xs font-bold text-slate-900 block truncate">
+                          {c.item.name}
+                        </strong>
+                        {c.selectedOptions.length > 0 && (
+                          <span className="text-[10px] text-slate-500 block">
+                            {c.selectedOptions.map((o) => o.valueName).join(', ')}
+                          </span>
+                        )}
+                        {c.note && (
+                          <span className="text-[10px] text-amber-700 italic block">
+                            Ghi chú: {c.note}
+                          </span>
+                        )}
+                        <span className="text-xs font-extrabold text-[#176044] block mt-1">
+                          {formatCurrencyVND(c.itemTotal)}
+                        </span>
+                      </div>
+
+                      {/* Quantity Controls */}
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          disabled={isSubmitting}
+                          onClick={() => handleCartQuantityChange(idx, -1)}
+                          className="w-6 h-6 rounded-md bg-white border border-slate-300 text-slate-700 grid place-items-center hover:bg-slate-100 active:scale-95 disabled:opacity-40 cursor-pointer"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="text-xs font-black text-slate-800 w-5 text-center">
+                          {c.quantity}
+                        </span>
+                        <button
+                          type="button"
+                          disabled={isSubmitting || !c.item.isAvailable}
+                          onClick={() => handleCartQuantityChange(idx, 1)}
+                          className="w-6 h-6 rounded-md bg-white border border-slate-300 text-slate-700 grid place-items-center hover:bg-slate-100 active:scale-95 disabled:opacity-40 cursor-pointer"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Total & Submit Button */}
+                <div className="pt-2 border-t border-slate-200 space-y-2.5">
+                  <div className="flex justify-between items-center text-xs font-bold text-slate-700">
+                    <span>Tạm tính ({totalCartCount} món):</span>
+                    <span className="text-base text-[#176044] font-black">
+                      {formatCurrencyVND(totalCartAmount)}
+                    </span>
+                  </div>
+
+                  <Button
+                    variant="primary"
+                    onClick={handleSubmitOrder}
+                    disabled={
+                      isSubmitting ||
+                      cart.some((c) => menuItems.find((m) => m.id === c.menuItemId)?.isAvailable === false)
+                    }
+                    className="w-full py-3 text-sm font-black shadow-md flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>Đang gửi Bếp...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4" />
+                        <span>Gửi Bếp Gọi Món ({totalCartCount})</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* 3. Live Active Order Section (when activeOrder exists) */}
+            {activeOrder && (
+              <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <div>
+                    <div className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      Đơn Đang Phục Vụ
+                    </div>
+                    <div className="text-xs font-mono font-black text-slate-900 mt-0.5">
+                      #{activeOrder.orderCode}
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    {activeOrder.status === 'Paid' ? 'Đã thanh toán' : 'Đang phục vụ'}
+                  </span>
+                </div>
+
+                {/* Cooking Progress Bar */}
+                <div>
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-600 font-semibold flex items-center gap-1.5">
+                      <ChefHat className="w-3.5 h-3.5 text-[#176044]" />
+                      Tiến độ chế biến
+                    </span>
+                    <span className="font-black text-[#176044]">
+                      {readyOrServedCount}/{validOrderItems.length} món xong
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden my-2">
+                    <div
+                      className="bg-emerald-500 h-2 rounded-full transition-all duration-500"
+                      style={{ width: `${orderProgressPercent}%` }}
+                    />
+                  </div>
+                </div>
+
+                {/* Preview of active items */}
+                <div className="space-y-1.5 max-h-[180px] overflow-y-auto pr-1">
+                  {validOrderItems.map((it, idx) => {
+                    const isCooking = it.status === 'Cooking';
+                    const isReady = it.status === 'Ready';
+                    const isServed = it.status === 'Served';
+
+                    return (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg bg-slate-50 border border-slate-100"
+                      >
+                        <div className="min-w-0 flex-1 pr-2 truncate">
+                          <span className="font-bold text-slate-800">{it.name}</span>
+                          <span className="text-slate-400 font-semibold ml-1">x{it.quantity}</span>
+                        </div>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
+                            isServed
+                              ? 'bg-slate-200 text-slate-700'
+                              : isReady
+                              ? 'bg-emerald-100 text-emerald-800 animate-pulse'
+                              : isCooking
+                              ? 'bg-amber-100 text-amber-800'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          {isServed
+                            ? 'Đã phục vụ'
+                            : isReady
+                            ? '🍽️ Sẵn sàng'
+                            : isCooking
+                            ? '🔥 Đang nấu'
+                            : 'Chờ bếp'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Total & Action Buttons */}
+                <div className="pt-2 border-t border-slate-100 space-y-2">
+                  <div className="flex justify-between items-center text-xs font-bold text-slate-700">
+                    <span>Tạm tính đơn:</span>
+                    <span className="text-base text-amber-600 font-black">
+                      {formatCurrencyVND(activeOrder.totalAmount)}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 pt-1">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setIsPreBillOpen(true)}
+                      className="text-xs font-bold py-2 cursor-pointer flex items-center justify-center gap-1"
+                    >
+                      <Receipt className="w-3.5 h-3.5" />
+                      <span>Xem tạm tính</span>
+                    </Button>
+                    <Button
+                      variant="amber"
+                      size="sm"
+                      onClick={() => setIsVietQROpen(true)}
+                      className="text-xs font-bold py-2 cursor-pointer flex items-center justify-center gap-1 shadow-sm"
+                    >
+                      <QrCode className="w-3.5 h-3.5" />
+                      <span>Quét VietQR</span>
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* 4. Empty State when both cart and activeOrder are empty */}
+            {cart.length === 0 && !activeOrder && (
+              <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-emerald-50 text-[#176044] grid place-items-center mx-auto">
+                  <ShoppingBag className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold text-slate-800">Giỏ hàng đang trống</div>
+                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                    Chọn món ăn từ thực đơn bên trái để thêm vào giỏ và gửi bếp chế biến
+                  </p>
+                </div>
+              </div>
+            )}
+          </aside>
+        </div>
+      </div>
+
+      {/* ================= FLOATING CART BOTTOM DRAWER TRIGGER (MOBILE / TABLET ONLY) ================= */}
       {totalCartCount > 0 && (
-        <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40 animate-slideUp">
+        <div className="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40 animate-slideUp lg:hidden">
           <button
+            type="button"
             onClick={() => setIsCartOpen(true)}
             className="w-full bg-[#124a36] hover:bg-[#176044] text-white rounded-2xl p-3.5 px-5 shadow-2xl flex items-center justify-between font-bold border-2 border-amber-300 active:scale-[0.99] transition-all cursor-pointer"
           >
@@ -794,6 +1247,51 @@ export default function CustomerTableMenuPage() {
               <ChevronRight className="w-4 h-4" />
             </div>
           </button>
+        </div>
+      )}
+
+      {/* ================= SMART FIXED BOTTOM ACTION BAR ON MOBILE / TABLET ================= */}
+      {totalCartCount === 0 && activeOrder && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-slate-200/90 shadow-2xl p-2 px-3 lg:hidden">
+          <div className="max-w-lg mx-auto grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              onClick={() => setIsTrackerOpen(true)}
+              className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 transition-colors cursor-pointer"
+            >
+              <div className="flex items-center gap-1 text-[#176044]">
+                <Clock className="w-3.5 h-3.5 animate-spin" />
+                <span className="text-xs font-black">
+                  {readyOrServedCount}/{validOrderItems.length}
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-500 font-medium mt-0.5 truncate max-w-full">
+                Tiến độ món
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsCallStaffOpen(true)}
+              className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 transition-colors cursor-pointer"
+            >
+              <PhoneCall className="w-4 h-4 text-amber-600" />
+              <span className="text-[10px] font-bold mt-0.5">Gọi nhân viên</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsPreBillOpen(true)}
+              className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#124a36] hover:bg-[#176044] text-white shadow-md active:scale-95 transition-all cursor-pointer"
+            >
+              <div className="text-[11px] font-black text-amber-300 truncate max-w-full">
+                {formatCurrencyVND(activeOrder.totalAmount)}
+              </div>
+              <span className="text-[9px] text-emerald-200 font-semibold uppercase tracking-wider">
+                Tạm tính / Bill
+              </span>
+            </button>
+          </div>
         </div>
       )}
 
