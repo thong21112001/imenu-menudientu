@@ -860,6 +860,71 @@ async function runSdkContractTests() {
       fail('SDK-29: tables.listPublicBySlug sai route', reqPublicTables);
       failed++;
     }
+
+    // -------------------------------------------------------------------------
+    // TEST 30: Phase 10 - tables.callStaff route & payload
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.tables.callStaff('table-123', {
+      reason: 'Xin thêm đá lạnh',
+      note: '2 ly đá to',
+      qrToken: 'token-abc',
+      restaurantSlug: 'quan-ngon',
+    });
+
+    const reqCallStaff = capturedRequests[0];
+    if (
+      reqCallStaff?.method === 'POST' &&
+      reqCallStaff?.url === '/api/tables/table-123/call-staff' &&
+      JSON.parse(reqCallStaff.body)?.reason === 'Xin thêm đá lạnh' &&
+      JSON.parse(reqCallStaff.body)?.qrToken === 'token-abc'
+    ) {
+      pass('SDK-30: tables.callStaff map chính xác POST /api/tables/:tableId/call-staff với payload');
+      passed++;
+    } else {
+      fail('SDK-30: tables.callStaff sai route hoặc payload', reqCallStaff);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 31: Phase 10 - tables.acknowledgeCall route
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.tables.acknowledgeCall('table-123');
+
+    const reqAckCall = capturedRequests[0];
+    if (
+      reqAckCall?.method === 'POST' &&
+      reqAckCall?.url === '/api/tables/table-123/acknowledge-call'
+    ) {
+      pass('SDK-31: tables.acknowledgeCall map chính xác POST /api/tables/:tableId/acknowledge-call');
+      passed++;
+    } else {
+      fail('SDK-31: tables.acknowledgeCall sai route', reqAckCall);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 32: Phase 10 - customerOrders.callStaff route & payload
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.customerOrders.callStaff('table-123', {
+      reason: 'Xin thêm chén dĩa',
+      restaurantSlug: 'quan-ngon',
+    });
+
+    const reqCustCall = capturedRequests[0];
+    if (
+      reqCustCall?.method === 'POST' &&
+      reqCustCall?.url === '/api/tables/table-123/call-staff' &&
+      JSON.parse(reqCustCall.body)?.reason === 'Xin thêm chén dĩa'
+    ) {
+      pass('SDK-32: customerOrders.callStaff map chính xác POST /api/tables/:tableId/call-staff');
+      passed++;
+    } else {
+      fail('SDK-32: customerOrders.callStaff sai route hoặc payload', reqCustCall);
+      failed++;
+    }
   } finally {
     await new Promise<void>((resolve) => mockServer.close(() => resolve()));
   }
