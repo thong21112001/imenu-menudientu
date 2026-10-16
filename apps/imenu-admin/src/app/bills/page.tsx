@@ -72,6 +72,7 @@ export default function BillsPage() {
   const [serviceFee, setServiceFee] = useState<number>(0);
   const [cashGiven, setCashGiven] = useState<number>(0);
   const [isProcessingCheckout, setIsProcessingCheckout] = useState<boolean>(false);
+  const checkoutIdempotencyKeyRef = useRef<string | null>(null);
   const [copiedEscPos, setCopiedEscPos] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -79,6 +80,11 @@ export default function BillsPage() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
+
+  // Reset idempotency key when changing order
+  useEffect(() => {
+    checkoutIdempotencyKeyRef.current = null;
+  }, [selectedOrderForBill?.id]);
 
   // Current logged in user / cashier
   const currentUser = useMemo(() => storageService.getCurrentUser(), []);
@@ -273,7 +279,10 @@ export default function BillsPage() {
 
     try {
       const calcFinal = activeReceiptData?.financials.totalAmount || selectedOrderForBill.totalAmount;
-      const idempotencyKey = `pay-${selectedOrderForBill.id}-${Date.now()}`;
+      if (!checkoutIdempotencyKeyRef.current) {
+        checkoutIdempotencyKeyRef.current = `pay-${selectedOrderForBill.id}-${Date.now()}`;
+      }
+      const idempotencyKey = checkoutIdempotencyKeyRef.current;
 
       const res = await apiClient.orders.completePayment(
         selectedOrderForBill.id,
@@ -288,6 +297,9 @@ export default function BillsPage() {
         },
         { idempotencyKey },
       );
+
+      // Reset idempotency key on success
+      checkoutIdempotencyKeyRef.current = null;
 
       showToast('✅ Đã thu tiền thành công! Đang tiến hành in hóa đơn...');
 

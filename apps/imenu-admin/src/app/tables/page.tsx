@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   storageService,
   formatCurrencyVND,
@@ -74,9 +74,15 @@ export default function TablesMapPage() {
   const [cashGiven, setCashGiven] = useState<number>(0);
   const [paymentNote, setPaymentNote] = useState<string>('');
   const [isProcessingPayment, setIsProcessingPayment] = useState<boolean>(false);
+  const checkoutIdempotencyKeyRef = useRef<string | null>(null);
   const [showVietQRModal, setShowVietQRModal] = useState<boolean>(false);
   const [isPreBillPreviewOpen, setIsPreBillPreviewOpen] = useState<boolean>(false);
   const [restaurant, setRestaurant] = useState<Restaurant>(storageService.getRestaurant());
+
+  // Reset idempotency key when changing selected table
+  useEffect(() => {
+    checkoutIdempotencyKeyRef.current = null;
+  }, [selectedTable?.id]);
 
   const loadData = useCallback(async (silent = false) => {
     if (!silent) setIsLoading(true);
@@ -241,11 +247,14 @@ export default function TablesMapPage() {
 
   // Complete Payment for table
   const handleCompletePayment = async () => {
-    if (!selectedTable || !selectedTableOrder) return;
+    if (!selectedTable || !selectedTableOrder || isProcessingPayment) return;
     setIsProcessingPayment(true);
 
     try {
-      const idempotencyKey = `pay-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      if (!checkoutIdempotencyKeyRef.current) {
+        checkoutIdempotencyKeyRef.current = `pay-${selectedTableOrder.id}-${Date.now()}`;
+      }
+      const idempotencyKey = checkoutIdempotencyKeyRef.current;
 
       await apiClient.orders.completePayment(
         selectedTableOrder.id,
@@ -261,6 +270,9 @@ export default function TablesMapPage() {
         },
         { idempotencyKey },
       );
+
+      // Reset idempotency key on success
+      checkoutIdempotencyKeyRef.current = null;
 
       soundEngine.playReadyChime();
       toast.success(
