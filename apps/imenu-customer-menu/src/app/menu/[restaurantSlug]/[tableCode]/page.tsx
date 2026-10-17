@@ -608,8 +608,8 @@ export default function CustomerTableMenuPage() {
         const res = await apiClient.customerOrders.addItems(
           activeOrder.id,
           {
-            restaurantSlug,
-            tableCode,
+            restaurantSlug: restaurant?.slug || restaurantSlug,
+            tableCode: table?.code || tableCode,
             qrToken: qrToken || '',
             orderId: activeOrder.id,
             items: itemsPayload,
@@ -621,8 +621,8 @@ export default function CustomerTableMenuPage() {
         // Calling create for Round 1
         const res = await apiClient.customerOrders.create(
           {
-            restaurantSlug,
-            tableCode,
+            restaurantSlug: restaurant?.slug || restaurantSlug,
+            tableCode: table?.code || tableCode,
             qrToken: qrToken || '',
             items: itemsPayload,
           },
@@ -662,7 +662,7 @@ export default function CustomerTableMenuPage() {
         reason: finalReason,
         note,
         qrToken: qrToken || undefined,
-        restaurantSlug,
+        restaurantSlug: restaurant?.slug || restaurantSlug,
       });
 
       // Local RealtimeHub publish for immediate cross-tab sync fallback
@@ -696,8 +696,8 @@ export default function CustomerTableMenuPage() {
     setIsRequestingPayment(true);
     try {
       const res = await apiClient.customerOrders.requestPayment(activeOrder.id, {
-        restaurantSlug,
-        tableCode,
+        restaurantSlug: restaurant?.slug || restaurantSlug,
+        tableCode: table?.code || tableCode,
         qrToken: qrToken || '',
         paymentMethod: method,
       });
