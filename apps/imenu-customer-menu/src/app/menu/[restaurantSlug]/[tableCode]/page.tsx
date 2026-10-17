@@ -10,6 +10,9 @@ import {
   realtimeHub,
   soundEngine,
   socketClient,
+  buildReceiptData,
+  downloadReceiptAsPng,
+  renderReceiptToPngDataUrl,
 } from '@imenu/utils';
 import {
   Restaurant,
@@ -59,6 +62,10 @@ import {
   ChefHat,
   Trash2,
   ShoppingCart,
+  Star,
+  Download,
+  Printer,
+  Image as ImageIcon,
 } from 'lucide-react';
 
 export default function CustomerTableMenuPage() {
@@ -113,6 +120,29 @@ export default function CustomerTableMenuPage() {
   const [effectiveBankAccount, setEffectiveBankAccount] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [copiedWifi, setCopiedWifi] = useState<boolean>(false);
+
+  // Phase 11: Review & Digital Bill states
+  const [reviewRating, setReviewRating] = useState<number>(5);
+  const [reviewFoodRating, setReviewFoodRating] = useState<number>(5);
+  const [reviewServiceRating, setReviewServiceRating] = useState<number>(5);
+  const [reviewAmbianceRating, setReviewAmbianceRating] = useState<number>(5);
+  const [reviewQuickTags, setReviewQuickTags] = useState<string[]>([]);
+  const [reviewComment, setReviewComment] = useState<string>('');
+  const [customerName, setCustomerName] = useState<string>('');
+  const [customerPhone, setCustomerPhone] = useState<string>('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState<boolean>(false);
+  const [hasReviewed, setHasReviewed] = useState<boolean>(false);
+  const [receiptPreviewUrl, setReceiptPreviewUrl] = useState<string | null>(null);
+  const [isRenderingPng, setIsRenderingPng] = useState<boolean>(false);
+
+  const QUICK_TAG_OPTIONS = [
+    'Món ăn ngon',
+    'Phục vụ nhiệt tình',
+    'Ra món nhanh',
+    'Không gian sạch sẽ',
+    'Giá cả hợp lý',
+    'Đợi món hơi lâu',
+  ];
 
   // Active orders for this table
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
@@ -715,6 +745,95 @@ export default function CustomerTableMenuPage() {
     } finally {
       setIsRequestingPayment(false);
     }
+  };
+
+  const handleToggleQuickTag = (tag: string) => {
+    setReviewQuickTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
+    );
+  };
+
+  const handleSubmitReview = async () => {
+    const targetOrder = activeOrder || paidSummary;
+    const targetOrderId = targetOrder?._id || targetOrder?.id;
+    if (!targetOrderId) {
+      showToast('Không tìm thấy thông tin đơn hàng để đánh giá');
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    try {
+      const res = await apiClient.reviews.createCustomerReview({
+        orderId: targetOrderId,
+        overallRating: reviewRating,
+        foodRating: reviewFoodRating,
+        serviceRating: reviewServiceRating,
+        ambianceRating: reviewAmbianceRating,
+        quickTags: reviewQuickTags,
+        comment: reviewComment,
+        customerName: customerName.trim() || undefined,
+        customerPhone: customerPhone.trim() || undefined,
+        restaurantSlug: restaurant?.slug || restaurantSlug,
+        tableCode: table?.code || tableCode,
+        qrToken: qrToken || undefined,
+        receiptAccessToken: targetOrder.receiptAccessToken,
+      });
+
+      if (res.data || res.success) {
+        setHasReviewed(true);
+        showToast('⭐ Cảm ơn bạn đã gửi đánh giá chất lượng bữa ăn!');
+      } else {
+        showToast(res.message || 'Không thể gửi đánh giá');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'Đã có lỗi xảy ra khi gửi đánh giá');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const handleDownloadBillPng = async () => {
+    const targetOrder = activeOrder || paidSummary;
+    const targetOrderId = targetOrder?._id || targetOrder?.id;
+    if (!targetOrderId || !restaurant) {
+      showToast('Không tìm thấy thông tin đơn hàng để xuất bill');
+      return;
+    }
+
+    setIsRenderingPng(true);
+    try {
+      let receiptData: any;
+      try {
+        const res = await apiClient.customerOrders.downloadBill(targetOrderId, {
+          restaurantSlug: restaurant?.slug || restaurantSlug,
+          tableCode: table?.code || tableCode,
+          qrToken: qrToken || undefined,
+          receiptAccessToken: targetOrder.receiptAccessToken,
+        });
+        if (res.data) receiptData = res.data;
+      } catch (e) {
+        // Fallback sang local build
+      }
+
+      if (!receiptData) {
+        receiptData = buildReceiptData(targetOrder, restaurant, {
+          billCode: targetOrder.billCode,
+          receiptType: targetOrder.isPaid || targetOrder.status === 'Paid' ? 'FINAL_BILL' : 'PRE_BILL',
+        });
+      }
+
+      const dataUrl = await downloadReceiptAsPng(receiptData);
+      setReceiptPreviewUrl(dataUrl);
+      showToast('📸 Đã tạo ảnh hóa đơn PNG thành công!');
+    } catch (err: any) {
+      showToast(err.message || 'Không thể xuất ảnh hóa đơn');
+    } finally {
+      setIsRenderingPng(false);
+    }
+  };
+
+  const handlePrintBill = () => {
+    window.print();
   };
 
   // Render Loading Screen
@@ -1912,6 +2031,124 @@ export default function CustomerTableMenuPage() {
                 </div>
               </div>
 
+              {/* Nút tải ảnh và in hóa đơn */}
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  onClick={handleDownloadBillPng}
+                  disabled={isRenderingPng}
+                  className="py-2.5 text-xs flex items-center justify-center gap-1.5"
+                >
+                  {isRenderingPng ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Download className="w-3.5 h-3.5 text-emerald-700" />
+                  )}
+                  <span>Lưu Ảnh Bill (PNG)</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handlePrintBill}
+                  className="py-2.5 text-xs flex items-center justify-center gap-1.5"
+                >
+                  <Printer className="w-3.5 h-3.5 text-slate-700" />
+                  <span>In / Lưu PDF</span>
+                </Button>
+              </div>
+
+              {/* Khu vực Đánh giá chất lượng dịch vụ khi đã gọi thanh toán */}
+              {(activeOrder.status === 'PaymentRequested' || activeOrder.isPaid) && (
+                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 text-left">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                      <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                      Đánh giá bữa ăn
+                    </span>
+                    {hasReviewed && (
+                      <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                        Đã gửi đánh giá
+                      </span>
+                    )}
+                  </div>
+
+                  {hasReviewed ? (
+                    <p className="text-xs text-slate-600 italic">
+                      Cảm ơn quý khách đã gửi nhận xét đánh giá chất lượng dịch vụ!
+                    </p>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {/* Chọn số sao */}
+                      <div className="flex items-center gap-1.5 justify-center py-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setReviewRating(star)}
+                            className="p-1 hover:scale-110 transition-transform focus:outline-none"
+                          >
+                            <Star
+                              className={`w-6 h-6 ${
+                                star <= reviewRating
+                                  ? 'text-amber-400 fill-amber-400 drop-shadow-sm'
+                                  : 'text-slate-300'
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Quick tags */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {QUICK_TAG_OPTIONS.map((tag) => {
+                          const isSelected = reviewQuickTags.includes(tag);
+                          return (
+                            <button
+                              key={tag}
+                              type="button"
+                              onClick={() => handleToggleQuickTag(tag)}
+                              className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                                isSelected
+                                  ? 'bg-[#176044] text-white border-[#176044]'
+                                  : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                              }`}
+                            >
+                              {tag}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {/* Ghi chú nhận xét */}
+                      <textarea
+                        rows={2}
+                        value={reviewComment}
+                        onChange={(e) => setReviewComment(e.target.value)}
+                        placeholder="Thêm góp ý giúp nhà hàng nâng cao chất lượng phục vụ..."
+                        maxLength={500}
+                        className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#176044] transition-colors resize-none"
+                      />
+
+                      <Button
+                        variant="primary"
+                        onClick={handleSubmitReview}
+                        disabled={isSubmittingReview}
+                        className="w-full py-2 text-xs"
+                      >
+                        {isSubmittingReview ? (
+                          <div className="flex items-center justify-center gap-1.5">
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Đang gửi đánh giá...</span>
+                          </div>
+                        ) : (
+                          'Gửi đánh giá dịch vụ'
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Các nút gọi thanh toán (khi chưa gọi hoặc muốn đổi phương thức) */}
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <Button
                   variant="secondary"
@@ -2154,6 +2391,121 @@ export default function CustomerTableMenuPage() {
             </div>
           )}
 
+          {/* Nút tải ảnh và in hóa đơn */}
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <Button
+              variant="outline"
+              onClick={handleDownloadBillPng}
+              disabled={isRenderingPng}
+              className="py-2.5 text-xs flex items-center justify-center gap-1.5"
+            >
+              {isRenderingPng ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Download className="w-3.5 h-3.5 text-emerald-700" />
+              )}
+              <span>Lưu Ảnh Bill (PNG)</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handlePrintBill}
+              className="py-2.5 text-xs flex items-center justify-center gap-1.5"
+            >
+              <Printer className="w-3.5 h-3.5 text-slate-700" />
+              <span>In / Lưu PDF</span>
+            </Button>
+          </div>
+
+          {/* Khu vực Đánh giá chất lượng dịch vụ khi đã thanh toán thành công */}
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 text-left">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                <Star className="w-4 h-4 text-amber-500 fill-amber-500" />
+                Đánh giá chất lượng phục vụ
+              </span>
+              {hasReviewed && (
+                <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                  Đã gửi đánh giá
+                </span>
+              )}
+            </div>
+
+            {hasReviewed ? (
+              <p className="text-xs text-slate-600 italic">
+                Cảm ơn quý khách đã gửi nhận xét đánh giá chất lượng dịch vụ!
+              </p>
+            ) : (
+              <div className="space-y-2.5">
+                {/* Chọn số sao */}
+                <div className="flex items-center gap-1.5 justify-center py-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewRating(star)}
+                      className="p-1 hover:scale-110 transition-transform focus:outline-none"
+                    >
+                      <Star
+                        className={`w-6 h-6 ${
+                          star <= reviewRating
+                            ? 'text-amber-400 fill-amber-400 drop-shadow-sm'
+                            : 'text-slate-300'
+                        }`}
+                      />
+                    </button>
+                  ))}
+                </div>
+
+                {/* Quick tags */}
+                <div className="flex flex-wrap gap-1.5">
+                  {QUICK_TAG_OPTIONS.map((tag) => {
+                    const isSelected = reviewQuickTags.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => handleToggleQuickTag(tag)}
+                        className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors ${
+                          isSelected
+                            ? 'bg-[#176044] text-white border-[#176044]'
+                            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                        }`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Ghi chú nhận xét */}
+                <textarea
+                  rows={2}
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  placeholder="Thêm góp ý giúp nhà hàng nâng cao chất lượng phục vụ..."
+                  maxLength={500}
+                  className="w-full px-3 py-1.5 text-xs border border-slate-200 rounded-xl focus:outline-none focus:border-[#176044] transition-colors resize-none"
+                />
+
+                <Button
+                  variant="primary"
+                  onClick={handleSubmitReview}
+                  disabled={isSubmittingReview}
+                  className="w-full py-2 text-xs"
+                >
+                  {isSubmittingReview ? (
+                    <div className="flex items-center justify-center gap-1.5">
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Đang gửi đánh giá...</span>
+                    </div>
+                  ) : (
+                    'Gửi đánh giá dịch vụ'
+                  )}
+                </Button>
+              </div>
+            )}
+          </div>
+
           <Button
             variant="primary"
             onClick={() => {
@@ -2168,6 +2520,46 @@ export default function CustomerTableMenuPage() {
           </Button>
         </div>
       </Modal>
+
+      {/* ================= RECEIPT PREVIEW MODAL (SAFARI / ZALO HELPER) ================= */}
+      {receiptPreviewUrl && (
+        <Modal
+          isOpen={!!receiptPreviewUrl}
+          onClose={() => setReceiptPreviewUrl(null)}
+          title="Hóa đơn thanh toán"
+          subtitle="Chạm và giữ ảnh để lưu về máy (iOS / Zalo Browser)"
+        >
+          <div className="space-y-3 text-center">
+            <div className="max-h-[60vh] overflow-y-auto p-2 bg-slate-100 rounded-2xl flex justify-center border border-slate-200">
+              <img
+                src={receiptPreviewUrl}
+                alt="Hóa đơn"
+                className="w-full max-w-xs shadow-md rounded-lg"
+              />
+            </div>
+            <p className="text-[11px] text-slate-500">
+              💡 Hướng dẫn: Chạm và giữ vào ảnh hóa đơn, sau đó chọn <b>"Lưu hình ảnh"</b> hoặc <b>"Chia sẻ"</b>.
+            </p>
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <a
+                href={receiptPreviewUrl}
+                download="hoa-don-imenu.png"
+                className="py-2.5 px-3 rounded-xl bg-[#176044] text-white text-xs font-semibold flex items-center justify-center gap-1.5 hover:bg-[#124d36] transition-colors"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Tải lại ảnh</span>
+              </a>
+              <Button
+                variant="secondary"
+                onClick={() => setReceiptPreviewUrl(null)}
+                className="py-2.5 text-xs"
+              >
+                Đóng
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* ================= QR REVOKED MODAL ================= */}
       {isQrRevoked && (

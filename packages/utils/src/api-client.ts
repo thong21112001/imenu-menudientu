@@ -16,6 +16,10 @@ import {
   RevenueReportData,
   TopItemsResponseData,
   PublicRestaurantTablesData,
+  ReviewItem,
+  CreateCustomerReviewPayload,
+  ReviewSummaryResult,
+  QueryReviewsParams,
 } from '@imenu/types';
 
 export interface ApiResponse<T = any> {
@@ -1037,13 +1041,26 @@ export const apiClient = {
 
     async getReceipt(
       orderId: string,
-      params: { restaurantSlug: string; tableCode: string; qrToken?: string },
+      params: { restaurantSlug?: string; tableCode?: string; qrToken?: string; receiptAccessToken?: string },
     ) {
       const q = new URLSearchParams();
-      q.append('restaurantSlug', params.restaurantSlug);
-      q.append('tableCode', params.tableCode);
+      if (params.restaurantSlug) q.append('restaurantSlug', params.restaurantSlug);
+      if (params.tableCode) q.append('tableCode', params.tableCode);
       if (params.qrToken) q.append('qrToken', params.qrToken);
+      if (params.receiptAccessToken) q.append('receiptAccessToken', params.receiptAccessToken);
       return request<ReceiptData>(`/orders/customer/${orderId}/receipt?${q.toString()}`);
+    },
+
+    async downloadBill(
+      orderId: string,
+      params: { restaurantSlug?: string; tableCode?: string; qrToken?: string; receiptAccessToken?: string },
+    ) {
+      const q = new URLSearchParams();
+      if (params.restaurantSlug) q.append('restaurantSlug', params.restaurantSlug);
+      if (params.tableCode) q.append('tableCode', params.tableCode);
+      if (params.qrToken) q.append('qrToken', params.qrToken);
+      if (params.receiptAccessToken) q.append('receiptAccessToken', params.receiptAccessToken);
+      return request<ReceiptData>(`/orders/customer/${orderId}/download-bill?${q.toString()}`);
     },
 
     async callStaff(
@@ -1239,6 +1256,69 @@ export const apiClient = {
       if (params?.limit) q.append('limit', String(params.limit));
       const qs = q.toString();
       return request<any>(`/activity-logs${qs ? `?${qs}` : ''}`);
+    },
+  },
+
+  reviews: {
+    async createCustomerReview(payload: CreateCustomerReviewPayload) {
+      return request<ReviewItem>('/reviews/customer', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async getCustomerReviewByOrder(
+      orderId: string,
+      params?: {
+        restaurantSlug?: string;
+        tableCode?: string;
+        qrToken?: string;
+        receiptAccessToken?: string;
+      },
+    ) {
+      const q = new URLSearchParams();
+      if (params?.restaurantSlug) q.append('restaurantSlug', params.restaurantSlug);
+      if (params?.tableCode) q.append('tableCode', params.tableCode);
+      if (params?.qrToken) q.append('qrToken', params.qrToken);
+      if (params?.receiptAccessToken) q.append('receiptAccessToken', params.receiptAccessToken);
+      const queryStr = q.toString() ? `?${q.toString()}` : '';
+      return request<ReviewItem>(`/reviews/customer/by-order/${orderId}${queryStr}`);
+    },
+
+    async list(params?: QueryReviewsParams) {
+      const q = new URLSearchParams();
+      if (params?.branchId) q.append('branchId', params.branchId);
+      if (params?.rating) q.append('rating', String(params.rating));
+      if (params?.hasReply !== undefined) q.append('hasReply', String(params.hasReply));
+      if (params?.fromDate) q.append('fromDate', params.fromDate);
+      if (params?.toDate) q.append('toDate', params.toDate);
+      if (params?.search) q.append('search', params.search);
+      if (params?.page) q.append('page', String(params.page));
+      if (params?.limit) q.append('limit', String(params.limit));
+      const queryStr = q.toString() ? `?${q.toString()}` : '';
+      return request<{ items: ReviewItem[]; total: number; page: number; limit: number; totalPages: number }>(
+        `/reviews${queryStr}`,
+      );
+    },
+
+    async getSummary(params?: { branchId?: string }) {
+      const q = new URLSearchParams();
+      if (params?.branchId) q.append('branchId', params.branchId);
+      const queryStr = q.toString() ? `?${q.toString()}` : '';
+      return request<ReviewSummaryResult>(`/reviews/summary${queryStr}`);
+    },
+
+    async reply(id: string, payload: { content: string }) {
+      return request<ReviewItem>(`/reviews/${id}/reply`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async toggleHidden(id: string) {
+      return request<ReviewItem>(`/reviews/${id}/toggle-hidden`, {
+        method: 'PATCH',
+      });
     },
   },
 

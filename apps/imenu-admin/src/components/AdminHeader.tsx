@@ -278,6 +278,30 @@ export const AdminHeader: React.FC = () => {
         if (payload.data?.status === 'Ready') {
           soundEngine.playReadyChime();
         }
+      } else if (payload.type === 'NEW_REVIEW' || payload.type === 'review:created') {
+        const revData = payload.data || {};
+        const rating = Number(revData.overallRating) || 5;
+        const isLow = rating <= 2;
+        if (isLow) {
+          soundEngine.playCallStaffChime();
+        }
+        const newNotif: AdminNotificationItem = {
+          id: `rev_${revData.reviewId || now}`,
+          priority: isLow ? 'URGENT' : 'NORMAL',
+          type: 'REVIEW',
+          title: isLow ? `⚠️ Cảnh báo đánh giá thấp (${rating}⭐)` : `⭐ Đánh giá mới (${rating}⭐)`,
+          message: `${revData.tableName || 'Bàn ăn'}: "${revData.comment || 'Khách gửi đánh giá bữa ăn'}"`,
+          tableName: revData.tableName,
+          timestamp: now,
+          isRead: false,
+          actionUrl: `/reviews`,
+        };
+        setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id)].slice(0, 50));
+        if (isLow) {
+          toast.warning(`⚠️ Bàn ${revData.tableName || ''} đánh giá ${rating} sao! Cần kiểm tra.`);
+        } else {
+          toast.info(`⭐ Nhận đánh giá mới ${rating} sao từ bàn ${revData.tableName || ''}`);
+        }
       }
     });
 

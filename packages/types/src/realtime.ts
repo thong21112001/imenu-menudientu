@@ -80,7 +80,7 @@ export interface TableQrUpdatedPayload {
 export interface AdminNotificationItem {
   id: string;
   priority: 'URGENT' | 'HIGH' | 'NORMAL' | 'INFO';
-  type: 'CALL_STAFF' | 'PAYMENT_REQUESTED' | 'NEW_ORDER' | 'ROUND_ADDED' | 'ITEM_READY' | 'SYSTEM';
+  type: 'CALL_STAFF' | 'PAYMENT_REQUESTED' | 'NEW_ORDER' | 'ROUND_ADDED' | 'ITEM_READY' | 'SYSTEM' | 'REVIEW';
   title: string;
   message: string;
   tableId?: string;

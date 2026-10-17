@@ -43,6 +43,10 @@ const ROUTE_PERMISSIONS_MAP: Record<string, { permissions: string[]; name: strin
     permissions: ['perm-rep-view'],
     name: 'Báo Cáo & Doanh Thu',
   },
+  '/reviews': {
+    permissions: ['perm-review-view'],
+    name: 'Đánh Giá Khách Hàng',
+  },
   '/staff': {
     permissions: ['perm-staff-manage', 'perm-role-manage'],
     name: 'Nhân Viên & Phân Quyền',
