@@ -448,6 +448,12 @@ Tệp `packages/utils/tests/sdk-contract.test.ts` tự động dựng một Mock
 - **SDK-30**: `tables.callStaff` map chính xác `POST /api/tables/:tableId/call-staff` với payload.
 - **SDK-31**: `tables.acknowledgeCall` map chính xác `POST /api/tables/:tableId/acknowledge-call`.
 - **SDK-32**: `customerOrders.callStaff` map chính xác `POST /api/tables/:tableId/call-staff`.
+- **SDK-33**: `customerOrders.downloadBill` map chính xác `GET /api/orders/customer/:id/download-bill` với `receiptAccessToken`.
+- **SDK-34**: `reviews.createCustomerReview` map chính xác `POST /api/reviews/customer`.
+- **SDK-35**: `reviews.getCustomerReviewByOrder` map chính xác `GET /api/reviews/customer/by-order/:orderId`.
+- **SDK-36**: `reviews.list` map chính xác `GET /api/reviews` kèm đầy đủ bộ lọc phân trang và chi nhánh.
+- **SDK-37**: `reviews.getSummary & reviews.reply` map chính xác các backend routes.
+- **SDK-38**: `renderReceiptToPngDataUrl` biên dịch thành công ảnh Data URL chuẩn cho hóa đơn nhiệt 80mm Retina (640px, scale=2).
 
 ### Chi Tiết Kịch Bản E2E Trình Duyệt Đa Tab Thời Gian Thực (`node scripts/e2e-realtime-ecosystem.mjs`)
 Tệp `scripts/e2e-realtime-ecosystem.mjs` kiểm chứng chu trình đồng bộ thời gian thực đa tab trên Google Chrome (3 Checkpoints):
@@ -524,7 +530,15 @@ Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai 
 
 ## 📄 10. Trạng Thái Dự Án & Nghiệm Thu (Project Status)
 
-### Phase 10: Thời Gian Thực, Phân Lập Phòng WebSocket & Hoàn Thiện Hệ Sinh Thái — ✅ ĐÃ NGHIỆM THU & HOÀN TẤT TOÀN BỘ LỘ TRÌNH 10/10 PHASES
+### Phase 11: Đánh Giá Khách Hàng Theo Chi Nhánh & Tải Hóa Đơn Điện Tử — ✅ ĐÃ NGHIỆM THU & HOÀN TẤT TOÀN BỘ LỘ TRÌNH 11/11 PHASES
+- **Đánh Giá Khách Hàng Phân Lập Chi Nhánh (`/reviews`)**: Trang quản lý đánh giá toàn diện với CSAT KPI cards, phân rã 1–5 sao, bộ lọc chi nhánh độc lập, modal phản hồi nhanh và quyền kiểm duyệt ẩn/hiện chỉ dành cho Chủ quán.
+- **Tải Hóa Đơn Điện Tử Sau Khi Giải Phóng Bàn (Token 24h & Canvas 2D)**: Cấp phát mã `receiptAccessToken` dạng crypto hex 48 ký tự, cho phép khách tải và xem lại hóa đơn trong vòng 24 giờ kể từ khi thanh toán.
+- **Bộ Kết Xuất Hóa Đơn Nhiệt 80mm Retina 2D Canvas**: Module `@imenu/utils` (`renderReceiptToPngDataUrl`) kết xuất ảnh PNG sắc nét (640px, scale=2), tích hợp modal xem trước ảnh tương thích tuyệt đối với Safari iOS và Zalo in-app browser.
+- **Chuông Báo & Cảnh Báo Realtime**: Sự kiện `review:created` phát tức thì qua WebSocket tới phòng chi nhánh; tự động rung chuông cảnh báo đặc biệt khi nhận đánh giá tiêu cực $\le 2$ sao.
+- **Hợp Đồng SDK Frontend (`@imenu/utils`)**: Đạt **40 / 40 ca test PASS (100%)** với các phương thức bổ sung `SDK-33` đến `SDK-38`.
+- **Bảo Mật & Gia Cố Đối Kháng (AUD-11.1 đến AUD-11.7)**: CAS Atomic Concurrency 10 requests đồng thời, chặn đứng IDOR mã bàn, kiểm duyệt phân quyền Owner, nhật ký kiểm toán `activity-logs`.
+
+### Phase 10: Thời Gian Thực, Phân Lập Phòng WebSocket & Hoàn Thiện Hệ Sinh Thái — ✅ ĐÃ NGHIỆM THU
 - **Khách Gọi Nhân Viên & Tiếp Nhận Hai Chiều**: Luồng gửi yêu cầu từ bàn ăn (`callStaff`) và tiếp nhận trên Admin POS (`acknowledgeCall`) kèm phát âm thanh chuông reo và thông báo Toast phản hồi thời gian thực tới bàn khách.
 - **Bảo Mật Phòng WebSocket & Phân Lập Chi Nhánh**: Phân cấp phòng nghiêm ngặt (`restaurant_${id}`, `branch_${id}`, `table_${id}`), cô lập tuyệt đối khách vãng lai khỏi các kênh nội bộ, dọn sạch phòng cũ khi nhân viên đổi chi nhánh (`client.leave(r)`).
 - **Ma Trận Sự Kiện Miền Thời Gian Thực**: Chuẩn hóa 7 nhóm sự kiện miền phủ kín toàn bộ chu trình F&B: Đơn hàng mới, Cập nhật đơn hàng, Trạng thái món ăn, Sơ đồ bàn ăn, Gọi nhân viên, Thanh toán & Hóa đơn, Báo hết món (86).
