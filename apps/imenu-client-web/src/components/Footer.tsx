@@ -5,16 +5,14 @@ import Link from 'next/link';
 import { Logo } from '@imenu/ui';
 import {
   Globe,
-  ShieldCheck,
   Printer,
-  QrCode,
-  Zap,
-  ArrowUpRight,
-  Sparkles,
   CreditCard,
-  Laptop,
-  CheckCircle2,
   Lock,
+  ArrowUpRight,
+  ShieldCheck,
+  Trash2,
+  Briefcase,
+  BookOpen,
 } from 'lucide-react';
 
 export const Footer: React.FC = () => {
@@ -22,10 +20,10 @@ export const Footer: React.FC = () => {
     <footer className="bg-slate-950 text-slate-300 pt-16 pb-12 border-t border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* 5-Column Grid */}
+        {/* 4-Column Responsive Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 lg:gap-8 pb-14 border-b border-slate-800/80">
           
-          {/* Column 1-2 (5 cols on lg): Brand & Trust Signals */}
+          {/* Cột 1 (4 cols trên lg): Thương hiệu & Tín nhiệm */}
           <div className="lg:col-span-4 space-y-5">
             <Link href="/" className="inline-block hover:opacity-95 transition-opacity">
               <Logo light size="lg" />
@@ -57,16 +55,16 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
-          {/* Column 3 (2.5 cols on lg): Giải pháp F&B */}
+          {/* Cột 2 (3 cols trên lg): Sản phẩm & Giải pháp */}
           <div className="lg:col-span-3 space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
               <span className="w-1.5 h-3.5 rounded bg-emerald-500" />
-              Giải pháp F&B
+              Sản phẩm & Giải pháp
             </h4>
             <ul className="space-y-2.5 text-sm text-slate-400">
               <li>
-                <Link href="/#workflow" className="hover:text-emerald-400 transition-colors flex items-center justify-between group">
-                  <span>Menu QR tại bàn</span>
+                <Link href="/#features" className="hover:text-emerald-400 transition-colors flex items-center justify-between group">
+                  <span>Menu điện tử QR tại bàn</span>
                   <span className="text-[10px] text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">Khuyên dùng</span>
                 </Link>
               </li>
@@ -77,34 +75,46 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <Link href="/#features" className="hover:text-emerald-400 transition-colors">
-                  Phần mềm POS & Sơ đồ bàn
+                <Link href="/#workflow" className="hover:text-emerald-400 transition-colors">
+                  Phần mềm POS & Bếp KDS
                 </Link>
               </li>
               <li>
-                <Link href="/#features" className="hover:text-emerald-400 transition-colors">
-                  Màn hình Bếp KDS (FIFO)
+                <Link href="/#comparison" className="hover:text-emerald-400 transition-colors">
+                  So sánh giải pháp
                 </Link>
               </li>
               <li>
-                <Link href="/#roles" className="hover:text-emerald-400 transition-colors">
-                  Quản trị chuỗi đa chi nhánh
+                <Link href="/#pricing" className="hover:text-emerald-400 transition-colors">
+                  Bảng giá & Ưu đãi máy in
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 4 (2.5 cols on lg): Khám phá & Trải nghiệm */}
+          {/* Cột 3 (3 cols trên lg): Kiến thức & Hợp tác */}
           <div className="lg:col-span-3 space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
               <span className="w-1.5 h-3.5 rounded bg-amber-500" />
-              Khám phá & Trải nghiệm
+              Kiến thức & Hợp tác
             </h4>
             <ul className="space-y-2.5 text-sm">
               <li>
                 <Link href="/huong-dan" className="text-emerald-400 hover:text-emerald-300 font-bold transition-colors flex items-center gap-1.5">
-                  <span>📖 Hướng dẫn vận hành 7 bước</span>
-                  <span className="text-[10px] bg-emerald-950 text-emerald-300 px-1.5 py-0.2 rounded border border-emerald-800/80">Hot</span>
+                  <span>📖 Hướng dẫn sử dụng (7 bước)</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/kien-thuc" className="text-slate-300 hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <span>📚 Kiến thức quản lý quán F&B</span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/tuyen-dung-nhan-vien-kinh-doanh" className="text-amber-300 hover:text-amber-200 font-semibold transition-colors flex items-center justify-between group">
+                  <span>💼 Tuyển nhân viên kinh doanh</span>
+                  <span className="text-[10px] font-bold text-amber-950 bg-amber-400 px-1.5 py-0.2 rounded">
+                    Đang tuyển
+                  </span>
                 </Link>
               </li>
               <li>
@@ -114,7 +124,7 @@ export const Footer: React.FC = () => {
                   rel="noreferrer"
                   className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 group"
                 >
-                  <span>Mở thử Menu Khách QR</span>
+                  <span>📱 Trải nghiệm Demo Menu QR</span>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 transition-colors" />
                 </a>
               </li>
@@ -125,48 +135,38 @@ export const Footer: React.FC = () => {
                   rel="noreferrer"
                   className="text-slate-400 hover:text-emerald-400 transition-colors flex items-center gap-1 group"
                 >
-                  <span>Mở thử Quản trị POS / KDS</span>
+                  <span>🖥️ Trải nghiệm Demo Admin POS</span>
                   <ArrowUpRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-400 transition-colors" />
                 </a>
-              </li>
-              <li>
-                <Link href="/#pricing" className="text-slate-400 hover:text-emerald-400 transition-colors">
-                  Bảng giá & Ưu đãi máy in
-                </Link>
-              </li>
-              <li>
-                <Link href="/#comparison" className="text-slate-400 hover:text-emerald-400 transition-colors">
-                  So sánh giải pháp
-                </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 5 (2 cols on lg): Hỗ trợ & Bảo mật */}
+          {/* Cột 4 (2 cols trên lg): Bảo mật & Pháp lý */}
           <div className="lg:col-span-2 space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
               <span className="w-1.5 h-3.5 rounded bg-teal-500" />
-              Hỗ trợ & Bảo mật
+              Bảo mật & Pháp lý
             </h4>
             <ul className="space-y-2.5 text-sm text-slate-400">
               <li>
-                <Link href="/#faq" className="hover:text-emerald-400 transition-colors">
-                  Câu hỏi thường gặp
+                <Link href="/chinh-sach-quyen-rieng-tu" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <span>🛡️ Chính sách quyền riêng tư</span>
                 </Link>
               </li>
               <li>
-                <Link href="/#roles" className="hover:text-emerald-400 transition-colors">
-                  Phân quyền & Bảo mật dữ liệu
+                <Link href="/xoa-du-lieu" className="hover:text-rose-400 transition-colors flex items-center gap-1.5">
+                  <span>🗑️ Hướng dẫn xóa dữ liệu</span>
                 </Link>
               </li>
               <li>
-                <Link href="/dang-ky" className="hover:text-emerald-400 transition-colors font-semibold text-emerald-300">
-                  Đăng ký quán mới
+                <Link href="/#roles" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <span>🔐 Phân quyền & Bảo mật RBAC</span>
                 </Link>
               </li>
               <li>
-                <Link href="/dang-nhap" className="hover:text-emerald-400 transition-colors">
-                  Đăng nhập hệ thống
+                <Link href="/#faq" className="hover:text-emerald-400 transition-colors flex items-center gap-1.5">
+                  <span>❓ Câu hỏi thường gặp</span>
                 </Link>
               </li>
             </ul>
@@ -174,19 +174,28 @@ export const Footer: React.FC = () => {
 
         </div>
 
-        {/* Bottom Bar */}
+        {/* Dòng bản quyền dưới đáy */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
           <div className="flex flex-wrap items-center gap-3 text-slate-400">
-            <span>© 2026 iMenu Platform. Đồng hành cùng nhà hàng Việt.</span>
+            <span>© 2026 Hệ sinh thái Nền tảng Quản lý Nhà hàng iMenu. Mọi quyền được bảo lưu.</span>
             <span className="hidden sm:inline text-slate-700">·</span>
-            <span className="inline-flex items-center gap-1 text-slate-400">
+            <Link href="/chinh-sach-quyen-rieng-tu" className="hover:text-emerald-400 transition-colors underline">
+              Chính sách quyền riêng tư
+            </Link>
+            <span className="hidden sm:inline text-slate-700">·</span>
+            <Link href="/xoa-du-lieu" className="hover:text-rose-400 transition-colors underline">
+              Yêu cầu xóa dữ liệu
+            </Link>
+          </div>
+          <div className="flex flex-wrap items-center gap-4 text-slate-400">
+            <span className="inline-flex items-center gap-1">
               <Lock className="w-3.5 h-3.5 text-emerald-500" />
               Mã hóa dữ liệu chuẩn AES-256
             </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-6">
-            <span className="text-slate-400">Hạ tầng Cloud Realtime WebSocket</span>
-            <span className="text-slate-400">Hỗ trợ kỹ thuật 24/7</span>
+            <span className="hidden md:inline text-slate-700">·</span>
+            <span>Hạ tầng Cloud Realtime WebSocket</span>
+            <span className="hidden md:inline text-slate-700">·</span>
+            <span>Hỗ trợ kỹ thuật 24/7</span>
           </div>
         </div>
 

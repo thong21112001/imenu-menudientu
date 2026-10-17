@@ -46,6 +46,8 @@ import {
   DollarSign,
   Coffee,
   FileText,
+  BookOpen,
+  Briefcase,
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -927,6 +929,141 @@ export default function LandingPage() {
               <p className="text-xs text-slate-500 leading-relaxed">
                 Xem vé bếp theo thứ tự gọi món FIFO, đánh dấu món hoàn thành và báo hết hàng (86).
               </p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* =========================================================================
+       * PHÂN KHU LỐI TẮT: KIẾN THỨC CHỦ QUÁN & CƠ HỘI HỢP TÁC KINH DOANH (BENTO CARDS)
+       * ========================================================================= */}
+      <section className="py-16 sm:py-20 bg-gradient-to-b from-white via-slate-50/80 to-white border-b border-slate-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          
+          <div className="text-center space-y-2.5 max-w-2xl mx-auto">
+            <span className="text-xs font-bold text-emerald-700 tracking-widest uppercase">
+              Đồng Hành & Phát Triển Cùng iMenu
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+              Kiến thức vận hành thực chiến & Cơ hội hợp tác
+            </h2>
+            <p className="text-sm text-slate-600">
+              Cung cấp giải pháp quản trị bài bản cho chủ quán F&B và chính sách thu nhập hấp dẫn cho đối tác phát triển thị trường toàn quốc.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+            {/* Thẻ 1: Dành cho Chủ quán F&B */}
+            <div className="group relative rounded-3xl bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 text-white p-7 sm:p-9 shadow-xl border border-emerald-800/80 flex flex-col justify-between overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="space-y-4 relative z-10">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-800/80 border border-emerald-600/60 text-xs font-extrabold text-emerald-200">
+                    <BookOpen className="w-3.5 h-3.5 text-emerald-300" />
+                    Dành Cho Chủ Quán F&B
+                  </span>
+                  <span className="text-[11px] text-emerald-300/80 font-medium">Cập nhật 2026</span>
+                </div>
+
+                <h3 className="text-xl sm:text-2xl font-extrabold leading-snug text-white">
+                  📚 Cẩm nang & Kiến thức vận hành F&B thực chiến
+                </h3>
+
+                <p className="text-sm text-emerald-100/80 leading-relaxed">
+                  Cách tính giá vốn (Food Cost), ghi sổ doanh thu 2026, giải pháp chống nhân viên &ldquo;đá bill&rdquo;, thất thoát nguyên liệu và tối ưu quy trình gọi món QR tại bàn.
+                </p>
+
+                <div className="grid grid-cols-2 gap-2.5 pt-2 text-xs text-emerald-200/90 font-medium">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Quản trị Food Cost chuẩn</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Chống thất thoát bill</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Bếp FIFO không tắc nghẽn</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <span>Kinh nghiệm marketing quán</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-8 relative z-10">
+                <Link href="/kien-thuc" className="inline-block w-full sm:w-auto">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="w-full sm:w-auto bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold px-6 py-2.5 shadow-lg shadow-emerald-950/40 border-0 flex items-center justify-center gap-2"
+                  >
+                    <span>Đọc cẩm nang chủ quán</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* Thẻ 2: Dành cho Nhân viên kinh doanh & Cộng tác viên */}
+            <div className="group relative rounded-3xl bg-gradient-to-br from-slate-900 via-amber-950/70 to-slate-900 text-white p-7 sm:p-9 shadow-xl border border-amber-800/60 flex flex-col justify-between overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+              <div className="space-y-4 relative z-10">
+                <div className="flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-900/80 border border-amber-600/60 text-xs font-extrabold text-amber-200">
+                    <Briefcase className="w-3.5 h-3.5 text-amber-300" />
+                    Cơ Hội Hợp Tác & Tuyển Dụng
+                  </span>
+                  <span className="text-[11px] font-extrabold text-amber-300 bg-amber-950/90 border border-amber-500/40 px-2.5 py-0.5 rounded-full">
+                    Hoa hồng 50%
+                  </span>
+                </div>
+
+                <h3 className="text-xl sm:text-2xl font-extrabold leading-snug text-white">
+                  💼 Tuyển Nhân viên Kinh doanh & Đối tác Phát triển Thị trường Toàn quốc
+                </h3>
+
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  Làm việc từ xa chủ động thời gian, nhận ngay <strong>50% phí triển khai (tối thiểu 500K/quán)</strong> cùng <strong>20% hoa hồng duy trì hằng năm</strong> cho mỗi khách hàng tái ký trọn đời.
+                </p>
+
+                <div className="grid grid-cols-2 gap-2.5 pt-2 text-xs text-amber-200/90 font-medium">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Hoa hồng 50% tiền tươi</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>20% doanh thu tái ký trọn đời</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Làm việc tự do toàn quốc</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                    <span>Hỗ trợ tài liệu & đào tạo A-Z</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-8 relative z-10">
+                <Link href="/tuyen-dung-nhan-vien-kinh-doanh" className="inline-block w-full sm:w-auto">
+                  <Button
+                    variant="primary"
+                    size="md"
+                    className="w-full sm:w-auto bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-6 py-2.5 shadow-lg shadow-amber-950/40 border-0 flex items-center justify-center gap-2"
+                  >
+                    <span>Xem chính sách thu nhập & Ứng tuyển</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
 
