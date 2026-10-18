@@ -1,12 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Logo, Button } from '@imenu/ui';
-import { CheckCircle2, ArrowRight, AlertCircle, Loader2, Sparkles } from 'lucide-react';
+import { CheckCircle2, ArrowRight, AlertCircle, Loader2, Sparkles, UserCheck, ShieldCheck } from 'lucide-react';
 import { apiClient } from '@imenu/utils';
 
-export default function RegisterPage() {
+function RegisterForm() {
+  const searchParams = useSearchParams();
   const [restaurantName, setRestaurantName] = useState('Bếp Nhà - Ẩm Thực Việt');
   const [restaurantPhone, setRestaurantPhone] = useState('0908 123 456');
   const [address, setAddress] = useState('Số 68 Đường Nguyễn Huệ, Phường Bến Nghé, Quận 1, TP.HCM');
@@ -15,10 +17,58 @@ export default function RegisterPage() {
   const [email, setEmail] = useState('owner@sample.vn');
   const [password, setPassword] = useState(process.env.NEXT_PUBLIC_DEMO_PASSWORD || '');
   const [confirmPassword, setConfirmPassword] = useState(process.env.NEXT_PUBLIC_DEMO_PASSWORD || '');
+  
+  // Affiliate & Referral State
+  const [referralCode, setReferralCode] = useState('');
+  const [isFromAffiliateLink, setIsFromAffiliateLink] = useState(false);
+  const [salesRep, setSalesRep] = useState<{ fullName: string; phone?: string; referralCode: string } | null>(null);
+  const [validatingRef, setValidatingRef] = useState(false);
+  const [refError, setRefError] = useState('');
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
   const [successData, setSuccessData] = useState<{ restaurantName: string; redirectUrl: string } | null>(null);
+
+  useEffect(() => {
+    const urlRef = searchParams.get('ref');
+    const storedRef = typeof window !== 'undefined' ? localStorage.getItem('imenu_ref_code') : null;
+    const initialCode = urlRef || storedRef || '';
+
+    if (initialCode) {
+      setReferralCode(initialCode.toUpperCase());
+      if (urlRef) {
+        setIsFromAffiliateLink(true);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('imenu_ref_code', urlRef.toUpperCase());
+        }
+      }
+      validateCode(initialCode.toUpperCase());
+    }
+  }, [searchParams]);
+
+  const validateCode = async (code: string) => {
+    if (!code.trim()) {
+      setSalesRep(null);
+      setRefError('');
+      return;
+    }
+    setValidatingRef(true);
+    setRefError('');
+    try {
+      const res = await apiClient.referrals.validateCode(code.trim());
+      if (res.data?.valid) {
+        setSalesRep(res.data);
+      } else {
+        setSalesRep(null);
+        setRefError('Mã giới thiệu không hợp lệ hoặc đã hết hạn');
+      }
+    } catch {
+      setSalesRep(null);
+      setRefError('Mã giới thiệu không tồn tại trên hệ thống');
+    } finally {
+      setValidatingRef(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +85,7 @@ export default function RegisterPage() {
     setError('');
 
     try {
+      const cleanRef = referralCode.trim().toUpperCase();
       const res = await apiClient.auth.register({
         restaurant: {
           name: restaurantName,
@@ -47,6 +98,12 @@ export default function RegisterPage() {
           email: email,
           password: password,
         },
+        referralCode: cleanRef || undefined,
+        acquisitionChannel: isFromAffiliateLink
+          ? 'AFFILIATE_LINK'
+          : cleanRef
+          ? 'REFERRAL_CODE'
+          : 'ORGANIC',
       });
 
       const token = res.data?.accessToken;
@@ -229,6 +286,55 @@ export default function RegisterPage() {
                 </div>
               </div>
 
+              {/* Referral & Partner Code (Phase 12) */}
+              <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200/80 space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-amber-900 uppercase tracking-wider flex items-center gap-1.5">
+                    <ShieldCheck className="w-4 h-4 text-amber-600" />
+                    3. Chuyên viên hỗ trợ / Mã giới thiệu (Tùy chọn)
+                  </h3>
+                  {isFromAffiliateLink && (
+                    <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                      Link liên kết đối tác
+                    </span>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={referralCode}
+                    onChange={(e) => {
+                      const val = e.target.value.toUpperCase();
+                      setReferralCode(val);
+                      validateCode(val);
+                    }}
+                    placeholder="Ví dụ: IMENU-DEMO88"
+                    className="w-full px-3.5 py-2 uppercase font-mono tracking-wider rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none bg-white"
+                  />
+                  {validatingRef && (
+                    <div className="absolute right-3 top-2.5">
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                    </div>
+                  )}
+                </div>
+
+                {salesRep && (
+                  <div className="p-2.5 rounded-xl bg-emerald-100/70 border border-emerald-300 flex items-center gap-2 text-xs text-emerald-900 font-medium animate-in fade-in">
+                    <UserCheck className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>
+                      Chuyên viên hỗ trợ đồng hành: <strong>{salesRep.fullName}</strong> ({salesRep.referralCode})
+                    </span>
+                  </div>
+                )}
+
+                {refError && !validatingRef && (
+                  <p className="text-xs text-rose-600 font-medium">
+                    {refError}
+                  </p>
+                )}
+              </div>
+
               <Button
                 type="submit"
                 variant="primary"
@@ -307,5 +413,19 @@ export default function RegisterPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-700" />
+        </div>
+      }
+    >
+      <RegisterForm />
+    </Suspense>
   );
 }

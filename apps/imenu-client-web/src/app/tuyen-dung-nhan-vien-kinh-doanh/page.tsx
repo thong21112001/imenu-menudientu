@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Header } from '../../components/Header';
 import { Footer } from '../../components/Footer';
 import { Button } from '@imenu/ui';
+import { apiClient } from '@imenu/utils';
 import {
   Briefcase,
   ChevronRight,
@@ -32,9 +34,13 @@ import {
   BadgePercent,
   Calculator,
   Store,
+  AlertCircle,
+  Loader2,
+  UserCheck,
 } from 'lucide-react';
 
-export default function TuyenDungKinhDoanhPage() {
+function TuyenDungKinhDoanhContent() {
+  const searchParams = useSearchParams();
   // Simulator State
   const [directStores, setDirectStores] = useState<number>(5);
   const [subStores, setSubStores] = useState<number>(3);
@@ -45,11 +51,20 @@ export default function TuyenDungKinhDoanhPage() {
   const [email, setEmail] = useState('');
   const [city, setCity] = useState('');
   const [note, setNote] = useState('');
+  const [parentRef, setParentRef] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   // FAQ Accordion State
   const [openFaq, setOpenFaq] = useState<number | null>(0);
+
+  useEffect(() => {
+    const pRef = searchParams.get('parentRef') || searchParams.get('ref') || '';
+    if (pRef) {
+      setParentRef(pRef.toUpperCase());
+    }
+  }, [searchParams]);
 
   // Calculation
   // 1. Phí setup: directStores * 500.000₫
@@ -63,14 +78,28 @@ export default function TuyenDungKinhDoanhPage() {
   // Thu nhập duy trì năm tiếp theo (20% phí duy trì hằng năm: 600.000₫ / quán / năm)
   const passiveAnnualIncome = (directStores + subStores) * 600000;
 
-  const handleSubmitApplication = (e: React.FormEvent) => {
+  const handleSubmitApplication = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName || !phone) return;
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
+    setSubmitError('');
+
+    try {
+      const appEmail = email.trim() || `${phone.trim().replace(/\s+/g, '')}@partner.imenu.vn`;
+      await apiClient.referrals.submitApplication({
+        fullName: fullName.trim(),
+        phone: phone.trim(),
+        email: appEmail,
+        city: city.trim(),
+        note: note.trim(),
+        parentReferralCode: parentRef || undefined,
+      });
       setIsSubmitted(true);
-    }, 800);
+    } catch (err: any) {
+      setSubmitError(err.message || 'Đăng ký ứng tuyển thất bại. Vui lòng kiểm tra lại thông tin.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const candidateFaqs = [
@@ -649,6 +678,22 @@ export default function TuyenDungKinhDoanhPage() {
               </div>
             ) : (
               <form onSubmit={handleSubmitApplication} className="space-y-4">
+                {parentRef && (
+                  <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-xs text-amber-900 font-medium">
+                    <UserCheck className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>
+                      Được giới thiệu bởi Chuyên viên / CTV: <strong className="font-mono">{parentRef}</strong>
+                    </span>
+                  </div>
+                )}
+
+                {submitError && (
+                  <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl flex items-center gap-2 text-xs text-rose-700 font-medium">
+                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                    <span>{submitError}</span>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-800">
@@ -793,3 +838,18 @@ export default function TuyenDungKinhDoanhPage() {
     </div>
   );
 }
+
+export default function TuyenDungKinhDoanhPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-700" />
+        </div>
+      }
+    >
+      <TuyenDungKinhDoanhContent />
+    </Suspense>
+  );
+}
+

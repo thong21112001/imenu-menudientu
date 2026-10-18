@@ -1099,6 +1099,182 @@ async function runSdkContractTests() {
       fail('SDK-38: renderReceiptToPngDataUrl trả về định dạng ảnh không hợp lệ', pngDataUrl);
       failed++;
     }
+
+    // -------------------------------------------------------------------------
+    // TEST 39: Phase 12 - referrals.validateCode
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.referrals.validateCode('IMENU-DEMO88');
+    const req39 = capturedRequests[0];
+    if (
+      req39?.method === 'GET' &&
+      req39?.url === '/api/referrals/validate/IMENU-DEMO88'
+    ) {
+      pass('SDK-39: referrals.validateCode map chính xác GET /api/referrals/validate/:code');
+      passed++;
+    } else {
+      fail('SDK-39: referrals.validateCode sai route', req39);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 40: Phase 12 - referrals.submitApplication
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.referrals.submitApplication({
+      fullName: 'Trần Văn CTV',
+      phone: '0901234888',
+      email: 'ctv@gmail.com',
+      city: 'Hà Nội',
+      note: 'Muốn làm CTV',
+      parentReferralCode: 'IMENU-DEMO88',
+    });
+    const req40 = capturedRequests[0];
+    const parsedBody40 = req40 ? JSON.parse(req40.body) : {};
+    if (
+      req40?.method === 'POST' &&
+      req40?.url === '/api/referrals/apply' &&
+      parsedBody40.fullName === 'Trần Văn CTV' &&
+      parsedBody40.parentReferralCode === 'IMENU-DEMO88'
+    ) {
+      pass('SDK-40: referrals.submitApplication map chính xác POST /api/referrals/apply');
+      passed++;
+    } else {
+      fail('SDK-40: referrals.submitApplication sai route hoặc body', { req40, parsedBody40 });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 41: Phase 12 - sales.getDashboard
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.sales.getDashboard();
+    const req41 = capturedRequests[0];
+    if (
+      req41?.method === 'GET' &&
+      req41?.url === '/api/sales/dashboard'
+    ) {
+      pass('SDK-41: sales.getDashboard map chính xác GET /api/sales/dashboard');
+      passed++;
+    } else {
+      fail('SDK-41: sales.getDashboard sai route', req41);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 42: Phase 12 - sales.getRestaurants
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.sales.getRestaurants({
+      search: 'Bếp Nhà',
+      subscriptionStatus: 'ACTIVE_PAID',
+      isActivationQualified: true,
+      page: 1,
+      limit: 10,
+    });
+    const req42 = capturedRequests[0];
+    if (
+      req42?.method === 'GET' &&
+      req42?.url?.includes('/api/sales/restaurants?') &&
+      req42?.url?.includes('search=B%E1%BA%BFp+Nh%C3%A0') &&
+      req42?.url?.includes('subscriptionStatus=ACTIVE_PAID') &&
+      req42?.url?.includes('isActivationQualified=true')
+    ) {
+      pass('SDK-42: sales.getRestaurants map chính xác GET /api/sales/restaurants kèm bộ lọc');
+      passed++;
+    } else {
+      fail('SDK-42: sales.getRestaurants sai route hoặc query params', req42);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 43: Phase 12 - sales.createRestaurant
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.sales.createRestaurant({
+      restaurant: {
+        name: 'Quán Ăn Hoàng Gia',
+        phone: '0909999111',
+        address: '88 Phố Huế, Q.Hai Bà Trưng, Hà Nội',
+        tagline: 'Tinh hoa ẩm thực',
+      },
+      owner: {
+        fullName: 'Lê Hoàng',
+        phone: '0909999111',
+        email: 'lehoang@nhahang.vn',
+        password: 'Password@123',
+      },
+      seedDemoTables: true,
+      seedDemoMenu: true,
+    });
+    const req43 = capturedRequests[0];
+    const parsedBody43 = req43 ? JSON.parse(req43.body) : {};
+    if (
+      req43?.method === 'POST' &&
+      req43?.url === '/api/sales/restaurants' &&
+      parsedBody43.restaurant?.name === 'Quán Ăn Hoàng Gia' &&
+      parsedBody43.owner?.email === 'lehoang@nhahang.vn'
+    ) {
+      pass('SDK-43: sales.createRestaurant map chính xác POST /api/sales/restaurants');
+      passed++;
+    } else {
+      fail('SDK-43: sales.createRestaurant sai route hoặc body', { req43, parsedBody43 });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 44: Phase 12 - sales.getCommissions
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.sales.getCommissions({
+      commissionType: 'SETUP_COMMISSION',
+      status: 'APPROVED',
+      payoutPeriod: '2026-10-K1',
+      page: 1,
+      limit: 20,
+    });
+    const req44 = capturedRequests[0];
+    if (
+      req44?.method === 'GET' &&
+      req44?.url?.includes('/api/sales/commissions?') &&
+      req44?.url?.includes('commissionType=SETUP_COMMISSION') &&
+      req44?.url?.includes('status=APPROVED') &&
+      req44?.url?.includes('payoutPeriod=2026-10-K1')
+    ) {
+      pass('SDK-44: sales.getCommissions map chính xác GET /api/sales/commissions kèm bộ lọc');
+      passed++;
+    } else {
+      fail('SDK-44: sales.getCommissions sai route hoặc query params', req44);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 45: Phase 12 - sales.getSubTeam & sales.updatePayoutBank
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.sales.getSubTeam();
+    await apiClient.sales.updatePayoutBank({
+      bankId: 'MB',
+      bankName: 'MBBank',
+      accountNo: '0908888999',
+      accountName: 'NGUYEN VAN SALES',
+    });
+    const reqTeam = capturedRequests[0];
+    const reqBank = capturedRequests[1];
+    const parsedBank = reqBank ? JSON.parse(reqBank.body) : {};
+    if (
+      reqTeam?.method === 'GET' &&
+      reqTeam?.url === '/api/sales/sub-team' &&
+      reqBank?.method === 'PUT' &&
+      reqBank?.url === '/api/sales/profile/bank-account' &&
+      parsedBank.accountNo === '0908888999'
+    ) {
+      pass('SDK-45: sales.getSubTeam & sales.updatePayoutBank map chính xác backend routes');
+      passed++;
+    } else {
+      fail('SDK-45: sales subTeam/bankAccount sai route hoặc body', { reqTeam, reqBank });
+      failed++;
+    }
   } finally {
     await new Promise<void>((resolve) => mockServer.close(() => resolve()));
   }

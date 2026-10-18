@@ -140,6 +140,37 @@ const NAV_GROUPS_CONFIG: NavGroupConfig[] = [
   },
 ];
 
+const SALES_NAV_GROUP_CONFIG: NavGroupConfig = {
+  id: 'sales_portal',
+  label: 'Cổng Đối Tác Kinh Doanh',
+  items: [
+    {
+      name: 'Bảng điều khiển & KPI',
+      href: '/sales/dashboard',
+      icon: LayoutDashboard,
+      permissions: ['perm-sales-view'],
+    },
+    {
+      name: 'Quản lý Nhà hàng & Tạo mới',
+      href: '/sales/restaurants',
+      icon: Store,
+      permissions: ['perm-sales-view', 'perm-sales-create-restaurant'],
+    },
+    {
+      name: 'Sổ cái Hoa hồng & Đối soát',
+      href: '/sales/commissions',
+      icon: Receipt,
+      permissions: ['perm-sales-view'],
+    },
+    {
+      name: 'Đội ngũ CTV cấp dưới',
+      href: '/sales/team',
+      icon: Users,
+      permissions: ['perm-sales-view'],
+    },
+  ],
+};
+
 export const AdminSidebar: React.FC = () => {
   const pathname = usePathname();
   const { isMobile, isSidebarOpen, isCollapsed, toggleCollapsed, closeSidebar } = useSidebar();
@@ -168,49 +199,64 @@ export const AdminSidebar: React.FC = () => {
   const roleSlug = String(user?.role || '').toLowerCase();
   const isSuperAdmin = roleSlug === 'system_admin' || roleSlug === 'super_admin';
   const isOwner = roleSlug === 'restaurant_admin';
+  const isSalesRep = roleSlug === 'sales_rep';
   const isMainBranchUser = isSuperAdmin || Boolean(user?.isMainBranch);
 
-  // Lọc quyền RBAC và tự động ẩn các nhóm không có mục nào hiển thị
-  const visibleGroups = NAV_GROUPS_CONFIG.map((group) => {
-    const filteredItems = group.items
-      .filter((item) => {
-        // 1. Super Admin và Chủ Nhà Hàng (HQ) có toàn quyền
-        if (isSuperAdmin || isOwner) {
-          if (item.requireMainBranch && !isMainBranchUser) return false;
+  let visibleGroups: NavGroupConfig[] = [];
+
+  if (isSalesRep) {
+    visibleGroups = [SALES_NAV_GROUP_CONFIG];
+  } else {
+    // Lọc quyền RBAC và tự động ẩn các nhóm không có mục nào hiển thị
+    visibleGroups = NAV_GROUPS_CONFIG.map((group) => {
+      const filteredItems = group.items
+        .filter((item) => {
+          // 1. Super Admin và Chủ Nhà Hàng (HQ) có toàn quyền
+          if (isSuperAdmin || isOwner) {
+            if (item.requireMainBranch && !isMainBranchUser) return false;
+            return true;
+          }
+
+          // 2. Kiểm tra điều kiện Chi nhánh chính
+          if (item.requireMainBranch && !isMainBranchUser) {
+            return false;
+          }
+
+          // 3. Kiểm tra permission của người dùng
+          if (item.permissions && item.permissions.length > 0) {
+            const hasPerm = item.permissions.some((p) => permissions.includes(p));
+            if (!hasPerm) return false;
+          }
+
           return true;
-        }
+        })
+        .map((item) => {
+          if (item.href === '/settings' && !isMainBranchUser) {
+            return { ...item, name: 'Cài đặt Chi nhánh' };
+          }
+          return item;
+        });
 
-        // 2. Kiểm tra điều kiện Chi nhánh chính
-        if (item.requireMainBranch && !isMainBranchUser) {
-          return false;
-        }
+      return {
+        ...group,
+        items: filteredItems,
+      };
+    }).filter((group) => group.items.length > 0);
 
-        // 3. Kiểm tra permission của người dùng
-        if (item.permissions && item.permissions.length > 0) {
-          const hasPerm = item.permissions.some((p) => permissions.includes(p));
-          if (!hasPerm) return false;
-        }
+    if (isSuperAdmin) {
+      visibleGroups.push(SALES_NAV_GROUP_CONFIG);
+    }
+  }
 
-        return true;
-      })
-      .map((item) => {
-        if (item.href === '/settings' && !isMainBranchUser) {
-          return { ...item, name: 'Cài đặt Chi nhánh' };
-        }
-        return item;
-      });
-
-    return {
-      ...group,
-      items: filteredItems,
-    };
-  }).filter((group) => group.items.length > 0);
-
-  const restaurantName = isSuperAdmin && !selectedRestaurantId
+  const restaurantName = isSalesRep
+    ? 'iMenu Partner Portal'
+    : isSuperAdmin && !selectedRestaurantId
     ? 'iMenu Platform'
     : restaurant?.name || 'Bếp Nhà';
 
-  const restaurantInitials = isSuperAdmin && !selectedRestaurantId
+  const restaurantInitials = isSalesRep
+    ? 'SL'
+    : isSuperAdmin && !selectedRestaurantId
     ? 'SA'
     : restaurantName
         .split(' ')
@@ -219,7 +265,9 @@ export const AdminSidebar: React.FC = () => {
         .map((w: string) => w[0].toUpperCase())
         .join('') || 'IM';
 
-  const branchName = isSuperAdmin && !selectedRestaurantId
+  const branchName = isSalesRep
+    ? user?.fullName || 'Chuyên viên Kinh doanh'
+    : isSuperAdmin && !selectedRestaurantId
     ? 'Toàn bộ hệ thống'
     : user?.branchName || restaurant?.branches?.[0]?.name || 'Chi nhánh chính';
 

@@ -20,6 +20,16 @@ import {
   CreateCustomerReviewPayload,
   ReviewSummaryResult,
   QueryReviewsParams,
+  SalesApplicationPayload,
+  ValidatedReferralInfo,
+  SalesDashboardData,
+  ReferredRestaurantItem,
+  CommissionItem,
+  SalesTeamMember,
+  CreateAssistedRestaurantPayload,
+  PayoutBankAccount,
+  QueryCommissionsParams,
+  QueryReferredRestaurantsParams,
 } from '@imenu/types';
 
 export interface ApiResponse<T = any> {
@@ -42,6 +52,8 @@ export interface RegisterRestaurantPayload {
     email: string;
     password: string;
   };
+  referralCode?: string;
+  acquisitionChannel?: string;
 }
 
 export interface LoginPayload {
@@ -1322,6 +1334,80 @@ export const apiClient = {
     },
   },
 
+  referrals: {
+    async validateCode(code: string) {
+      return request<ValidatedReferralInfo>(`/referrals/validate/${encodeURIComponent(code)}`);
+    },
+
+    async submitApplication(payload: SalesApplicationPayload) {
+      return request<{ success: boolean; message: string; applicationId?: string }>('/referrals/apply', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+  },
+
+  sales: {
+    async getDashboard() {
+      return request<SalesDashboardData>('/sales/dashboard');
+    },
+
+    async getRestaurants(params?: QueryReferredRestaurantsParams) {
+      const q = new URLSearchParams();
+      if (params?.search) q.append('search', params.search);
+      if (params?.subscriptionStatus) q.append('subscriptionStatus', params.subscriptionStatus);
+      if (params?.isActivationQualified !== undefined && params?.isActivationQualified !== '') {
+        q.append('isActivationQualified', String(params.isActivationQualified));
+      }
+      if (params?.page) q.append('page', String(params.page));
+      if (params?.limit) q.append('limit', String(params.limit));
+      const queryStr = q.toString() ? `?${q.toString()}` : '';
+      return request<{ data: ReferredRestaurantItem[]; total: number; page: number; limit: number; totalPages: number }>(
+        `/sales/restaurants${queryStr}`,
+      );
+    },
+
+    async createRestaurant(payload: CreateAssistedRestaurantPayload) {
+      return request<{
+        success: boolean;
+        message: string;
+        restaurant: { id: string; name: string; slug: string; phone: string; address: string };
+        owner: { id: string; fullName: string; email: string; phone: string };
+      }>('/sales/restaurants', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async getCommissions(params?: QueryCommissionsParams) {
+      const q = new URLSearchParams();
+      if (params?.commissionType) q.append('commissionType', params.commissionType);
+      if (params?.status) q.append('status', params.status);
+      if (params?.payoutPeriod) q.append('payoutPeriod', params.payoutPeriod);
+      if (params?.page) q.append('page', String(params.page));
+      if (params?.limit) q.append('limit', String(params.limit));
+      const queryStr = q.toString() ? `?${q.toString()}` : '';
+      return request<{ data: CommissionItem[]; total: number; page: number; limit: number; totalPages: number }>(
+        `/sales/commissions${queryStr}`,
+      );
+    },
+
+    async getSubTeam() {
+      return request<{ total: number; members: SalesTeamMember[] }>('/sales/sub-team');
+    },
+
+    async updatePayoutBank(payload: PayoutBankAccount) {
+      return request<{ success: boolean; message: string; payoutBankAccount: PayoutBankAccount }>(
+        '/sales/profile/bank-account',
+        {
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        },
+      );
+    },
+  },
+
 };
+
 
 
