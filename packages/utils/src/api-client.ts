@@ -30,6 +30,14 @@ import {
   PayoutBankAccount,
   QueryCommissionsParams,
   QueryReferredRestaurantsParams,
+  PlatformOverviewDto,
+  PlatformRestaurantItem,
+  PlatformRestaurantsResponse,
+  PlatformRevenueReport,
+  PlatformSaaSRevenueDto,
+  PlatformSalesRepItem,
+  PayoutBatchDto,
+  PayoutBatchResult,
 } from '@imenu/types';
 
 export interface ApiResponse<T = any> {
@@ -1407,6 +1415,148 @@ export const apiClient = {
     },
   },
 
+  platform: {
+    async getOverview() {
+      return request<PlatformOverviewDto>('/platform/overview');
+    },
+
+    async getRestaurants(params?: {
+      search?: string;
+      plan?: string;
+      subscriptionStatus?: string;
+      isSuspended?: boolean | string;
+      salesId?: string;
+      sortBy?: string;
+      sortOrder?: string;
+      page?: number;
+      limit?: number;
+    }) {
+      const q = new URLSearchParams();
+      if (params?.search) q.append('search', params.search);
+      if (params?.plan) q.append('plan', params.plan);
+      if (params?.subscriptionStatus) q.append('subscriptionStatus', params.subscriptionStatus);
+      if (params?.isSuspended !== undefined && params?.isSuspended !== '') {
+        q.append('isSuspended', String(params.isSuspended));
+      }
+      if (params?.salesId) q.append('salesId', params.salesId);
+      if (params?.sortBy) q.append('sortBy', params.sortBy);
+      if (params?.sortOrder) q.append('sortOrder', params.sortOrder);
+      if (params?.page) q.append('page', String(params.page));
+      if (params?.limit) q.append('limit', String(params.limit));
+      const qs = q.toString() ? `?${q.toString()}` : '';
+      return request<PlatformRestaurantsResponse>(`/platform/restaurants${qs}`);
+    },
+
+    async updateRestaurantStatus(id: string, payload: { isSuspended: boolean; suspendReason?: string }) {
+      return request<any>(`/platform/restaurants/${id}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async updateRestaurantSubscription(
+      id: string,
+      payload: {
+        plan: string;
+        billingCycle?: string;
+        transactionType: 'INITIAL_SETUP' | 'RENEWAL';
+        netAmount: number;
+        planExpiresAt?: string | Date;
+        note?: string;
+      },
+    ) {
+      return request<any>(`/platform/restaurants/${id}/subscription`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async getRestaurantRevenues(params?: {
+      timeRange?: string;
+      startDate?: string;
+      endDate?: string;
+      restaurantId?: string;
+    }) {
+      const q = new URLSearchParams();
+      if (params?.timeRange) q.append('timeRange', params.timeRange);
+      if (params?.startDate) q.append('startDate', params.startDate);
+      if (params?.endDate) q.append('endDate', params.endDate);
+      if (params?.restaurantId) q.append('restaurantId', params.restaurantId);
+      const qs = q.toString() ? `?${q.toString()}` : '';
+      return request<PlatformRevenueReport>(`/platform/revenues/restaurants${qs}`);
+    },
+
+    async getSaaSRevenues(params?: {
+      timeRange?: string;
+      startDate?: string;
+      endDate?: string;
+    }) {
+      const q = new URLSearchParams();
+      if (params?.timeRange) q.append('timeRange', params.timeRange);
+      if (params?.startDate) q.append('startDate', params.startDate);
+      if (params?.endDate) q.append('endDate', params.endDate);
+      const qs = q.toString() ? `?${q.toString()}` : '';
+      return request<PlatformSaaSRevenueDto>(`/platform/revenues/saas${qs}`);
+    },
+
+    async getSalesReps() {
+      return request<PlatformSalesRepItem[]>('/platform/sales-reps');
+    },
+
+    async createSalesRep(payload: {
+      fullName: string;
+      email: string;
+      phone: string;
+      password?: string;
+      referralCode?: string;
+      parentSalesId?: string;
+      setupCommissionRate?: number;
+      renewalCommissionRate?: number;
+      activationBonusAmount?: number;
+      teamBonusAmount?: number;
+      payoutBankAccount?: any;
+    }) {
+      return request<{ success: boolean; data: any }>('/platform/sales-reps', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async updateSalesRep(id: string, payload: {
+      status?: 'ACTIVE' | 'INACTIVE';
+      referralCode?: string;
+      setupCommissionRate?: number;
+      renewalCommissionRate?: number;
+      activationBonusAmount?: number;
+      teamBonusAmount?: number;
+      payoutBankAccount?: any;
+    }) {
+      return request<{ success: boolean; data: any }>(`/platform/sales-reps/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async getSalesApplications() {
+      return request<any[]>('/platform/sales-applications');
+    },
+
+    async approveSalesApplication(id: string) {
+      return request<{ success: boolean; message: string; user: any }>(
+        `/platform/sales-applications/${id}/approve`,
+        {
+          method: 'POST',
+        },
+      );
+    },
+
+    async executePayoutBatch(payload: PayoutBatchDto) {
+      return request<PayoutBatchResult>('/platform/commissions/payout-batch', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+  },
 };
 
 

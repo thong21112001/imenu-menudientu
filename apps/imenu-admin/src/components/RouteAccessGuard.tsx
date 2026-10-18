@@ -90,6 +90,10 @@ export const RouteAccessGuard: React.FC<RouteAccessGuardProps> = ({ children }) 
 
   // 1. Tự động điều hướng trang chủ '/' về trang nghiệp vụ chuyên trách cho các vai trò vận hành
   if (pathname === '/') {
+    if (isSuperAdmin && !storageService.getSelectedRestaurantId()) {
+      router.replace('/platform/dashboard');
+      return null;
+    }
     if (isSalesRep) {
       router.replace('/sales/dashboard');
       return null;
@@ -108,7 +112,20 @@ export const RouteAccessGuard: React.FC<RouteAccessGuardProps> = ({ children }) 
     }
   }
 
-  // 1b. Khóa ranh giới đối tác kinh doanh (AUD-12.4): NVKD chỉ được phép truy cập cổng /sales/*
+  // 1b. Khóa ranh giới Quản trị nền tảng (AUD-13.1): Chỉ Superadmin mới được vào /platform/*
+  if (pathname.startsWith('/platform')) {
+    if (!isSuperAdmin) {
+      return renderForbidden(
+        currentUser,
+        'Quản Trị Nền Tảng iMenu',
+        'Khu vực này chỉ dành riêng cho Quản trị viên cấp cao (Superadmin)',
+        getDefaultRoute(roleSlug),
+      );
+    }
+    return <>{children}</>;
+  }
+
+  // 1c. Khóa ranh giới đối tác kinh doanh (AUD-12.4): NVKD chỉ được phép truy cập cổng /sales/*
   if (isSalesRep) {
     if (pathname.startsWith('/sales')) {
       return <>{children}</>;

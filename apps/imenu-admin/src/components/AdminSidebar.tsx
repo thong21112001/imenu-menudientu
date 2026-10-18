@@ -171,6 +171,33 @@ const SALES_NAV_GROUP_CONFIG: NavGroupConfig = {
   ],
 };
 
+const PLATFORM_NAV_GROUP_CONFIG: NavGroupConfig = {
+  id: 'platform_control',
+  label: 'Quản trị Hệ thống (SuperAdmin)',
+  items: [
+    {
+      name: 'Bảng điều khiển sàn',
+      href: '/platform/dashboard',
+      icon: LayoutDashboard,
+    },
+    {
+      name: 'Quản lý Nhà hàng & Gói cước',
+      href: '/platform/restaurants',
+      icon: Store,
+    },
+    {
+      name: 'Báo cáo Doanh thu kép',
+      href: '/platform/revenues',
+      icon: BarChart3,
+    },
+    {
+      name: 'Đội ngũ NVKD & Đối soát',
+      href: '/platform/sales',
+      icon: Users,
+    },
+  ],
+};
+
 export const AdminSidebar: React.FC = () => {
   const pathname = usePathname();
   const { isMobile, isSidebarOpen, isCollapsed, toggleCollapsed, closeSidebar } = useSidebar();
@@ -206,8 +233,11 @@ export const AdminSidebar: React.FC = () => {
 
   if (isSalesRep) {
     visibleGroups = [SALES_NAV_GROUP_CONFIG];
+  } else if (isSuperAdmin && !selectedRestaurantId) {
+    // Chế độ Toàn hệ thống (Superadmin Platform Center)
+    visibleGroups = [PLATFORM_NAV_GROUP_CONFIG];
   } else {
-    // Lọc quyền RBAC và tự động ẩn các nhóm không có mục nào hiển thị
+    // Chế độ Quản trị nội bộ một Nhà hàng (bao gồm Superadmin đang Impersonate)
     visibleGroups = NAV_GROUPS_CONFIG.map((group) => {
       const filteredItems = group.items
         .filter((item) => {
@@ -242,10 +272,6 @@ export const AdminSidebar: React.FC = () => {
         items: filteredItems,
       };
     }).filter((group) => group.items.length > 0);
-
-    if (isSuperAdmin) {
-      visibleGroups.push(SALES_NAV_GROUP_CONFIG);
-    }
   }
 
   const restaurantName = isSalesRep

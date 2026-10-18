@@ -550,6 +550,32 @@ export const AdminHeader: React.FC = () => {
 
   return (
     <>
+      {isSuperAdmin && selectedRestaurantId && (
+        <div className="bg-gradient-to-r from-purple-700 via-indigo-700 to-purple-800 text-white text-xs px-4 py-2 flex items-center justify-between shadow-md z-40 sticky top-0">
+          <div className="flex items-center gap-2">
+            <Crown className="w-4 h-4 text-amber-300 animate-pulse shrink-0" />
+            <span className="font-semibold">
+              Đang trong chế độ Hỗ trợ kỹ thuật: <span className="underline font-bold text-amber-200">{selectedRestaurantLabel}</span>
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              storageService.setSelectedRestaurantId(null);
+              setSelectedRestaurantId(null);
+              window.dispatchEvent(
+                new CustomEvent('imenu:restaurant_changed', {
+                  detail: { restaurantId: null },
+                }),
+              );
+              window.location.href = '/platform/dashboard';
+            }}
+            className="flex items-center gap-1.5 px-3 py-1 bg-white/20 hover:bg-white/30 text-white font-bold rounded-lg transition-colors cursor-pointer text-xs"
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>Quay về Trung tâm Superadmin</span>
+          </button>
+        </div>
+      )}
       <header className="h-16 bg-white border-b border-[#e4e8e5] sticky top-0 z-30 flex items-center justify-between px-3 sm:px-6 shadow-2xs w-full min-w-0 max-w-full">
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           {/* Sidebar Toggle Button */}
