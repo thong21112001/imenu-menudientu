@@ -88,7 +88,19 @@ export const RouteAccessGuard: React.FC<RouteAccessGuardProps> = ({ children }) 
   const isSalesRep = roleSlug === 'sales_rep';
   const isMainBranchUser = isSuperAdmin || Boolean(currentUser?.isMainBranch);
 
-  // 1. Tự động điều hướng trang chủ '/' về trang nghiệp vụ chuyên trách cho các vai trò vận hành
+  // 1a. Khóa ranh giới Quản trị viên Tối cao (Superadmin) — AUD-14.2:
+  // Superadmin làm việc 100% trong Trung tâm điều hành nền tảng (/platform/*) và Quản lý tài khoản (/staff).
+  // Mọi yêu cầu truy cập màn hình nghiệp vụ nhà hàng bán lẻ (/, /tables, /pos, /kitchen, /bills, /menu, /qr-codes, /reports, /reviews, /branches, /settings, /sales/*)
+  // đều được tự động điều hướng về /platform/dashboard.
+  if (isSuperAdmin) {
+    if (pathname.startsWith('/platform') || pathname === '/staff' || pathname.startsWith('/staff/')) {
+      return <>{children}</>;
+    }
+    router.replace('/platform/dashboard');
+    return null;
+  }
+
+  // 1b. Tự động điều hướng trang chủ '/' về trang nghiệp vụ chuyên trách cho các vai trò vận hành
   if (pathname === '/') {
     if (isSalesRep) {
       router.replace('/sales/dashboard');
@@ -108,7 +120,17 @@ export const RouteAccessGuard: React.FC<RouteAccessGuardProps> = ({ children }) 
     }
   }
 
-  // 1b. Khóa ranh giới đối tác kinh doanh (AUD-12.4): NVKD chỉ được phép truy cập cổng /sales/*
+  // 1c. Khóa ranh giới Quản trị nền tảng (AUD-13.1): Chỉ Superadmin mới được vào /platform/*
+  if (pathname.startsWith('/platform')) {
+    return renderForbidden(
+      currentUser,
+      'Quản Trị Nền Tảng iMenu',
+      'Khu vực này chỉ dành riêng cho Quản trị viên cấp cao (Superadmin)',
+      getDefaultRoute(roleSlug),
+    );
+  }
+
+  // 1d. Khóa ranh giới đối tác kinh doanh (AUD-12.4): NVKD chỉ được phép truy cập cổng /sales/*
   if (isSalesRep) {
     if (pathname.startsWith('/sales')) {
       return <>{children}</>;
@@ -121,8 +143,8 @@ export const RouteAccessGuard: React.FC<RouteAccessGuardProps> = ({ children }) 
     );
   }
 
-  // 2. Super Admin và Chủ Nhà Hàng (HQ) có toàn quyền truy cập
-  if (isSuperAdmin || isOwner) {
+  // 2. Chủ Nhà Hàng (HQ) có toàn quyền truy cập các nghiệp vụ nhà hàng
+  if (isOwner) {
     // Riêng trang /branches yêu cầu tài khoản thuộc Trụ sở chính (HQ)
     if (pathname === '/branches' && !isMainBranchUser) {
       return renderForbidden(currentUser, 'Quản Lý Chi Nhánh', 'Chức năng chỉ dành cho tài khoản thuộc Trụ sở chính (HQ)', '/');

@@ -171,6 +171,40 @@ const SALES_NAV_GROUP_CONFIG: NavGroupConfig = {
   ],
 };
 
+const SUPERADMIN_NAV_GROUPS: NavGroupConfig[] = [
+  {
+    id: 'platform_control',
+    label: 'Quản trị Nền tảng iMenu',
+    items: [
+      {
+        name: 'Tổng quan Hệ thống',
+        href: '/platform/dashboard',
+        icon: LayoutDashboard,
+      },
+      {
+        name: 'Danh sách Nhà hàng',
+        href: '/platform/restaurants',
+        icon: Store,
+      },
+      {
+        name: 'Doanh thu Hệ thống',
+        href: '/platform/revenues',
+        icon: BarChart3,
+      },
+      {
+        name: 'Nhân viên Kinh doanh',
+        href: '/platform/sales',
+        icon: Users,
+      },
+      {
+        name: 'Tài khoản & Phân quyền',
+        href: '/staff',
+        icon: Building2,
+      },
+    ],
+  },
+];
+
 export const AdminSidebar: React.FC = () => {
   const pathname = usePathname();
   const { isMobile, isSidebarOpen, isCollapsed, toggleCollapsed, closeSidebar } = useSidebar();
@@ -204,15 +238,18 @@ export const AdminSidebar: React.FC = () => {
 
   let visibleGroups: NavGroupConfig[] = [];
 
-  if (isSalesRep) {
+  if (isSuperAdmin) {
+    // AUD-14.2: Superadmin chỉ hiển thị duy nhất không gian Platform Control Center
+    visibleGroups = SUPERADMIN_NAV_GROUPS;
+  } else if (isSalesRep) {
     visibleGroups = [SALES_NAV_GROUP_CONFIG];
   } else {
-    // Lọc quyền RBAC và tự động ẩn các nhóm không có mục nào hiển thị
+    // Chế độ Quản trị nội bộ một Nhà hàng
     visibleGroups = NAV_GROUPS_CONFIG.map((group) => {
       const filteredItems = group.items
         .filter((item) => {
-          // 1. Super Admin và Chủ Nhà Hàng (HQ) có toàn quyền
-          if (isSuperAdmin || isOwner) {
+          // 1. Chủ Nhà Hàng (HQ) có toàn quyền
+          if (isOwner) {
             if (item.requireMainBranch && !isMainBranchUser) return false;
             return true;
           }
@@ -242,22 +279,18 @@ export const AdminSidebar: React.FC = () => {
         items: filteredItems,
       };
     }).filter((group) => group.items.length > 0);
-
-    if (isSuperAdmin) {
-      visibleGroups.push(SALES_NAV_GROUP_CONFIG);
-    }
   }
 
-  const restaurantName = isSalesRep
+  const restaurantName = isSuperAdmin
+    ? 'iMenu Platform Control Center'
+    : isSalesRep
     ? 'iMenu Partner Portal'
-    : isSuperAdmin && !selectedRestaurantId
-    ? 'iMenu Platform'
     : restaurant?.name || 'Bếp Nhà';
 
-  const restaurantInitials = isSalesRep
-    ? 'SL'
-    : isSuperAdmin && !selectedRestaurantId
+  const restaurantInitials = isSuperAdmin
     ? 'SA'
+    : isSalesRep
+    ? 'SL'
     : restaurantName
         .split(' ')
         .filter(Boolean)
@@ -265,10 +298,10 @@ export const AdminSidebar: React.FC = () => {
         .map((w: string) => w[0].toUpperCase())
         .join('') || 'IM';
 
-  const branchName = isSalesRep
+  const branchName = isSuperAdmin
+    ? '👑 Quản Trị Hệ Thống'
+    : isSalesRep
     ? user?.fullName || 'Chuyên viên Kinh doanh'
-    : isSuperAdmin && !selectedRestaurantId
-    ? 'Toàn bộ hệ thống'
     : user?.branchName || restaurant?.branches?.[0]?.name || 'Chi nhánh chính';
 
   const sidebarWidthClass = isMobile
@@ -374,28 +407,30 @@ export const AdminSidebar: React.FC = () => {
 
       {/* Footer & Collapse Toggle Button */}
       <div className="p-3 border-t border-[#183a2e] space-y-2">
-        {(!isCollapsed || isMobile) ? (
-          <a
-            href="http://localhost:3005"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800/40 text-[11px] text-emerald-300 transition-colors"
-          >
-            <span className="flex items-center gap-1.5 font-medium">
-              <Store className="w-3.5 h-3.5" /> Menu QR Khách
-            </span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
-        ) : (
-          <a
-            href="http://localhost:3005"
-            target="_blank"
-            rel="noopener noreferrer"
-            title="Menu QR Khách"
-            className="flex items-center justify-center p-2 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 transition-colors"
-          >
-            <Store className="w-4 h-4" />
-          </a>
+        {!isSuperAdmin && (
+          (!isCollapsed || isMobile) ? (
+            <a
+              href="http://localhost:3005"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800/40 text-[11px] text-emerald-300 transition-colors"
+            >
+              <span className="flex items-center gap-1.5 font-medium">
+                <Store className="w-3.5 h-3.5" /> Menu QR Khách
+              </span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          ) : (
+            <a
+              href="http://localhost:3005"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Menu QR Khách"
+              className="flex items-center justify-center p-2 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 transition-colors"
+            >
+              <Store className="w-4 h-4" />
+            </a>
+          )
         )}
 
         {/* Desktop Collapse / Expand Toggle Button */}

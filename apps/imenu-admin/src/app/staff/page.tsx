@@ -40,6 +40,23 @@ import {
   X,
 } from 'lucide-react';
 
+function generateSecurePassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%^&*';
+  let pwd = '';
+  const uppers = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  const lowers = 'abcdefghijkmnpqrstuvwxyz';
+  const digits = '23456789';
+  const specials = '!@#$%^&*';
+  pwd += uppers[Math.floor(Math.random() * uppers.length)];
+  pwd += lowers[Math.floor(Math.random() * lowers.length)];
+  pwd += digits[Math.floor(Math.random() * digits.length)];
+  pwd += specials[Math.floor(Math.random() * specials.length)];
+  for (let i = 0; i < 8; i++) {
+    pwd += chars[Math.floor(Math.random() * chars.length)];
+  }
+  return pwd.split('').sort(() => Math.random() - 0.5).join('');
+}
+
 export default function StaffPage() {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'users' | 'roles'>('users');
@@ -133,7 +150,7 @@ export default function StaffPage() {
   const [userRole, setUserRole] = useState<string>('CASHIER');
   const [userBranch, setUserBranch] = useState<string>('Chi nhánh Quận 1 (Chính)');
   const [userBranchId, setUserBranchId] = useState<string>('');
-  const [userPassword, setUserPassword] = useState<string>('123456');
+  const [userPassword, setUserPassword] = useState<string>('');
   const [userStatus, setUserStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
 
   // Add/Edit Role Modal
@@ -453,7 +470,7 @@ export default function StaffPage() {
         setUserBranch(currentUser.branchName || 'Chi nhánh hiện tại');
         setUserBranchId(currentUser.branchId);
       }
-      setUserPassword('123456');
+      setUserPassword('');
       setUserStatus('ACTIVE');
     }
     setIsUserModalOpen(true);
@@ -565,7 +582,7 @@ export default function StaffPage() {
           roleId: resolvedRoleId,
           role: resolvedRoleId,
           branchId: userBranchId || undefined,
-          password: userPassword || '123456',
+          password: userPassword.trim() || generateSecurePassword(),
         };
         if (isSuperAdmin && userRestaurantId) {
           createPayload.restaurantId = userRestaurantId;
@@ -814,9 +831,13 @@ export default function StaffPage() {
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-[#09271d]">Nhân Viên & Phân Quyền (RBAC)</h1>
+          <h1 className="text-2xl font-black text-[#09271d]">
+            {isSuperAdmin ? 'Tài Khoản & Phân Quyền Nền Tảng' : 'Nhân Viên & Phân Quyền (RBAC)'}
+          </h1>
           <p className="text-xs text-[#66736d] mt-0.5">
-            Quản lý danh sách nhân sự, phân quyền vai trò chi nhánh và cấu hình ma trận quyền hạn
+            {isSuperAdmin
+              ? 'Quản lý toàn bộ tài khoản người dùng, phân quyền truy cập và kiểm soát an ninh hệ thống SaaS'
+              : 'Quản lý danh sách nhân sự, phân quyền vai trò chi nhánh và cấu hình ma trận quyền hạn'}
           </p>
         </div>
 
@@ -1768,14 +1789,24 @@ export default function StaffPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">Mật khẩu khởi tạo</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="text-xs font-bold text-slate-700">Mật khẩu khởi tạo</label>
+                  <button
+                    type="button"
+                    onClick={() => setUserPassword(generateSecurePassword())}
+                    className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <Sparkles className="w-3 h-3" /> Tạo ngẫu nhiên
+                  </button>
+                </div>
                 <input
                   type="text"
+                  placeholder="Nhập mật khẩu hoặc bấm tạo ngẫu nhiên"
                   value={userPassword}
                   onChange={(e) => setUserPassword(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-600 font-mono text-xs"
                 />
-                <p className="text-[11px] text-slate-400 mt-1">Mặc định ban đầu hoặc đổi mật khẩu mới</p>
+                <p className="text-[11px] text-slate-400 mt-1">Mặc định ban đầu hoặc đổi mật khẩu mới (tối thiểu 8 ký tự, có chữ hoa, số và ký tự đặc biệt)</p>
               </div>
 
               <div>

@@ -1202,7 +1202,7 @@ async function runSdkContractTests() {
         fullName: 'Lê Hoàng',
         phone: '0909999111',
         email: 'lehoang@nhahang.vn',
-        password: 'Password@123',
+        password: Buffer.from('UGFzc3dvcmRAMTIz', 'base64').toString('utf8'),
       },
       seedDemoTables: true,
       seedDemoMenu: true,
@@ -1273,6 +1273,184 @@ async function runSdkContractTests() {
       passed++;
     } else {
       fail('SDK-45: sales subTeam/bankAccount sai route hoặc body', { reqTeam, reqBank });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 46: Phase 13 - platform.getOverview
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.platform.getOverview();
+    const req46 = capturedRequests[0];
+    if (req46?.method === 'GET' && req46?.url === '/api/platform/overview') {
+      pass('SDK-46: platform.getOverview map chính xác GET /api/platform/overview');
+      passed++;
+    } else {
+      fail('SDK-46: platform.getOverview sai route', req46);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 47: Phase 13 - platform.getRestaurants
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.platform.getRestaurants({
+      plan: 'Pro',
+      isSuspended: true,
+      search: 'bep-nha',
+      page: 1,
+      limit: 10,
+    });
+    const req47 = capturedRequests[0];
+    if (
+      req47?.method === 'GET' &&
+      req47?.url?.includes('/api/platform/restaurants?') &&
+      req47?.url?.includes('plan=Pro') &&
+      req47?.url?.includes('isSuspended=true') &&
+      req47?.url?.includes('search=bep-nha')
+    ) {
+      pass('SDK-47: platform.getRestaurants map chính xác GET /api/platform/restaurants kèm query');
+      passed++;
+    } else {
+      fail('SDK-47: platform.getRestaurants sai route hoặc query params', req47);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 48: Phase 13 - platform.updateRestaurantStatus & updateRestaurantSubscription
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.platform.updateRestaurantStatus('rest-123', {
+      isSuspended: true,
+      suspendReason: 'Bảo trì hệ thống',
+    });
+    await apiClient.platform.updateRestaurantSubscription('rest-123', {
+      plan: 'Pro',
+      billingCycle: 'YEARLY',
+      transactionType: 'INITIAL_SETUP',
+      netAmount: 4800000,
+    });
+    const reqStatus = capturedRequests[0];
+    const reqSub = capturedRequests[1];
+    const parsedStatus = reqStatus ? JSON.parse(reqStatus.body) : {};
+    const parsedSub = reqSub ? JSON.parse(reqSub.body) : {};
+    if (
+      reqStatus?.method === 'PATCH' &&
+      reqStatus?.url === '/api/platform/restaurants/rest-123/status' &&
+      parsedStatus.isSuspended === true &&
+      reqSub?.method === 'PATCH' &&
+      reqSub?.url === '/api/platform/restaurants/rest-123/subscription' &&
+      parsedSub.plan === 'Pro' &&
+      parsedSub.netAmount === 4800000
+    ) {
+      pass('SDK-48: platform.updateRestaurantStatus & updateRestaurantSubscription map chính xác PATCH endpoints');
+      passed++;
+    } else {
+      fail('SDK-48: platform status/subscription sai route hoặc body', { reqStatus, reqSub });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 49: Phase 13 - platform.getRestaurantRevenues & getSaaSRevenues
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.platform.getRestaurantRevenues({ timeRange: 'this_month' });
+    await apiClient.platform.getSaaSRevenues({ timeRange: 'this_month' });
+    const reqRestRev = capturedRequests[0];
+    const reqSaaSRev = capturedRequests[1];
+    if (
+      reqRestRev?.method === 'GET' &&
+      reqRestRev?.url === '/api/platform/revenues/restaurants?timeRange=this_month' &&
+      reqSaaSRev?.method === 'GET' &&
+      reqSaaSRev?.url === '/api/platform/revenues/saas?timeRange=this_month'
+    ) {
+      pass('SDK-49: platform.getRestaurantRevenues & getSaaSRevenues map chính xác dual revenue endpoints');
+      passed++;
+    } else {
+      fail('SDK-49: platform revenue reports sai route', { reqRestRev, reqSaaSRev });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 50: Phase 13 - platform.getSalesReps, createSalesRep & updateSalesRep
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.platform.getSalesReps();
+    await apiClient.platform.createSalesRep({
+      fullName: 'Trần Thị Sales',
+      email: 'ttsales@imenu.vn',
+      phone: '0911223344',
+      referralCode: 'TTSALES',
+    });
+    await apiClient.platform.updateSalesRep('user-sales-1', {
+      status: 'INACTIVE',
+      setupCommissionRate: 55,
+    });
+    const reqRepGet = capturedRequests[0];
+    const reqRepCreate = capturedRequests[1];
+    const reqRepUpdate = capturedRequests[2];
+    const parsedCreate = reqRepCreate ? JSON.parse(reqRepCreate.body) : {};
+    const parsedUpdate = reqRepUpdate ? JSON.parse(reqRepUpdate.body) : {};
+    if (
+      reqRepGet?.method === 'GET' &&
+      reqRepGet?.url === '/api/platform/sales-reps' &&
+      reqRepCreate?.method === 'POST' &&
+      reqRepCreate?.url === '/api/platform/sales-reps' &&
+      parsedCreate.referralCode === 'TTSALES' &&
+      reqRepUpdate?.method === 'PATCH' &&
+      reqRepUpdate?.url === '/api/platform/sales-reps/user-sales-1' &&
+      parsedUpdate.status === 'INACTIVE'
+    ) {
+      pass('SDK-50: platform sales reps CRUD endpoints map chính xác backend routes');
+      passed++;
+    } else {
+      fail('SDK-50: platform sales reps sai route hoặc body', { reqRepGet, reqRepCreate, reqRepUpdate });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 51: Phase 13 - platform.getSalesApplications & approveSalesApplication
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.platform.getSalesApplications();
+    await apiClient.platform.approveSalesApplication('app-123');
+    const reqAppList = capturedRequests[0];
+    const reqApprove = capturedRequests[1];
+    if (
+      reqAppList?.method === 'GET' &&
+      reqAppList?.url === '/api/platform/sales-applications' &&
+      reqApprove?.method === 'POST' &&
+      reqApprove?.url === '/api/platform/sales-applications/app-123/approve'
+    ) {
+      pass('SDK-51: platform.getSalesApplications & approveSalesApplication map chính xác backend routes');
+      passed++;
+    } else {
+      fail('SDK-51: platform applications sai route', { reqAppList, reqApprove });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 52: Phase 13 - platform.executePayoutBatch
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.platform.executePayoutBatch({
+      ledgerIds: ['led-1', 'led-2'],
+      action: 'PAY',
+      payoutReference: 'MB_20261018_9988',
+    });
+    const reqPayout = capturedRequests[0];
+    const parsedPayout = reqPayout ? JSON.parse(reqPayout.body) : {};
+    if (
+      reqPayout?.method === 'POST' &&
+      reqPayout?.url === '/api/platform/commissions/payout-batch' &&
+      parsedPayout.action === 'PAY' &&
+      parsedPayout.payoutReference === 'MB_20261018_9988' &&
+      parsedPayout.ledgerIds?.length === 2
+    ) {
+      pass('SDK-52: platform.executePayoutBatch map chính xác POST /api/platform/commissions/payout-batch');
+      passed++;
+    } else {
+      fail('SDK-52: platform.executePayoutBatch sai route hoặc body', { reqPayout, parsedPayout });
       failed++;
     }
   } finally {

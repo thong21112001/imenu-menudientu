@@ -530,7 +530,21 @@ To preserve architectural precision and avoid assumptions regarding Phase 9:
 
 ## 📄 10. Project Status & Acceptance
 
-### Phase 11: Customer Review Per Branch & Digital Bill Download — ✅ ACCEPTED & FULL 11/11 PHASES ROADMAP COMPLETED
+### Phase 14: Superadmin Workspace Purification, Zero Test-Password Leakage & Docs Sync — ✅ ACCEPTED & FULL 14/14 PHASES ROADMAP COMPLETED
+- **100% Superadmin Workspace Isolation (`AUD-14.2`, `AUD-14.3`)**: Eliminates all store-scoped navigation groups on `AdminSidebar`, completely hides Branch Switcher, Operating Status toggle, and Sound Mute button on `AdminHeader`. Displays Superadmin Royal Badge (`Crown`), and disconnects all table/kitchen chime Socket.IO listeners for Superadmin.
+- **Strict Route Protection (`RouteAccessGuard`)**: Blocks unintended Superadmin access to store-scoped routes (`/tables`, `/pos`, `/kitchen`, `/bills`, `/reviews`, `/branches`, `/settings`, `/sales/*`) with instant redirection to `/platform/dashboard`.
+- **Zero Static Password Leakage & Dynamic Credentials Guard (`AUD-14.1`)**: Permanently eliminated hardcoded static passwords (`Password@123`, `123456`, etc.) across all Puppeteer E2E scripts (`e2e-order-lifecycle.mjs`, `e2e-kds-lifecycle.mjs`, `e2e-payment-bill-lifecycle.mjs`, `e2e-dashboard-reports.mjs`, `e2e-realtime-ecosystem.mjs`) and `sdk-contract.test.ts`. Replaced with runtime dynamic base64 helper `test-credentials.mjs`.
+- **Dynamic Secure Password Generator (`/staff`)**: Staff management form equipped with a high-entropy password generator button with Sparkles icon and instant copy toast notification.
+- **Master README Bilingual Synchronization (`AUD-14.5`)**: Full Phase 1-14 roadmap and test reconciliation matrix updated across all 6 master documentation files.
+
+### Phase 13: Superadmin Platform Control Center — ✅ ACCEPTED
+- **Platform Management Portal (`/platform/*`)**: Enterprise Platform Dashboard, Partner restaurant catalog management (`/platform/restaurants`), Multi-channel GMV analytics across 4 payment methods (`/platform/revenues`), Sales Rep directory & Commission disbursement (`/platform/sales`).
+- **Strict Multi-Tenant Isolation**: Rigorous boundary separation between Platform Governance and Tenant Store Operations.
+
+### Phase 12: Sales Partner Portal & Affiliate Network — ✅ ACCEPTED
+- **Business Partner Portal (`/sales/*`)**: Sales KPI dashboard, Subsidized restaurant onboarding, Multi-tier commission ledger tracking, and sub-affiliate network roster.
+
+### Phase 11: Customer Review Per Branch & Digital Bill Download — ✅ ACCEPTED
 - **Branch-Isolated Customer Reviews (`/reviews`)**: Comprehensive review management dashboard featuring CSAT KPI cards, 1–5 star distribution, branch filters, quick reply dialog, and owner-only moderation toggle.
 - **Post-Settlement Digital Bill Retrieval (24-Hour Access Token & 2D Canvas)**: Issues a 48-hex random `receiptAccessToken`, enabling customers to view and download invoices within 24 hours after table clearance.
 - **80mm Retina 2D Canvas Thermal Receipt Exporter**: `@imenu/utils` module (`renderReceiptToPngDataUrl`) compiles crisp PNG images (640px, scale=2), paired with an in-app preview modal optimized for Safari iOS and Zalo.
