@@ -133,11 +133,11 @@ class RealtimeHub {
 
     // Dọn dẹp cache sau mỗi 100 sự kiện
     if (this.recentEvents.size > 200) {
-      for (const [k, t] of this.recentEvents.entries()) {
+      this.recentEvents.forEach((t, k) => {
         if (now - t > 5000) {
           this.recentEvents.delete(k);
         }
-      }
+      });
     }
 
     return false;

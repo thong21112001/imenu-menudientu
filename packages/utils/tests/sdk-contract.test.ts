@@ -1,5 +1,5 @@
 import { apiClient } from '../src/api-client';
-import { buildReceiptData } from '../src/receipt';
+import { buildReceiptData, renderReceiptToPngDataUrl, downloadReceiptAsPng } from '../src/receipt';
 import { EscPosEncoder, stripAccents, thermalPrinterService } from '../src/escpos';
 import { generateVietQRMemo, maskBankAccount } from '../src/vietqr';
 import http from 'http';
@@ -923,6 +923,356 @@ async function runSdkContractTests() {
       passed++;
     } else {
       fail('SDK-32: customerOrders.callStaff sai route hoặc payload', reqCustCall);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 33: Phase 11 - customerOrders.downloadBill route & query params
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.customerOrders.downloadBill('order-789', {
+      restaurantSlug: 'quan-ngon',
+      tableCode: 'ban-02',
+      qrToken: 'qr-secret-123',
+      receiptAccessToken: 'token-abc-999',
+    });
+
+    const reqDownloadBill = capturedRequests[0];
+    if (
+      reqDownloadBill?.method === 'GET' &&
+      reqDownloadBill?.url?.includes('/api/orders/customer/order-789/download-bill') &&
+      reqDownloadBill?.url?.includes('receiptAccessToken=token-abc-999') &&
+      reqDownloadBill?.url?.includes('restaurantSlug=quan-ngon')
+    ) {
+      pass('SDK-33: customerOrders.downloadBill map chính xác GET /api/orders/customer/:id/download-bill với credentials');
+      passed++;
+    } else {
+      fail('SDK-33: customerOrders.downloadBill sai route hoặc query params', reqDownloadBill);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 34: Phase 11 - reviews.createCustomerReview route & payload
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.reviews.createCustomerReview({
+      orderId: 'order-789',
+      overallRating: 5,
+      foodRating: 5,
+      serviceRating: 5,
+      ambianceRating: 4,
+      quickTags: ['Món ăn ngon', 'Phục vụ nhiệt tình'],
+      comment: 'Trải nghiệm tuyệt vời, món ra rất nhanh!',
+      restaurantSlug: 'quan-ngon',
+      tableCode: 'ban-02',
+      qrToken: 'qr-secret-123',
+    });
+
+    const reqCreateReview = capturedRequests[0];
+    const parsedReviewBody = reqCreateReview ? JSON.parse(reqCreateReview.body) : {};
+    if (
+      reqCreateReview?.method === 'POST' &&
+      reqCreateReview?.url === '/api/reviews/customer' &&
+      parsedReviewBody.overallRating === 5 &&
+      parsedReviewBody.orderId === 'order-789' &&
+      Array.isArray(parsedReviewBody.quickTags) &&
+      parsedReviewBody.quickTags.includes('Món ăn ngon')
+    ) {
+      pass('SDK-34: reviews.createCustomerReview map chính xác POST /api/reviews/customer');
+      passed++;
+    } else {
+      fail('SDK-34: reviews.createCustomerReview sai route hoặc payload', reqCreateReview);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 35: Phase 11 - reviews.getCustomerReviewByOrder route & query
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.reviews.getCustomerReviewByOrder('order-789', {
+      receiptAccessToken: 'token-abc-999',
+    });
+
+    const reqGetReviewByOrder = capturedRequests[0];
+    if (
+      reqGetReviewByOrder?.method === 'GET' &&
+      reqGetReviewByOrder?.url?.includes('/api/reviews/customer/by-order/order-789') &&
+      reqGetReviewByOrder?.url?.includes('receiptAccessToken=token-abc-999')
+    ) {
+      pass('SDK-35: reviews.getCustomerReviewByOrder map chính xác GET /api/reviews/customer/by-order/:orderId');
+      passed++;
+    } else {
+      fail('SDK-35: reviews.getCustomerReviewByOrder sai route', reqGetReviewByOrder);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 36: Phase 11 - reviews.list route & filter query
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.reviews.list({
+      branchId: 'branch-1',
+      rating: 5,
+      hasReply: false,
+      search: 'ORD-123',
+      page: 1,
+      limit: 10,
+    });
+
+    const reqListReviews = capturedRequests[0];
+    if (
+      reqListReviews?.method === 'GET' &&
+      reqListReviews?.url?.includes('/api/reviews?') &&
+      reqListReviews?.url?.includes('branchId=branch-1') &&
+      reqListReviews?.url?.includes('rating=5') &&
+      reqListReviews?.url?.includes('hasReply=false') &&
+      reqListReviews?.url?.includes('search=ORD-123')
+    ) {
+      pass('SDK-36: reviews.list map chính xác GET /api/reviews kèm đầy đủ query filters');
+      passed++;
+    } else {
+      fail('SDK-36: reviews.list sai route hoặc query params', reqListReviews);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 37: Phase 11 - reviews.getSummary & reviews.reply routes
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.reviews.getSummary({ branchId: 'branch-1' });
+    await apiClient.reviews.reply('rev-001', { content: 'Cảm ơn bạn đã ghé thăm nhà hàng!' });
+
+    const reqSummary = capturedRequests[0];
+    const reqReply = capturedRequests[1];
+    const parsedReply = reqReply ? JSON.parse(reqReply.body) : {};
+
+    if (
+      reqSummary?.method === 'GET' &&
+      reqSummary?.url?.includes('/api/reviews/summary?branchId=branch-1') &&
+      reqReply?.method === 'POST' &&
+      reqReply?.url === '/api/reviews/rev-001/reply' &&
+      parsedReply.content === 'Cảm ơn bạn đã ghé thăm nhà hàng!'
+    ) {
+      pass('SDK-37: reviews.getSummary & reviews.reply map chính xác backend routes');
+      passed++;
+    } else {
+      fail('SDK-37: reviews summary/reply sai route hoặc body', { reqSummary, reqReply });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 38: Phase 11 - renderReceiptToPngDataUrl & downloadReceiptAsPng
+    // -------------------------------------------------------------------------
+    const sampleReceiptData = buildReceiptData(
+      {
+        orderCode: 'ORD-261017-9999',
+        tableName: 'Bàn VIP 01',
+        branchId: 'branch-01',
+        branchName: 'Chi nhánh Quận 1',
+        subTotal: 300000,
+        discountAmount: 30000,
+        vatAmount: 27000,
+        totalAmount: 297000,
+        status: 'Paid',
+        isPaid: true,
+        items: [
+          { name: 'Phở Đặc Biệt', quantity: 2, price: 100000, itemTotal: 200000 },
+          { name: 'Trà Đá', quantity: 2, price: 10000, itemTotal: 20000 },
+        ],
+      },
+      {
+        name: 'Nhà Hàng Phở Việt',
+        address: '123 Đồng Khởi, Q.1, TP.HCM',
+        phone: '0909123456',
+      },
+    );
+
+    const pngDataUrl = await renderReceiptToPngDataUrl(sampleReceiptData);
+    if (
+      typeof pngDataUrl === 'string' &&
+      pngDataUrl.startsWith('data:image/') &&
+      pngDataUrl.length > 50
+    ) {
+      pass('SDK-38: renderReceiptToPngDataUrl biên dịch thành công ảnh Data URL chuẩn cho hóa đơn nhiệt 80mm');
+      passed++;
+    } else {
+      fail('SDK-38: renderReceiptToPngDataUrl trả về định dạng ảnh không hợp lệ', pngDataUrl);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 39: Phase 12 - referrals.validateCode
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.referrals.validateCode('IMENU-DEMO88');
+    const req39 = capturedRequests[0];
+    if (
+      req39?.method === 'GET' &&
+      req39?.url === '/api/referrals/validate/IMENU-DEMO88'
+    ) {
+      pass('SDK-39: referrals.validateCode map chính xác GET /api/referrals/validate/:code');
+      passed++;
+    } else {
+      fail('SDK-39: referrals.validateCode sai route', req39);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 40: Phase 12 - referrals.submitApplication
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.referrals.submitApplication({
+      fullName: 'Trần Văn CTV',
+      phone: '0901234888',
+      email: 'ctv@gmail.com',
+      city: 'Hà Nội',
+      note: 'Muốn làm CTV',
+      parentReferralCode: 'IMENU-DEMO88',
+    });
+    const req40 = capturedRequests[0];
+    const parsedBody40 = req40 ? JSON.parse(req40.body) : {};
+    if (
+      req40?.method === 'POST' &&
+      req40?.url === '/api/referrals/apply' &&
+      parsedBody40.fullName === 'Trần Văn CTV' &&
+      parsedBody40.parentReferralCode === 'IMENU-DEMO88'
+    ) {
+      pass('SDK-40: referrals.submitApplication map chính xác POST /api/referrals/apply');
+      passed++;
+    } else {
+      fail('SDK-40: referrals.submitApplication sai route hoặc body', { req40, parsedBody40 });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 41: Phase 12 - sales.getDashboard
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.sales.getDashboard();
+    const req41 = capturedRequests[0];
+    if (
+      req41?.method === 'GET' &&
+      req41?.url === '/api/sales/dashboard'
+    ) {
+      pass('SDK-41: sales.getDashboard map chính xác GET /api/sales/dashboard');
+      passed++;
+    } else {
+      fail('SDK-41: sales.getDashboard sai route', req41);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 42: Phase 12 - sales.getRestaurants
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.sales.getRestaurants({
+      search: 'Bếp Nhà',
+      subscriptionStatus: 'ACTIVE_PAID',
+      isActivationQualified: true,
+      page: 1,
+      limit: 10,
+    });
+    const req42 = capturedRequests[0];
+    if (
+      req42?.method === 'GET' &&
+      req42?.url?.includes('/api/sales/restaurants?') &&
+      req42?.url?.includes('search=B%E1%BA%BFp+Nh%C3%A0') &&
+      req42?.url?.includes('subscriptionStatus=ACTIVE_PAID') &&
+      req42?.url?.includes('isActivationQualified=true')
+    ) {
+      pass('SDK-42: sales.getRestaurants map chính xác GET /api/sales/restaurants kèm bộ lọc');
+      passed++;
+    } else {
+      fail('SDK-42: sales.getRestaurants sai route hoặc query params', req42);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 43: Phase 12 - sales.createRestaurant
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.sales.createRestaurant({
+      restaurant: {
+        name: 'Quán Ăn Hoàng Gia',
+        phone: '0909999111',
+        address: '88 Phố Huế, Q.Hai Bà Trưng, Hà Nội',
+        tagline: 'Tinh hoa ẩm thực',
+      },
+      owner: {
+        fullName: 'Lê Hoàng',
+        phone: '0909999111',
+        email: 'lehoang@nhahang.vn',
+        password: 'Password@123',
+      },
+      seedDemoTables: true,
+      seedDemoMenu: true,
+    });
+    const req43 = capturedRequests[0];
+    const parsedBody43 = req43 ? JSON.parse(req43.body) : {};
+    if (
+      req43?.method === 'POST' &&
+      req43?.url === '/api/sales/restaurants' &&
+      parsedBody43.restaurant?.name === 'Quán Ăn Hoàng Gia' &&
+      parsedBody43.owner?.email === 'lehoang@nhahang.vn'
+    ) {
+      pass('SDK-43: sales.createRestaurant map chính xác POST /api/sales/restaurants');
+      passed++;
+    } else {
+      fail('SDK-43: sales.createRestaurant sai route hoặc body', { req43, parsedBody43 });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 44: Phase 12 - sales.getCommissions
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.sales.getCommissions({
+      commissionType: 'SETUP_COMMISSION',
+      status: 'APPROVED',
+      payoutPeriod: '2026-10-K1',
+      page: 1,
+      limit: 20,
+    });
+    const req44 = capturedRequests[0];
+    if (
+      req44?.method === 'GET' &&
+      req44?.url?.includes('/api/sales/commissions?') &&
+      req44?.url?.includes('commissionType=SETUP_COMMISSION') &&
+      req44?.url?.includes('status=APPROVED') &&
+      req44?.url?.includes('payoutPeriod=2026-10-K1')
+    ) {
+      pass('SDK-44: sales.getCommissions map chính xác GET /api/sales/commissions kèm bộ lọc');
+      passed++;
+    } else {
+      fail('SDK-44: sales.getCommissions sai route hoặc query params', req44);
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 45: Phase 12 - sales.getSubTeam & sales.updatePayoutBank
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.sales.getSubTeam();
+    await apiClient.sales.updatePayoutBank({
+      bankId: 'MB',
+      bankName: 'MBBank',
+      accountNo: '0908888999',
+      accountName: 'NGUYEN VAN SALES',
+    });
+    const reqTeam = capturedRequests[0];
+    const reqBank = capturedRequests[1];
+    const parsedBank = reqBank ? JSON.parse(reqBank.body) : {};
+    if (
+      reqTeam?.method === 'GET' &&
+      reqTeam?.url === '/api/sales/sub-team' &&
+      reqBank?.method === 'PUT' &&
+      reqBank?.url === '/api/sales/profile/bank-account' &&
+      parsedBank.accountNo === '0908888999'
+    ) {
+      pass('SDK-45: sales.getSubTeam & sales.updatePayoutBank map chính xác backend routes');
+      passed++;
+    } else {
+      fail('SDK-45: sales subTeam/bankAccount sai route hoặc body', { reqTeam, reqBank });
       failed++;
     }
   } finally {

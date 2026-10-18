@@ -448,6 +448,12 @@ The test file `packages/utils/tests/sdk-contract.test.ts` launches an in-memory 
 - **SDK-30**: `tables.callStaff` properly maps `POST /api/tables/:tableId/call-staff` with payload.
 - **SDK-31**: `tables.acknowledgeCall` properly maps `POST /api/tables/:tableId/acknowledge-call`.
 - **SDK-32**: `customerOrders.callStaff` properly maps `POST /api/tables/:tableId/call-staff`.
+- **SDK-33**: `customerOrders.downloadBill` maps to `GET /api/orders/customer/:id/download-bill` with `receiptAccessToken`.
+- **SDK-34**: `reviews.createCustomerReview` maps to `POST /api/reviews/customer`.
+- **SDK-35**: `reviews.getCustomerReviewByOrder` maps to `GET /api/reviews/customer/by-order/:orderId`.
+- **SDK-36**: `reviews.list` maps to `GET /api/reviews` with pagination and multi-branch filters.
+- **SDK-37**: `reviews.getSummary & reviews.reply` map correctly to backend routes.
+- **SDK-38**: `renderReceiptToPngDataUrl` compiles valid 80mm thermal receipt PNG Data URLs (640px, scale=2).
 
 ### Realtime Multi-Tab Browser E2E Suite (`node scripts/e2e-realtime-ecosystem.mjs`)
 The script `scripts/e2e-realtime-ecosystem.mjs` verifies multi-tab realtime synchronization in real Google Chrome (3 Checkpoints):
@@ -524,7 +530,15 @@ To preserve architectural precision and avoid assumptions regarding Phase 9:
 
 ## 📄 10. Project Status & Acceptance
 
-### Phase 10: Realtime WebSocket Gateway, Room Security & Ecosystem Finalization — ✅ ACCEPTED & FULL 10/10 PHASES ROADMAP COMPLETED
+### Phase 11: Customer Review Per Branch & Digital Bill Download — ✅ ACCEPTED & FULL 11/11 PHASES ROADMAP COMPLETED
+- **Branch-Isolated Customer Reviews (`/reviews`)**: Comprehensive review management dashboard featuring CSAT KPI cards, 1–5 star distribution, branch filters, quick reply dialog, and owner-only moderation toggle.
+- **Post-Settlement Digital Bill Retrieval (24-Hour Access Token & 2D Canvas)**: Issues a 48-hex random `receiptAccessToken`, enabling customers to view and download invoices within 24 hours after table clearance.
+- **80mm Retina 2D Canvas Thermal Receipt Exporter**: `@imenu/utils` module (`renderReceiptToPngDataUrl`) compiles crisp PNG images (640px, scale=2), paired with an in-app preview modal optimized for Safari iOS and Zalo.
+- **Realtime Chime & Low-Rating Alert**: `review:created` events broadcast instantly to branch rooms with special audio chime triggers for ratings $\le 2$ stars.
+- **Frontend SDK Contract (`@imenu/utils`)**: 100% PASS (**40 / 40 test cases**) covering methods `SDK-33` through `SDK-38`.
+- **Security & Adversarial Hardening (AUD-11.1 to AUD-11.7)**: CAS atomic concurrency under 10 concurrent requests, anti-IDOR table validation, owner-only moderation RBAC, full audit trail logging to `activity-logs`.
+
+### Phase 10: Realtime WebSocket Gateway, Room Security & Ecosystem Finalization — ✅ ACCEPTED
 - **Customer Call Staff & Two-Way Acknowledgment**: Real-time table request flow (`callStaff`) and staff acknowledgment on Admin POS (`acknowledgeCall`) with audio chimes and diner toast feedback.
 - **WebSocket Room Security & Multi-Branch Isolation**: Strict hierarchical room structures (`restaurant_${id}`, `branch_${id}`, `table_${id}`), guest isolation preventing eavesdropping on staff channels, dynamic room migration on branch switch (`client.leave(r)`).
 - **Realtime Domain Events Matrix**: Standardized 7 core operational event groups (New Order, Order Updated, Dish Status, Table Status, Call Staff, Payment, 86 Stockout).

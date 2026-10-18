@@ -43,6 +43,10 @@ const ROUTE_PERMISSIONS_MAP: Record<string, { permissions: string[]; name: strin
     permissions: ['perm-rep-view'],
     name: 'Báo Cáo & Doanh Thu',
   },
+  '/reviews': {
+    permissions: ['perm-review-view'],
+    name: 'Đánh Giá Khách Hàng',
+  },
   '/staff': {
     permissions: ['perm-staff-manage', 'perm-role-manage'],
     name: 'Nhân Viên & Phân Quyền',
@@ -81,10 +85,15 @@ export const RouteAccessGuard: React.FC<RouteAccessGuardProps> = ({ children }) 
   const roleSlug = String(currentUser?.role || '').toLowerCase();
   const isSuperAdmin = roleSlug === 'system_admin' || roleSlug === 'super_admin';
   const isOwner = roleSlug === 'restaurant_admin';
+  const isSalesRep = roleSlug === 'sales_rep';
   const isMainBranchUser = isSuperAdmin || Boolean(currentUser?.isMainBranch);
 
   // 1. Tự động điều hướng trang chủ '/' về trang nghiệp vụ chuyên trách cho các vai trò vận hành
   if (pathname === '/') {
+    if (isSalesRep) {
+      router.replace('/sales/dashboard');
+      return null;
+    }
     if (roleSlug === 'kitchen') {
       router.replace('/kitchen');
       return null;
@@ -97,6 +106,19 @@ export const RouteAccessGuard: React.FC<RouteAccessGuardProps> = ({ children }) 
       router.replace('/pos');
       return null;
     }
+  }
+
+  // 1b. Khóa ranh giới đối tác kinh doanh (AUD-12.4): NVKD chỉ được phép truy cập cổng /sales/*
+  if (isSalesRep) {
+    if (pathname.startsWith('/sales')) {
+      return <>{children}</>;
+    }
+    return renderForbidden(
+      currentUser,
+      'Khu Vực Nội Bộ Nhà Hàng',
+      'Tài khoản Chuyên viên Kinh doanh chỉ được truy cập Cổng Đối Tác Kinh Doanh',
+      '/sales/dashboard',
+    );
   }
 
   // 2. Super Admin và Chủ Nhà Hàng (HQ) có toàn quyền truy cập
@@ -136,6 +158,7 @@ export const RouteAccessGuard: React.FC<RouteAccessGuardProps> = ({ children }) 
   return <>{children}</>;
 
   function getDefaultRoute(slug: string): string {
+    if (slug === 'sales_rep') return '/sales/dashboard';
     if (slug === 'kitchen') return '/kitchen';
     if (slug === 'cashier') return '/pos';
     if (slug === 'waiter') return '/tables';
