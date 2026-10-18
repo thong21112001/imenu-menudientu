@@ -8,6 +8,7 @@ import puppeteer from 'puppeteer-core';
 import fs from 'fs';
 import path from 'path';
 import http from 'http';
+import { getTestFixtureSecret } from './helpers/test-credentials.mjs';
 
 // ---------------------------------------------------------------------------
 // 0. AUTO-LOAD ENVIRONMENT VARIABLES
@@ -24,7 +25,7 @@ const API_BASE = process.env.API_BASE_URL || 'http://localhost:3001/api';
 const ADMIN_BASE = process.env.ADMIN_BASE_URL || 'http://localhost:3003';
 const MENU_BASE = process.env.MENU_BASE_URL || 'http://localhost:3005';
 const DEMO_EMAIL = process.env.DEMO_USER_EMAIL || 'owner@sample.vn';
-const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD || process.env.DEMO_PASSWORD || process.env.NEXT_PUBLIC_DEMO_PASSWORD;
+const DEMO_PASSWORD = process.env.DEMO_USER_PASSWORD || process.env.DEMO_PASSWORD || process.env.NEXT_PUBLIC_DEMO_PASSWORD || getTestFixtureSecret();
 
 const ARTIFACTS_DIR = path.resolve('test-artifacts/e2e-failures');
 if (!fs.existsSync(ARTIFACTS_DIR)) {

@@ -88,7 +88,14 @@ export default function DashboardOverviewPage() {
   };
 
   useEffect(() => {
-    setCurrentUser(storageService.getCurrentUser());
+    const usr = storageService.getCurrentUser();
+    const roleSlug = String(usr?.role || '').toLowerCase();
+    if (roleSlug === 'system_admin' || roleSlug === 'super_admin') {
+      window.location.replace('/platform/dashboard');
+      return;
+    }
+
+    setCurrentUser(usr);
     setRestaurant(storageService.getRestaurant());
     fetchDashboard(activeBranchId, selectedDate);
 

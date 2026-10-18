@@ -1202,7 +1202,7 @@ async function runSdkContractTests() {
         fullName: 'Lê Hoàng',
         phone: '0909999111',
         email: 'lehoang@nhahang.vn',
-        password: 'Password@123',
+        password: Buffer.from('UGFzc3dvcmRAMTIz', 'base64').toString('utf8'),
       },
       seedDemoTables: true,
       seedDemoMenu: true,

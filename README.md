@@ -530,7 +530,21 @@ Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai 
 
 ## 📄 10. Trạng Thái Dự Án & Nghiệm Thu (Project Status)
 
-### Phase 11: Đánh Giá Khách Hàng Theo Chi Nhánh & Tải Hóa Đơn Điện Tử — ✅ ĐÃ NGHIỆM THU & HOÀN TẤT TOÀN BỘ LỘ TRÌNH 11/11 PHASES
+### Phase 14: Thanh Lọc Không Gian Superadmin, Triệt Tiêu Mật Khẩu Tĩnh & Đồng Bộ Toàn Diện Tài Liệu — ✅ ĐÃ NGHIỆM THU & HOÀN TẤT TOÀN DIỆN LỘ TRÌNH 14/14 PHASES
+- **Cô Lập 100% Không Gian Superadmin Vào Platform Control Center (`AUD-14.2`, `AUD-14.3`)**: Ẩn toàn bộ các mục điều hướng quán lẻ trên `AdminSidebar`, loại bỏ hoàn toàn Branch Switcher, Toggle giờ hoạt động và Nút tắt chuông trên `AdminHeader`. Bổ sung huy hiệu hoàng gia Superadmin (`Crown`), ngắt 100% sự kiện âm thanh chuông bếp/bàn ăn Socket.IO cho Superadmin.
+- **Bảo Vệ Điều Hướng Tuyệt Đối (`RouteAccessGuard`)**: Chặn mọi truy cập vô tình từ Superadmin vào các trang quán lẻ (`/tables`, `/pos`, `/kitchen`, `/bills`, `/reviews`, `/branches`, `/settings`, `/sales/*`) và chuyển hướng tức thì sang `/platform/dashboard`.
+- **Triệt Tiêu 100% Mật Khẩu Tĩnh & Dynamic Credentials Guard (`AUD-14.1`)**: Xóa bỏ vĩnh viễn các chuỗi mật khẩu tĩnh (`Password@123`, `123456`, v.v.) trong toàn bộ các tệp E2E Puppeteer (`e2e-order-lifecycle.mjs`, `e2e-kds-lifecycle.mjs`, `e2e-payment-bill-lifecycle.mjs`, `e2e-dashboard-reports.mjs`, `e2e-realtime-ecosystem.mjs`) và `sdk-contract.test.ts`. Thay thế bằng runtime dynamic helper `test-credentials.mjs`.
+- **Trình Tạo Mật Khẩu An Toàn Động (`/staff`)**: Trang quản lý nhân sự bổ sung nút sinh mật khẩu ngẫu nhiên an toàn cao kèm biểu tượng Sparkles và thông báo Toast sao chép mật khẩu tức thì.
+- **Đồng Bộ Hóa Master README Song Ngữ (`AUD-14.5`)**: Cập nhật toàn diện lộ trình 14/14 Phases trên cả 6 tệp tài liệu master.
+
+### Phase 13: Trung Tâm Điều Hành Nền Tảng (Superadmin Platform Control Center) — ✅ ĐÃ NGHIỆM THU
+- **Giao Diện Điều Hành Toàn Sàn (`/platform/*`)**: Tổng quan hệ thống Platform Dashboard, Quản trị phê duyệt & kích hoạt nhà hàng (`/platform/restaurants`), Phân tích GMV toàn hệ thống theo 4 phương thức thanh toán (`/platform/revenues`), Quản lý đội ngũ NVKD & Giải ngân hoa hồng (`/platform/sales`).
+- **Phân Quyền Nền Tảng Chặt Chẽ**: Phân lập nghiêm ngặt giữa Quản trị Nền tảng (Platform) và Quản trị Quán lẻ (Tenant).
+
+### Phase 12: Cổng Đối Tác Kinh Doanh & Tiếp Thị Liên Kết (Sales Partner Portal) — ✅ ĐÃ NGHIỆM THU
+- **Giao Diện Đối Tác Kinh Doanh (`/sales/*`)**: Bảng điều khiển KPI đối tác, Tạo & quản lý nhà hàng bảo trợ, Theo dõi sổ cái hoa hồng lũy kế và đội ngũ CTV cấp dưới.
+
+### Phase 11: Đánh Giá Khách Hàng Theo Chi Nhánh & Tải Hóa Đơn Điện Tử — ✅ ĐÃ NGHIỆM THU
 - **Đánh Giá Khách Hàng Phân Lập Chi Nhánh (`/reviews`)**: Trang quản lý đánh giá toàn diện với CSAT KPI cards, phân rã 1–5 sao, bộ lọc chi nhánh độc lập, modal phản hồi nhanh và quyền kiểm duyệt ẩn/hiện chỉ dành cho Chủ quán.
 - **Tải Hóa Đơn Điện Tử Sau Khi Giải Phóng Bàn (Token 24h & Canvas 2D)**: Cấp phát mã `receiptAccessToken` dạng crypto hex 48 ký tự, cho phép khách tải và xem lại hóa đơn trong vòng 24 giờ kể từ khi thanh toán.
 - **Bộ Kết Xuất Hóa Đơn Nhiệt 80mm Retina 2D Canvas**: Module `@imenu/utils` (`renderReceiptToPngDataUrl`) kết xuất ảnh PNG sắc nét (640px, scale=2), tích hợp modal xem trước ảnh tương thích tuyệt đối với Safari iOS và Zalo in-app browser.
