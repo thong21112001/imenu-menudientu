@@ -158,7 +158,11 @@ function LoginForm() {
 
       if (res?.data?.accessToken) {
         const userRole = (res.data.user as any)?.role;
-        const isSuperAdmin = userRole === 'SYSTEM_ADMIN' || userRole === 'system_admin';
+        const roleSlug = String(userRole || '').toLowerCase();
+        const isSuperAdmin =
+          roleSlug === 'system_admin' ||
+          roleSlug === 'super_admin' ||
+          Boolean((res.data.user as any)?.isSuperAdmin);
 
         // Neu khong phai Super Admin -> lay thong tin nha hang hien tai
         if (!isSuperAdmin) {
@@ -175,8 +179,11 @@ function LoginForm() {
         // Chuyen huong thong minh dua tren role neu nguoi dung vao goc '/'
         let targetUrl = returnUrl.startsWith('/') ? returnUrl : `/${returnUrl}`;
         if (targetUrl === '/' || targetUrl === '') {
-          const roleSlug = String(userRole || '').toLowerCase();
-          if (roleSlug === 'kitchen') {
+          if (isSuperAdmin) {
+            targetUrl = '/platform/dashboard';
+          } else if (roleSlug === 'sales_rep') {
+            targetUrl = '/sales/dashboard';
+          } else if (roleSlug === 'kitchen') {
             targetUrl = '/kitchen';
           } else if (roleSlug === 'cashier') {
             targetUrl = '/pos';

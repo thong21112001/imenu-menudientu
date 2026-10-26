@@ -166,6 +166,10 @@ export interface PlatformSalesRepItem {
     activationBonusAmount: number;
     teamBonusAmount: number;
   };
+  setupCommissionRate?: number;
+  renewalCommissionRate?: number;
+  activationBonusAmount?: number;
+  teamBonusAmount?: number;
   payoutBankAccount?: {
     bankId?: string;
     bankName?: string;
@@ -202,3 +206,51 @@ export interface PayoutBatchResult {
   message: string;
   payoutReference?: string;
 }
+
+export interface PlatformCommissionItem {
+  id: string;
+  _id?: string;
+  ledgerCode: string;
+  salesId?: {
+    id: string;
+    _id?: string;
+    fullName: string;
+    email: string;
+    phone?: string;
+    referralCode?: string;
+  } | null;
+  restaurantId?: {
+    id: string;
+    _id?: string;
+    name: string;
+    slug?: string;
+  } | null;
+  commissionType: string;
+  baseAmount: number;
+  commissionRate: number;
+  commissionAmount: number;
+  formulaSnapshot: string;
+  status: 'PENDING' | 'APPROVED' | 'PAID';
+  payoutPeriod: string;
+  payoutReference?: string;
+  paidAt?: string;
+  createdAt: string;
+}
+
+export interface QueryPlatformCommissionsParams {
+  status?: string;
+  salesId?: string;
+  payoutPeriod?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface PlatformCommissionsResponse {
+  items: PlatformCommissionItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+

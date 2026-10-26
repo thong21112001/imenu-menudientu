@@ -52,6 +52,8 @@ export default function PlatformRestaurantsPage() {
   const [billingCycle, setBillingCycle] = useState('YEARLY');
   const [transactionType, setTransactionType] = useState<'INITIAL_SETUP' | 'RENEWAL'>('INITIAL_SETUP');
   const [netAmount, setNetAmount] = useState(4800000);
+  const [customExpiresAt, setCustomExpiresAt] = useState('');
+  const [subNote, setSubNote] = useState('');
   const [subSubmitting, setSubSubmitting] = useState(false);
 
   const fetchRestaurants = async () => {
@@ -66,10 +68,12 @@ export default function PlatformRestaurantsPage() {
         limit,
       });
 
-      if (res && res.data) {
-        setItems(res.data.items || []);
-        setTotal(res.data.total || 0);
-        setTotalPages(res.data.totalPages || 1);
+      if (res) {
+        const payload: any = res.data || res;
+        const list = payload.items || (Array.isArray(payload) ? payload : []);
+        setItems(list);
+        setTotal(typeof payload.total === 'number' ? payload.total : list.length);
+        setTotalPages(payload.totalPages || 1);
       }
     } catch (err: any) {
       toast.error(err?.message || 'Không thể tải danh sách nhà hàng');
@@ -88,15 +92,22 @@ export default function PlatformRestaurantsPage() {
     fetchRestaurants();
   };
 
-  // 1. Vào quản trị quán (Impersonate Context)
+  // 1. Vào quản trị quán (Impersonate Support Mode)
   const handleImpersonate = (restaurant: PlatformRestaurantItem) => {
     storageService.setSelectedRestaurantId(restaurant.id);
+    storageService.saveRestaurant({
+      _id: restaurant.id,
+      id: restaurant.id,
+      name: restaurant.name,
+      slug: restaurant.slug,
+      plan: restaurant.plan,
+    } as any);
     window.dispatchEvent(
       new CustomEvent('imenu:restaurant_changed', {
         detail: { restaurantId: restaurant.id },
       }),
     );
-    toast.success(`Đã chuyển ngữ cảnh sang hỗ trợ nhà hàng: "${restaurant.name}"`);
+    toast.success(`Đã kích hoạt Chế độ Hỗ trợ nhà hàng: "${restaurant.name}"`);
     router.push('/tables');
   };
 
@@ -138,6 +149,8 @@ export default function PlatformRestaurantsPage() {
         billingCycle,
         transactionType,
         netAmount: Number(netAmount),
+        planExpiresAt: customExpiresAt || undefined,
+        note: subNote.trim() || undefined,
       });
 
       toast.success(
@@ -619,6 +632,29 @@ export default function PlatformRestaurantsPage() {
                     value={netAmount}
                     onChange={(e) => setNetAmount(Number(e.target.value))}
                     className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold text-purple-900 focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1 text-slate-700">Ngày hết hạn tùy chọn (bỏ trống để tự tính):</label>
+                  <input
+                    type="date"
+                    value={customExpiresAt}
+                    onChange={(e) => setCustomExpiresAt(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-purple-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-semibold mb-1 text-slate-700">Ghi chú giao dịch:</label>
+                  <input
+                    type="text"
+                    placeholder="VD: Khuyến mãi gói VIP 12 tháng"
+                    value={subNote}
+                    onChange={(e) => setSubNote(e.target.value)}
+                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:border-purple-500"
                   />
                 </div>
               </div>

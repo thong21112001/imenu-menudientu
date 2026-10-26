@@ -239,8 +239,41 @@ export const AdminSidebar: React.FC = () => {
   let visibleGroups: NavGroupConfig[] = [];
 
   if (isSuperAdmin) {
-    // AUD-14.2: Superadmin chỉ hiển thị duy nhất không gian Platform Control Center
-    visibleGroups = SUPERADMIN_NAV_GROUPS;
+    // Phase 15: Superadmin Platform Center & Chế độ Hỗ trợ Nhà hàng
+    visibleGroups = [...SUPERADMIN_NAV_GROUPS];
+    if (selectedRestaurantId) {
+      visibleGroups.push({
+        id: 'restaurant_support',
+        label: `Hỗ trợ: ${restaurant?.name || 'Nhà hàng'}`,
+        items: [
+          {
+            name: 'Sơ đồ Bàn',
+            href: '/tables',
+            icon: Grid3X3,
+          },
+          {
+            name: 'Quản lý Thực đơn',
+            href: '/menu',
+            icon: UtensilsCrossed,
+          },
+          {
+            name: 'Quản lý Chi nhánh',
+            href: '/branches',
+            icon: Building2,
+          },
+          {
+            name: 'Cài đặt Nhà hàng',
+            href: '/settings',
+            icon: Settings,
+          },
+          {
+            name: 'Báo cáo Doanh thu',
+            href: '/reports',
+            icon: BarChart3,
+          },
+        ],
+      });
+    }
   } else if (isSalesRep) {
     visibleGroups = [SALES_NAV_GROUP_CONFIG];
   } else {

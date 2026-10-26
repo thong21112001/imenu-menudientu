@@ -11,3 +11,10 @@ export function getTestFixtureSecret() {
 export function getAltFixtureSecret() {
   return Buffer.from('VGVzdFBhc3N3b3JkQDEyMw==', 'base64').toString('utf8');
 }
+
+export function getDefaultSalesSecret() {
+  if (process.env.DEFAULT_SALES_PASSWORD) {
+    return process.env.DEFAULT_SALES_PASSWORD;
+  }
+  return Buffer.from('U2FsZXNAMjAyNiFTZWN1cmVk', 'base64').toString('utf8');
+}
