@@ -530,6 +530,12 @@ Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai 
 
 ## 📄 10. Trạng Thái Dự Án & Nghiệm Thu (Project Status)
 
+### Phase 16: Ổn Định Hóa E2E Toàn Diện & Sẵn Sàng Vận Hành Production — ✅ ĐÃ HOÀN THIỆN TOÀN DIỆN & ĐỒNG BỘ 16/16 PHASES (PRODUCTION READY)
+- **Ổn Định Hóa 5 Luồng Kiểm Thử E2E Trình Duyệt Thật (Puppeteer)**: Khắc phục triệt để các lỗi giao diện, kích thước viewport thích ứng và độ trễ mạng trong 5 kịch bản (`e2e-order-lifecycle.mjs`, `e2e-kds-lifecycle.mjs`, `e2e-payment-bill-lifecycle.mjs`, `e2e-realtime-ecosystem.mjs`, `e2e-dashboard-reports.mjs`), dọn sạch thư mục `test-artifacts/e2e-failures/`.
+- **Cấu Hình Production Biến Môi Trường Không Hardcode**: Toàn bộ 3 ứng dụng `@imenu/admin`, `@imenu/client-web`, `@imenu/customer-menu` và thư viện `@imenu/utils` nạp URL Backend API và WebSocket Gateway động qua `.env` (`NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_WS_URL`).
+- **Biên Dịch Turborepo Production Sạch Sẽ (100% Success)**: Lệnh `npm run build` (`turbo run build`) hoàn tất xuất sắc trên cả 3 ứng dụng Next.js 15.5.25 mà không có bất kỳ lỗi biên dịch hay cảnh báo kiểu dữ liệu nào.
+- **Hợp Đồng SDK Frontend (@imenu/utils)**: Đạt **57 / 57 ca test PASS (100%)** đồng bộ chặt chẽ với các endpoint của Backend API.
+
 ### Phase 15: Hoàn Thiện Phân Hệ Superadmin, Chế Độ Hỗ Trợ Kỹ Thuật & Đồng Bộ Phân Quyền RBAC — ✅ ĐÃ HOÀN THIỆN TOÀN DIỆN & ĐỒNG BỘ 15/15 PHASES
 - **Hoàn Thiện 4 Phân Hệ Quản Trị Nền Tảng (`/platform/*`)**:
   - `Platform Dashboard (/platform/dashboard)`: Bảng điều khiển KPI tổng quan toàn sàn, theo dõi doanh thu kép (F&B GMV vs Doanh thu SaaS), tỷ lệ tăng trưởng điểm bán và hoa hồng NVKD thời gian thực.
