@@ -53,11 +53,22 @@ export default function BranchesPage() {
     Boolean(user?.isSuperAdmin);
   const isMainBranchUser = isSuperAdmin || Boolean(user?.isMainBranch);
   const isDemo = Boolean(user?.isDemo || user?.email === 'owner@sample.vn');
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(
+    storageService.getSelectedRestaurantId(),
+  );
 
-  const loadBranches = async () => {
+  const loadBranches = async (overrideRestId?: string | null) => {
     setLoading(true);
     try {
-      const res = await apiClient.branches.list();
+      const restId =
+        overrideRestId !== undefined
+          ? overrideRestId
+          : selectedRestaurantId || user?.restaurantId;
+      if (isSuperAdmin && !restId) {
+        setBranches([]);
+        return;
+      }
+      const res = await apiClient.branches.list(restId || undefined);
       if (res.data && Array.isArray(res.data)) {
         setBranches(res.data);
       }
@@ -70,7 +81,20 @@ export default function BranchesPage() {
 
   useEffect(() => {
     setUser(storageService.getCurrentUser());
-    loadBranches();
+    const restId = storageService.getSelectedRestaurantId();
+    setSelectedRestaurantId(restId);
+    loadBranches(restId);
+
+    const handleRestaurantChanged = (e: any) => {
+      const newRestId = e.detail?.restaurantId ?? null;
+      setSelectedRestaurantId(newRestId);
+      loadBranches(newRestId);
+    };
+
+    window.addEventListener('imenu:restaurant_changed', handleRestaurantChanged);
+    return () => {
+      window.removeEventListener('imenu:restaurant_changed', handleRestaurantChanged);
+    };
   }, []);
 
   const showNotification = (type: 'success' | 'error', text: string) => {
@@ -113,6 +137,7 @@ export default function BranchesPage() {
         name: branchName.trim(),
         address: branchAddress.trim(),
         phone: branchPhone.trim(),
+        restaurantId: (isSuperAdmin ? selectedRestaurantId : undefined) || undefined,
       });
       setIsAddModalOpen(false);
       toast.success(`Đã tạo mới chi nhánh "${branchName}" thành công!`);

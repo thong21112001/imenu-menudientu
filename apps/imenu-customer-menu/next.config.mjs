@@ -2,8 +2,13 @@
 const nextConfig = {
   transpilePackages: ["@imenu/ui", "@imenu/utils", "@imenu/types"],
   images: {
-    domains: ["images.unsplash.com", "api.qrserver.com", "img.vietqr.io"],
-  }
+    remotePatterns: [
+      { protocol: "https", hostname: "images.unsplash.com" },
+      { protocol: "https", hostname: "api.qrserver.com" },
+      { protocol: "https", hostname: "img.vietqr.io" },
+      { protocol: "https", hostname: "**" },
+    ],
+  },
 };
 
 export default nextConfig;

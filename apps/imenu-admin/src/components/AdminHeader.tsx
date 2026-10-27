@@ -127,6 +127,10 @@ export const AdminHeader: React.FC = () => {
   const fetchBranches = async (targetRestId?: string | null) => {
     try {
       const effectiveRestId = targetRestId !== undefined ? targetRestId : selectedRestaurantId;
+      if (isSuperAdmin && !effectiveRestId) {
+        setBranches([]);
+        return;
+      }
       const res = await apiClient.branches.list(effectiveRestId || undefined);
       if (res.data && Array.isArray(res.data)) {
         setBranches(res.data);
@@ -555,6 +559,31 @@ export const AdminHeader: React.FC = () => {
 
   return (
     <>
+      {/* AUD-14.2 & Phase 15: Ambient Support Mode Banner for Superadmin */}
+      {isSuperAdmin && selectedRestaurantId && (
+        <div className="w-full bg-linear-to-r from-purple-800 via-indigo-900 to-purple-900 text-white px-4 py-2 text-xs font-semibold flex items-center justify-between shadow-md sticky top-0 z-40 border-b border-purple-500/30">
+          <div className="flex items-center gap-2 truncate">
+            <Crown className="w-4 h-4 text-amber-300 shrink-0 animate-pulse" />
+            <span>
+              Chế độ Hỗ trợ: <strong className="text-amber-300">{currentRestaurant?.name || 'Đang hỗ trợ nhà hàng'}</strong>
+            </span>
+            <span className="text-purple-200 hidden sm:inline">
+              ({currentRestaurant?.slug || ''}) • Toàn quyền xem và thao tác dữ liệu
+            </span>
+          </div>
+          <button
+            onClick={() => {
+              handleSelectRestaurant(null);
+              window.location.href = '/platform/dashboard';
+            }}
+            className="px-3 py-1 rounded-xl bg-purple-600/80 hover:bg-purple-600 text-white text-[11px] font-bold transition-all cursor-pointer shrink-0 ml-2 border border-purple-400/40 shadow-xs flex items-center gap-1"
+          >
+            <span>Thoát hỗ trợ</span>
+            <span>✕</span>
+          </button>
+        </div>
+      )}
+
       <header className="h-16 bg-white border-b border-[#e4e8e5] sticky top-0 z-30 flex items-center justify-between px-3 sm:px-6 shadow-2xs w-full min-w-0 max-w-full">
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           {/* Sidebar Toggle Button */}
@@ -577,13 +606,91 @@ export const AdminHeader: React.FC = () => {
           {isSuperAdmin && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-purple-50 border border-purple-200/80 text-xs font-bold text-purple-900 shadow-2xs">
               <Crown className="w-4 h-4 text-purple-600 shrink-0" />
-              <span className="hidden sm:inline">👑 Quản Trị Viên Tối Cao (Superadmin)</span>
-              <span className="sm:hidden">Superadmin</span>
+              <span className="hidden lg:inline">👑 Quản Trị Viên Tối Cao (Superadmin)</span>
+              <span className="lg:hidden">Superadmin</span>
+            </div>
+          )}
+
+          {/* Phase 15: Superadmin Restaurant Selector */}
+          {isSuperAdmin && (
+            <div ref={restaurantDropdownRef} className="relative">
+              <button
+                onClick={() => setShowRestaurantDropdown(!showRestaurantDropdown)}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                  selectedRestaurantId
+                    ? 'bg-purple-100 text-purple-950 border-purple-300 shadow-xs'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border-slate-200'
+                }`}
+                title="Chọn nhà hàng để hỗ trợ hoặc xem toàn sàn"
+              >
+                <Store className="w-3.5 h-3.5 text-purple-700 shrink-0" />
+                <span className="truncate max-w-[130px] sm:max-w-[200px]">{selectedRestaurantLabel}</span>
+                <ChevronDown className="w-3 h-3 text-purple-500 shrink-0" />
+              </button>
+
+              {showRestaurantDropdown && (
+                <div className="absolute left-0 mt-2 w-72 sm:w-80 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
+                  <div className="px-2.5 py-1.5 border-b border-slate-100 mb-1 flex items-center justify-between">
+                    <span className="font-bold text-slate-500 text-[10px] uppercase tracking-wider">
+                      Phạm vi điều hành
+                    </span>
+                    <span className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded font-bold">
+                      SuperAdmin
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => handleSelectRestaurant(null)}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left cursor-pointer transition-colors ${
+                      selectedRestaurantId === null
+                        ? 'bg-purple-700 text-white font-bold'
+                        : 'hover:bg-slate-100 text-slate-700'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Globe className="w-4 h-4 shrink-0" />
+                      <span>🌐 Toàn hệ thống (Platform Center)</span>
+                    </div>
+                    {selectedRestaurantId === null && <Check className="w-3.5 h-3.5" />}
+                  </button>
+
+                  <div className="my-1 border-t border-slate-100" />
+
+                  <div className="max-h-56 overflow-y-auto space-y-1">
+                    {restaurants.map((r) => {
+                      const rId = r._id || r.id;
+                      const isSelected = selectedRestaurantId === rId;
+                      return (
+                        <button
+                          key={rId}
+                          onClick={() => handleSelectRestaurant(rId)}
+                          className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-left cursor-pointer transition-colors ${
+                            isSelected
+                              ? 'bg-purple-50 text-purple-900 font-bold border border-purple-200'
+                              : 'hover:bg-slate-50 text-slate-700'
+                          }`}
+                        >
+                          <div className="min-w-0 flex-1 pr-2">
+                            <div className="flex items-center gap-1.5">
+                              <span className="truncate font-semibold">{r.name}</span>
+                              <span className="text-[9px] px-1 py-0.2 bg-purple-100 text-purple-800 font-bold rounded">
+                                {r.plan || 'Basic'}
+                              </span>
+                            </div>
+                            <small className="text-[10px] text-slate-400 block truncate">{r.address || r.slug}</small>
+                          </div>
+                          {isSelected && <Check className="w-3.5 h-3.5 text-purple-700 shrink-0" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {/* Branch Switcher / Current Branch Indicator */}
-          {!isSuperAdmin &&
+          {(!isSuperAdmin || Boolean(selectedRestaurantId)) &&
             (isMainBranchUser ? (
               <div ref={branchDropdownRef} className="relative">
                 <button

@@ -88,12 +88,22 @@ export const RouteAccessGuard: React.FC<RouteAccessGuardProps> = ({ children }) 
   const isSalesRep = roleSlug === 'sales_rep';
   const isMainBranchUser = isSuperAdmin || Boolean(currentUser?.isMainBranch);
 
-  // 1a. Khóa ranh giới Quản trị viên Tối cao (Superadmin) — AUD-14.2:
-  // Superadmin làm việc 100% trong Trung tâm điều hành nền tảng (/platform/*) và Quản lý tài khoản (/staff).
-  // Mọi yêu cầu truy cập màn hình nghiệp vụ nhà hàng bán lẻ (/, /tables, /pos, /kitchen, /bills, /menu, /qr-codes, /reports, /reviews, /branches, /settings, /sales/*)
-  // đều được tự động điều hướng về /platform/dashboard.
+  // 1a. Chế độ Quản trị Nền tảng & Hỗ trợ Nhà hàng của Superadmin (Phase 15):
+  // Superadmin có toàn quyền tại /platform/* và /staff.
+  // Khi đang chọn 1 nhà hàng cụ thể (storageService.getSelectedRestaurantId()), Superadmin ở Chế độ Hỗ trợ (Impersonation Support Mode)
+  // và được phép truy cập tất cả các route nghiệp vụ nhà hàng (/tables, /pos, /kitchen, /bills, /menu, /qr-codes, /reports, /reviews, /branches, /settings).
+  // Nếu chưa chọn nhà hàng mà cố truy cập các route bán lẻ, tự động điều hướng về /platform/dashboard.
   if (isSuperAdmin) {
-    if (pathname.startsWith('/platform') || pathname === '/staff' || pathname.startsWith('/staff/')) {
+    if (
+      pathname.startsWith('/platform') ||
+      pathname === '/staff' ||
+      pathname.startsWith('/staff/')
+    ) {
+      return <>{children}</>;
+    }
+    const selectedRestaurantId = storageService.getSelectedRestaurantId();
+    if (selectedRestaurantId) {
+      // Đang trong Chế độ Hỗ trợ Nhà hàng -> Cho phép truy cập toàn bộ nghiệp vụ
       return <>{children}</>;
     }
     router.replace('/platform/dashboard');

@@ -23,6 +23,8 @@ export default function PlatformRevenuesPage() {
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'GMV' | 'SAAS'>('GMV');
   const [timeRange, setTimeRange] = useState('this_month');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [drillDownRestaurantId, setDrillDownRestaurantId] = useState<string | null>(null);
 
   const [gmvData, setGmvData] = useState<PlatformRevenueReport | null>(null);
@@ -32,18 +34,21 @@ export default function PlatformRevenuesPage() {
   const fetchRevenues = async () => {
     try {
       setLoading(true);
+      const queryParams: any = {
+        timeRange,
+      };
+      if (timeRange === 'custom') {
+        if (startDate) queryParams.startDate = startDate;
+        if (endDate) queryParams.endDate = endDate;
+      }
       if (activeTab === 'GMV') {
-        const res = await apiClient.platform.getRestaurantRevenues({
-          timeRange,
-          restaurantId: drillDownRestaurantId || undefined,
-        });
+        queryParams.restaurantId = drillDownRestaurantId || undefined;
+        const res = await apiClient.platform.getRestaurantRevenues(queryParams);
         if (res && res.data) {
           setGmvData(res.data);
         }
       } else {
-        const res = await apiClient.platform.getSaaSRevenues({
-          timeRange,
-        });
+        const res = await apiClient.platform.getSaaSRevenues(queryParams);
         if (res && res.data) {
           setSaasData(res.data);
         }
@@ -56,8 +61,11 @@ export default function PlatformRevenuesPage() {
   };
 
   useEffect(() => {
+    if (timeRange === 'custom' && (!startDate || !endDate)) {
+      return; // Wait for both dates
+    }
     fetchRevenues();
-  }, [activeTab, timeRange, drillDownRestaurantId]);
+  }, [activeTab, timeRange, startDate, endDate, drillDownRestaurantId]);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
@@ -77,7 +85,7 @@ export default function PlatformRevenuesPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Time Filter */}
           <div className="flex items-center bg-white border border-slate-200 rounded-xl p-1 shadow-2xs">
             <button
@@ -112,7 +120,34 @@ export default function PlatformRevenuesPage() {
             >
               Tháng trước
             </button>
+            <button
+              onClick={() => setTimeRange('custom')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition cursor-pointer ${
+                timeRange === 'custom' ? 'bg-purple-700 text-white shadow-2xs' : 'text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Tùy chọn
+            </button>
           </div>
+
+          {timeRange === 'custom' && (
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-2.5 py-1 text-xs shadow-2xs">
+              <span className="text-slate-500 font-medium">Từ:</span>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-purple-600"
+              />
+              <span className="text-slate-500 font-medium">Đến:</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-700 outline-none focus:ring-1 focus:ring-purple-600"
+              />
+            </div>
+          )}
 
           <button
             onClick={fetchRevenues}

@@ -139,6 +139,20 @@ async function main() {
   }
 
   try {
+    console.log(`\n[SETUP] 1. Xác thực tài khoản quản trị (${DEMO_EMAIL})...`);
+    let adminToken = '';
+    try {
+      const loginRes = await fetch(`${API_BASE}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD }),
+      });
+      const loginData = await loginRes.json();
+      if (loginRes.ok && loginData?.data?.accessToken) {
+        adminToken = loginData.data.accessToken;
+      }
+    } catch {}
+
     browser = await puppeteer.launch({
       executablePath: chromePath,
       headless: true,
@@ -155,7 +169,28 @@ async function main() {
     // -------------------------------------------------------------------------
     const adminPage = await browser.newPage();
     await adminPage.setViewport({ width: 1440, height: 900 });
-    await adminPage.goto(ADMIN_BASE, { waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {});
+
+    if (adminToken) {
+      await adminPage.setCookie({
+        name: 'imenu_access_token',
+        value: adminToken,
+        domain: 'localhost',
+        path: '/',
+      });
+      await adminPage.goto(`${ADMIN_BASE}/login`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+      await adminPage.evaluate((token) => {
+        document.cookie = `imenu_access_token=${token}; path=/; max-age=604800; SameSite=Lax`;
+        localStorage.setItem('imenu_access_token_v1', token);
+        localStorage.setItem('imenu_current_user_v1', JSON.stringify({
+          email: 'owner@sample.vn',
+          fullName: 'Nguyễn Minh An',
+          role: 'restaurant_admin',
+        }));
+      }, adminToken);
+    }
+
+    await adminPage.goto(ADMIN_BASE, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await new Promise(r => setTimeout(r, 2000));
 
     // Kiểm tra cấu trúc 4 nhóm menu trong DOM
     const sidebarGroups = await adminPage.evaluate(() => {
@@ -257,6 +292,17 @@ async function main() {
 
   } catch (err) {
     fail('E2E-P9-EXCEPTION', 'Lỗi thực thi kịch bản E2E Dashboard & Reports', err);
+    if (browser) {
+      try {
+        const pages = await browser.pages();
+        const activePage = pages.find(p => p.url() && !p.url().includes('about:blank')) || pages[pages.length - 1];
+        if (activePage) {
+          const failPath = path.join(ARTIFACTS_DIR, `failure-dashboard-${Date.now()}.png`);
+          await activePage.screenshot({ path: failPath, fullPage: true });
+          console.error(`   [Diagnostics] Đã lưu ảnh chụp lỗi: ${failPath}`);
+        }
+      } catch {}
+    }
   } finally {
     if (browser) {
       await browser.close();

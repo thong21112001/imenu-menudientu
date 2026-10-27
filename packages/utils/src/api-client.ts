@@ -38,6 +38,9 @@ import {
   PlatformSalesRepItem,
   PayoutBatchDto,
   PayoutBatchResult,
+  PlatformCommissionItem,
+  QueryPlatformCommissionsParams,
+  PlatformCommissionsResponse,
 } from '@imenu/types';
 
 export interface ApiResponse<T = any> {
@@ -93,6 +96,7 @@ export interface BranchPayload {
   name: string;
   address: string;
   phone: string;
+  restaurantId?: string;
   isMainBranch?: boolean;
   bankAccount?: {
     bankId?: string;
@@ -314,6 +318,13 @@ export const apiClient = {
 
     async getById(id: string) {
       return request<any>(`/restaurants/${id}`);
+    },
+
+    async updateById(id: string, payload: UpdateRestaurantPayload) {
+      return request<any>(`/restaurants/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
     },
   },
 
@@ -1555,6 +1566,18 @@ export const apiClient = {
         method: 'POST',
         body: JSON.stringify(payload),
       });
+    },
+
+    async getCommissions(params?: QueryPlatformCommissionsParams) {
+      const q = new URLSearchParams();
+      if (params?.status && params.status !== 'ALL') q.append('status', params.status);
+      if (params?.salesId) q.append('salesId', params.salesId);
+      if (params?.payoutPeriod) q.append('payoutPeriod', params.payoutPeriod);
+      if (params?.search) q.append('search', params.search);
+      if (params?.page) q.append('page', String(params.page));
+      if (params?.limit) q.append('limit', String(params.limit));
+      const qs = q.toString() ? `?${q.toString()}` : '';
+      return request<PlatformCommissionsResponse>(`/platform/commissions${qs}`);
     },
   },
 };

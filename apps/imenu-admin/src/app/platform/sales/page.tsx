@@ -43,6 +43,21 @@ export default function PlatformSalesPage() {
   const [applications, setApplications] = useState<any[]>([]);
   const [approvingId, setApprovingId] = useState<string | null>(null);
 
+  // Edit Rep state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingRep, setEditingRep] = useState<PlatformSalesRepItem | null>(null);
+  const [editForm, setEditForm] = useState({
+    referralCode: '',
+    setupCommissionRate: 50,
+    renewalCommissionRate: 20,
+    activationBonusAmount: 0,
+    teamBonusAmount: 0,
+    bankName: '',
+    accountNo: '',
+    accountName: '',
+  });
+  const [updatingRep, setUpdatingRep] = useState(false);
+
   // Payout Batch state
   const [commissions, setCommissions] = useState<any[]>([]);
   const [selectedLedgerIds, setSelectedLedgerIds] = useState<string[]>([]);
@@ -64,9 +79,9 @@ export default function PlatformSalesPage() {
           setApplications(res.data);
         }
       } else if (activeTab === 'PAYOUT') {
-        const res = await apiClient.sales.getCommissions({ limit: 100 });
+        const res = await apiClient.platform.getCommissions({ page: 1, limit: 100 });
         if (res && res.data) {
-          const list = (res.data as any).data || res.data;
+          const list = (res.data as any).items || (res.data as any).data || res.data;
           setCommissions(Array.isArray(list) ? list : []);
         }
       }
@@ -133,6 +148,57 @@ export default function PlatformSalesPage() {
       fetchData();
     } catch (err: any) {
       toast.error(err?.message || 'Lỗi khi cập nhật trạng thái NVKD');
+    }
+  };
+
+  // 2b. Mở modal chỉnh sửa NVKD
+  const handleOpenEditModal = (rep: PlatformSalesRepItem) => {
+    setEditingRep(rep);
+    const policy = rep.salesCommissionPolicy;
+    setEditForm({
+      referralCode: rep.referralCode || '',
+      setupCommissionRate: policy?.setupCommissionRate ?? rep.setupCommissionRate ?? 50,
+      renewalCommissionRate: policy?.renewalCommissionRate ?? rep.renewalCommissionRate ?? 20,
+      activationBonusAmount: policy?.activationBonusAmount ?? rep.activationBonusAmount ?? 0,
+      teamBonusAmount: policy?.teamBonusAmount ?? rep.teamBonusAmount ?? 0,
+      bankName: rep.payoutBankAccount?.bankName || '',
+      accountNo: rep.payoutBankAccount?.accountNo || '',
+      accountName: rep.payoutBankAccount?.accountName || '',
+    });
+    setShowEditModal(true);
+  };
+
+  // 2c. Lưu thông tin chỉnh sửa NVKD
+  const handleUpdateSalesRep = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRep) return;
+
+    try {
+      setUpdatingRep(true);
+      await apiClient.platform.updateSalesRep(editingRep.id, {
+        referralCode: editForm.referralCode || undefined,
+        setupCommissionRate: Number(editForm.setupCommissionRate),
+        renewalCommissionRate: Number(editForm.renewalCommissionRate),
+        activationBonusAmount: Number(editForm.activationBonusAmount),
+        teamBonusAmount: Number(editForm.teamBonusAmount),
+        payoutBankAccount:
+          editForm.bankName || editForm.accountNo
+            ? {
+                bankName: editForm.bankName,
+                accountNo: editForm.accountNo,
+                accountName: editForm.accountName,
+              }
+            : undefined,
+      });
+
+      toast.success(`Đã cập nhật chính sách NVKD "${editingRep.fullName}" thành công!`);
+      setShowEditModal(false);
+      setEditingRep(null);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err?.message || 'Lỗi khi cập nhật NVKD');
+    } finally {
+      setUpdatingRep(false);
     }
   };
 
@@ -352,17 +418,26 @@ export default function PlatformSalesPage() {
                         )}
                       </td>
                       <td className="py-3.5 px-4 text-right">
-                        <button
-                          onClick={() => handleToggleSalesRepStatus(rep)}
-                          className={`p-1.5 rounded-lg transition cursor-pointer ${
-                            rep.status === 'ACTIVE'
-                              ? 'text-rose-600 hover:bg-rose-50'
-                              : 'text-emerald-600 hover:bg-emerald-50'
-                          }`}
-                          title={rep.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Kích hoạt lại'}
-                        >
-                          {rep.status === 'ACTIVE' ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-                        </button>
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            onClick={() => handleOpenEditModal(rep)}
+                            className="p-1.5 text-slate-500 hover:text-purple-700 hover:bg-purple-50 rounded-lg transition cursor-pointer"
+                            title="Chỉnh sửa chính sách NVKD"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleToggleSalesRepStatus(rep)}
+                            className={`p-1.5 rounded-lg transition cursor-pointer ${
+                              rep.status === 'ACTIVE'
+                                ? 'text-rose-600 hover:bg-rose-50'
+                                : 'text-emerald-600 hover:bg-emerald-50'
+                            }`}
+                            title={rep.status === 'ACTIVE' ? 'Khóa tài khoản' : 'Kích hoạt lại'}
+                          >
+                            {rep.status === 'ACTIVE' ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -769,6 +844,173 @@ export default function PlatformSalesPage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* MODAL 3: Chỉnh Sửa Chính Sách NVKD */}
+      {showEditModal && editingRep && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <form
+            onSubmit={handleUpdateSalesRep}
+            className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-extrabold text-slate-900 text-base flex items-center gap-2">
+                  <Edit2 className="w-5 h-5 text-purple-600" />
+                  Chỉnh Sửa Chính Sách NVKD
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {editingRep.fullName} • {editingRep.email}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingRep(null);
+                }}
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="my-4 text-xs space-y-4">
+              <div>
+                <label className="block font-semibold mb-1 text-slate-700">Mã Giới Thiệu (Referral Code)</label>
+                <input
+                  type="text"
+                  value={editForm.referralCode}
+                  onChange={(e) =>
+                    setEditForm({ ...editForm, referralCode: e.target.value.toUpperCase() })
+                  }
+                  placeholder="VD: SALESVIP, THONG_123"
+                  className="w-full p-2.5 rounded-xl border border-slate-200 font-mono font-bold text-purple-700 focus:outline-none focus:border-purple-500 uppercase"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1 text-slate-700">% Hoa hồng Setup:</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={editForm.setupCommissionRate}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, setupCommissionRate: Number(e.target.value) })
+                    }
+                    className="w-full p-2.5 rounded-xl border border-slate-200 font-bold text-purple-700 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1 text-slate-700">% Hoa hồng Duy trì:</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={editForm.renewalCommissionRate}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, renewalCommissionRate: Number(e.target.value) })
+                    }
+                    className="w-full p-2.5 rounded-xl border border-slate-200 font-bold text-purple-700 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1 text-slate-700">Thưởng Kích Hoạt (VND):</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.activationBonusAmount}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, activationBonusAmount: Number(e.target.value) })
+                    }
+                    className="w-full p-2.5 rounded-xl border border-slate-200 font-bold text-slate-700 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1 text-slate-700">Thưởng Team F1 (VND):</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editForm.teamBonusAmount}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, teamBonusAmount: Number(e.target.value) })
+                    }
+                    className="w-full p-2.5 rounded-xl border border-slate-200 font-bold text-slate-700 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Ngân hàng */}
+              <div className="pt-2 border-t border-slate-100">
+                <h4 className="font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+                  <CreditCard className="w-4 h-4 text-purple-600" />
+                  Tài Khoản Ngân Hàng Thụ Hưởng
+                </h4>
+                <div className="space-y-2.5">
+                  <div>
+                    <label className="block font-medium mb-1 text-slate-600">Ngân hàng:</label>
+                    <input
+                      type="text"
+                      value={editForm.bankName}
+                      onChange={(e) => setEditForm({ ...editForm, bankName: e.target.value })}
+                      placeholder="VD: Vietcombank, Techcombank, MB Bank"
+                      className="w-full p-2 rounded-xl border border-slate-200 focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block font-medium mb-1 text-slate-600">Số tài khoản:</label>
+                      <input
+                        type="text"
+                        value={editForm.accountNo}
+                        onChange={(e) => setEditForm({ ...editForm, accountNo: e.target.value })}
+                        placeholder="VD: 0123456789"
+                        className="w-full p-2 rounded-xl border border-slate-200 font-mono focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block font-medium mb-1 text-slate-600">Chủ tài khoản:</label>
+                      <input
+                        type="text"
+                        value={editForm.accountName}
+                        onChange={(e) =>
+                          setEditForm({ ...editForm, accountName: e.target.value.toUpperCase() })
+                        }
+                        placeholder="VD: NGUYEN VAN A"
+                        className="w-full p-2 rounded-xl border border-slate-200 font-bold uppercase focus:outline-none focus:border-purple-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingRep(null);
+                }}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="submit"
+                disabled={updatingRep}
+                className="px-4 py-2 text-xs font-bold text-white bg-purple-700 hover:bg-purple-800 rounded-xl transition cursor-pointer shadow-2xs"
+              >
+                {updatingRep ? 'Đang lưu...' : 'Lưu thay đổi'}
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

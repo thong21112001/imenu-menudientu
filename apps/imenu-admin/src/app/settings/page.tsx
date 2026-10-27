@@ -29,6 +29,9 @@ export default function SettingsPage() {
     Boolean(currentUser?.isSuperAdmin);
   const isMainBranchUser = isSuperAdmin || Boolean(currentUser?.isMainBranch);
   const isDemo = Boolean(currentUser?.isDemo || currentUser?.email === 'owner@sample.vn');
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(
+    storageService.getSelectedRestaurantId(),
+  );
 
   const [rest, setRest] = useState<Restaurant>(storageService.getRestaurant());
   const [loading, setLoading] = useState(false);
@@ -51,53 +54,77 @@ export default function SettingsPage() {
     },
   });
 
-  useEffect(() => {
-    let isMounted = true;
+  const loadRestaurantData = async (targetRestId?: string | null) => {
     const user = storageService.getCurrentUser();
-    setCurrentUser(user);
+    const isSup =
+      user?.role === 'SYSTEM_ADMIN' ||
+      user?.role === 'system_admin' ||
+      user?.role === 'super_admin' ||
+      Boolean(user?.isSuperAdmin);
+    const effectiveRestId = targetRestId !== undefined ? targetRestId : selectedRestaurantId;
 
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const res = await apiClient.restaurant.getCurrent();
-        if (isMounted && res.data) {
-          setRest(res.data);
-          // Nếu là tài khoản chi nhánh con, tìm thông tin chi nhánh đó
-          const isMain = isSuperAdmin || Boolean(user?.isMainBranch);
-          if (!isMain && user?.branchId && Array.isArray(res.data.branches)) {
-            const found = res.data.branches.find(
-              (b: any) => (b._id || b.id) === user.branchId,
-            );
-            if (found) {
-              setBranch({
-                name: found.name || '',
-                address: found.address || '',
-                phone: found.phone || '',
-                openingHours: found.openingHours || '08:00 - 22:00',
-                tagline: found.tagline || '',
-                bankAccount: found.bankAccount || {
-                  bankId: 'MB',
-                  bankName: 'MBBank',
-                  accountNo: '',
-                  accountName: '',
-                  template: 'compact',
-                },
-              });
-            }
+    if (isSup && !effectiveRestId) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res =
+        isSup && effectiveRestId
+          ? await apiClient.restaurant.getById(effectiveRestId)
+          : await apiClient.restaurant.getCurrent();
+
+      if (res.data) {
+        setRest(res.data);
+        const isMain = isSup || Boolean(user?.isMainBranch);
+        if (!isMain && user?.branchId && Array.isArray(res.data.branches)) {
+          const found = res.data.branches.find(
+            (b: any) => (b._id || b.id) === user.branchId,
+          );
+          if (found) {
+            setBranch({
+              name: found.name || '',
+              address: found.address || '',
+              phone: found.phone || '',
+              openingHours: found.openingHours || '08:00 - 22:00',
+              tagline: found.tagline || '',
+              bankAccount: found.bankAccount || {
+                bankId: 'MB',
+                bankName: 'MBBank',
+                accountNo: '',
+                accountName: '',
+                template: 'compact',
+              },
+            });
           }
         }
-      } catch (err: any) {
-        console.warn('Không thể tải dữ liệu từ backend API:', err.message);
-      } finally {
-        if (isMounted) setLoading(false);
       }
+    } catch (err: any) {
+      console.warn('Không thể tải dữ liệu từ backend API:', err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const user = storageService.getCurrentUser();
+    setCurrentUser(user);
+    const restId = storageService.getSelectedRestaurantId();
+    setSelectedRestaurantId(restId);
+    loadRestaurantData(restId);
+
+    const handleRestaurantChanged = (e: any) => {
+      const newRestId = e.detail?.restaurantId ?? null;
+      setSelectedRestaurantId(newRestId);
+      loadRestaurantData(newRestId);
     };
 
-    fetchData();
+    window.addEventListener('imenu:restaurant_changed', handleRestaurantChanged);
     return () => {
-      isMounted = false;
+      window.removeEventListener('imenu:restaurant_changed', handleRestaurantChanged);
     };
-  }, [isSuperAdmin]);
+  }, []);
 
   // Lưu cấu hình dành cho chi nhánh con
   const handleSaveBranch = async (e: React.FormEvent) => {
@@ -152,7 +179,7 @@ export default function SettingsPage() {
     setStatusMessage(null);
 
     try {
-      const res = await apiClient.restaurant.updateCurrent({
+      const payload = {
         name: rest.name,
         phone: rest.phone,
         address: rest.address,
@@ -160,7 +187,12 @@ export default function SettingsPage() {
         isOpen: rest.isOpen,
         openingHours: rest.openingHours,
         tagline: rest.tagline,
-      });
+      };
+
+      const res =
+        isSuperAdmin && selectedRestaurantId
+          ? await apiClient.restaurant.updateById(selectedRestaurantId, payload)
+          : await apiClient.restaurant.updateCurrent(payload);
 
       if (res.data) {
         setRest(res.data);
@@ -204,6 +236,23 @@ export default function SettingsPage() {
             : 'Cấu hình thông tin thương hiệu nhà hàng, tài khoản ngân hàng nhận tiền VietQR và giờ mở cửa'}
         </p>
       </div>
+
+      {/* Superadmin Context Notice */}
+      {isSuperAdmin && !selectedRestaurantId && (
+        <div className="p-4 rounded-2xl bg-purple-50 border border-purple-200 flex items-center justify-between gap-3 text-purple-900 shadow-2xs">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 grid place-items-center shrink-0">
+              <Store className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-sm font-bold">Chế độ Quản Trị Hệ Thống (Superadmin)</p>
+              <p className="text-xs text-purple-700/90">
+                Vui lòng chọn một nhà hàng trên thanh điều hướng hoặc từ mục "Quản Lý Đối Tác" để xem và điều chỉnh cấu hình nhà hàng cụ thể.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Demo Account Notice */}
       {isDemo && (
