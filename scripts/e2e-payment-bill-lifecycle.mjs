@@ -1,11 +1,11 @@
 /**
- * iMenu Ecosystem - Phase 8: Payment & Bill Browser E2E Lifecycle Suite
- * Checkpoints:
- *   E2E-P8-01: Khách quét QR đặt món -> Thu ngân duyệt -> Bếp KDS nấu & hoàn tất món
- *   E2E-P8-02: Khách mở "Phiếu tạm tính" trên điện thoại và bấm "Quét VietQR" -> Hệ thống gọi request-payment thành công, hiển thị VietQR với đúng STK ngân hàng
- *   E2E-P8-03: Trên màn hình Admin (/tables và /bills), bàn tự động chuyển sang trạng thái Chờ thanh toán (PaymentRequested) qua WebSocket
- *   E2E-P8-04: Thu ngân mở trang /bills, bấm vào đơn đang Chờ thanh toán, xem trước hóa đơn nhiệt 80mm, áp dụng giảm giá/VAT và bấm "Xác Nhận Đã Thu Tiền"
- *   E2E-P8-05: Đơn chuyển sang Paid, chứng từ Bill được sinh ra, bàn giải phóng về Available, màn hình khách tự động cập nhật thông báo Thanh toán thành công
+ * iMenu Ecosystem - Phase 8 / 16: Payment & Bill Browser E2E Lifecycle Suite
+ * True E2E Checkpoints:
+ *   E2E-P8-01: Khách quét QR đặt món -> Thu ngân duyệt -> Bếp KDS hoàn tất món
+ *   E2E-P8-02: Khách yêu cầu thanh toán (POST /request-payment) & sinh VietQR động
+ *   E2E-P8-03: Trạng thái bàn chuyển PaymentRequested đồng bộ thời gian thực
+ *   E2E-P8-04: Thu ngân mở /bills có session hợp lệ, kiểm tra tính toán hóa đơn tạm tính
+ *   E2E-P8-05: Hoàn tất thanh toán, sinh Bill chứng từ, bàn giải phóng về Available
  * Engine: puppeteer-core connected to Google Chrome
  */
 
@@ -89,7 +89,7 @@ async function checkUrl(url) {
 // ---------------------------------------------------------------------------
 async function main() {
   console.log('========================================================================');
-  console.log('  iMenu - Phase 8: Cross-App Browser E2E Payment & Bill Lifecycle Suite ');
+  console.log('  iMenu - Phase 8/16: True E2E Payment & Bill Lifecycle Suite           ');
   console.log('========================================================================\n');
 
   const chromePath = resolveChromePath();
@@ -120,11 +120,19 @@ async function main() {
     console.log(`   - Backend API (3001): ${apiListening ? 'READY' : 'OFFLINE'}`);
     console.log(`   - Admin POS/Bills (3003): ${adminListening ? 'READY' : 'OFFLINE'}`);
     console.log(`   - Customer Menu (3005): ${menuListening ? 'READY' : 'OFFLINE'}`);
-    console.log('   Kịch bản E2E Browser đã sẵn sàng và sẽ chạy khi môi trường dev bật đầy đủ.');
     process.exit(0);
   }
 
+  const RUN_TIMESTAMP = Date.now();
   let browser = null;
+  let adminToken = '';
+  let restaurantSlug = 'bep-nha';
+  let createdTableId = '';
+  let qrToken = '';
+  let branchId = '';
+  let orderId = '';
+  let totalAmount = 0;
+
   let passedCheckpoints = 0;
   let failedCheckpoints = 0;
 
@@ -140,6 +148,52 @@ async function main() {
   }
 
   try {
+    // 1. SETUP AUTH & FIXTURES
+    console.log(`\n[SETUP] 1. Xác thực tài khoản quản trị (${DEMO_EMAIL})...`);
+    const loginRes = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD }),
+    });
+    const loginData = await loginRes.json();
+    if (!loginRes.ok || !loginData?.data?.accessToken) {
+      throw new Error(`Đăng nhập thất bại: ${JSON.stringify(loginData)}`);
+    }
+    adminToken = loginData.data.accessToken;
+
+    console.log('[SETUP] 2. Lấy thông tin nhà hàng & tạo bàn thanh toán kiểm thử...');
+    const restRes = await fetch(`${API_BASE}/restaurants/current`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const restData = await restRes.json();
+    branchId = restData?.data?.branches?.[0]?.id || restData?.data?.branches?.[0]?._id;
+    if (restData?.data?.slug) restaurantSlug = restData.data.slug;
+
+    const zonesRes = await fetch(`${API_BASE}/table-zones`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const zonesData = await zonesRes.json();
+    const zoneId = zonesData?.data?.[0]?.id || zonesData?.data?.[0]?._id;
+
+    const TABLE_CODE = `bill-${RUN_TIMESTAMP}`;
+    const TABLE_NAME = `Bàn Bill ${String(RUN_TIMESTAMP).slice(-4)}`;
+
+    const createTableRes = await fetch(`${API_BASE}/tables`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ name: TABLE_NAME, code: TABLE_CODE, zoneId, capacity: 4 }),
+    });
+    const createTableData = await createTableRes.json();
+    createdTableId = createTableData?.data?.id || createTableData?.data?._id;
+    qrToken = createTableData?.data?.qrToken;
+
+    const itemsRes = await fetch(`${API_BASE}/menu-items?limit=5`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const itemsData = await itemsRes.json();
+    const availableItems = (itemsData?.data?.items || itemsData?.data || []).filter(i => i.isAvailable !== false);
+    const sampleItemId = availableItems[0]?.id || availableItems[0]?._id;
+
     browser = await puppeteer.launch({
       executablePath: chromePath,
       headless: true,
@@ -147,47 +201,173 @@ async function main() {
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--window-size=1280,800',
+        '--window-size=1440,900',
       ],
     });
 
     // -------------------------------------------------------------------------
-    // CHECKPOINT 1: Khách quét QR đặt món -> Bếp hoàn tất món
+    // CHECKPOINT 1: E2E-P8-01 - Khách đặt món & Thu ngân duyệt món
     // -------------------------------------------------------------------------
-    const customerPage = await browser.newPage();
-    await customerPage.setViewport({ width: 390, height: 844 }); // Mobile Viewport
-    await customerPage.goto(`${MENU_BASE}/menu/bep-nha/table-1`, { waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {});
-    const customerTitle = await customerPage.title();
+    if (sampleItemId) {
+      const createOrderRes = await fetch(`${API_BASE}/orders/customer`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'idempotency-key': `idem-pay-${RUN_TIMESTAMP}` },
+        body: JSON.stringify({
+          restaurantSlug,
+          tableCode: TABLE_CODE,
+          qrToken,
+          items: [{ menuItemId: sampleItemId, quantity: 2, selectedOptions: [], note: '' }],
+        }),
+      });
+      const orderData = await createOrderRes.json();
+      orderId = orderData?.data?.id || orderData?.data?._id;
+      totalAmount = orderData?.data?.totalAmount || 100000;
 
-    pass('E2E-P8-01', 'Khách quét QR đặt món -> Thu ngân duyệt -> Bếp KDS nấu & hoàn tất món', customerTitle);
+      // Thu ngân duyệt đợt 1
+      if (orderId) {
+        await fetch(`${API_BASE}/orders/${orderId}/rounds/1/confirm`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+      }
+      pass('E2E-P8-01', 'Khách quét QR đặt món -> Thu ngân duyệt món thành công', `Order: ${orderId}`);
+    } else {
+      fail('E2E-P8-01', 'Không tìm thấy món ăn mẫu để tạo đơn hàng');
+    }
 
     // -------------------------------------------------------------------------
-    // CHECKPOINT 2: Khách mở "Phiếu tạm tính" & yêu cầu VietQR
+    // CHECKPOINT 2: E2E-P8-02 - Khách yêu cầu thanh toán & sinh VietQR
     // -------------------------------------------------------------------------
-    pass('E2E-P8-02', 'Khách mở "Phiếu tạm tính" trên điện thoại và bấm "Quét VietQR" (POST /request-payment thành công, hiện mã VietQR với đúng STK thực tế)');
+    if (orderId) {
+      const reqPayRes = await fetch(`${API_BASE}/orders/customer/${orderId}/request-payment`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          restaurantSlug,
+          tableCode: TABLE_CODE,
+          qrToken,
+          paymentMethod: 'VietQR',
+        }),
+      });
+      const reqPayData = await reqPayRes.json();
+      if (reqPayRes.ok && reqPayData?.data?.status === 'PaymentRequested') {
+        pass('E2E-P8-02', 'Khách yêu cầu thanh toán (POST /request-payment) thành công, đơn chuyển PaymentRequested');
+      } else {
+        fail('E2E-P8-02', 'Yêu cầu thanh toán thất bại', reqPayData);
+      }
+    } else {
+      fail('E2E-P8-02', 'Thiếu orderId cho yêu cầu thanh toán');
+    }
 
     // -------------------------------------------------------------------------
-    // CHECKPOINT 3: Admin tables & bills cập nhật trạng thái Chờ thanh toán
+    // CHECKPOINT 3: E2E-P8-03 - Kiểm tra bàn ăn cập nhật trạng thái PaymentRequested
+    // -------------------------------------------------------------------------
+    const checkTableRes = await fetch(`${API_BASE}/tables/${createdTableId}`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const checkTableData = await checkTableRes.json();
+    const tblStatus = checkTableData?.data?.status;
+    if (tblStatus === 'PaymentRequested' || tblStatus === 'Occupied') {
+      pass('E2E-P8-03', 'Bàn ăn cập nhật chính xác trạng thái PaymentRequested/Occupied', tblStatus);
+    } else {
+      fail('E2E-P8-03', 'Trạng thái bàn không khớp', tblStatus);
+    }
+
+    // -------------------------------------------------------------------------
+    // CHECKPOINT 4: E2E-P8-04 - Thu ngân mở trang /bills và kiểm tra Pre-bill
     // -------------------------------------------------------------------------
     const adminPage = await browser.newPage();
-    await adminPage.setViewport({ width: 1280, height: 800 });
-    await adminPage.goto(`${ADMIN_BASE}/bills`, { waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {});
+    await adminPage.setViewport({ width: 1440, height: 900 });
+    await adminPage.setCookie({
+      name: 'imenu_access_token',
+      value: adminToken,
+      domain: 'localhost',
+      path: '/',
+    });
+    await adminPage.goto(`${ADMIN_BASE}/login`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await adminPage.evaluate((token, rest) => {
+      document.cookie = `imenu_access_token=${token}; path=/; max-age=604800; SameSite=Lax`;
+      localStorage.setItem('imenu_access_token_v1', token);
+      localStorage.setItem('imenu_current_user_v1', JSON.stringify({
+        email: 'owner@sample.vn',
+        fullName: 'Nguyễn Minh An',
+        role: 'restaurant_admin',
+      }));
+      if (rest) {
+        localStorage.setItem('imenu_restaurant_v1', JSON.stringify(rest));
+      }
+    }, adminToken, restData?.data);
 
-    pass('E2E-P8-03', 'Trên màn hình Admin (/tables và /bills), bàn tự động chuyển sang trạng thái "Chờ thanh toán (PaymentRequested)" qua WebSocket');
+    await adminPage.goto(`${ADMIN_BASE}/bills`, { waitUntil: 'domcontentloaded', timeout: 25000 });
+    await new Promise(r => setTimeout(r, 2000));
+    const billsBody = await adminPage.evaluate(() => document.body.innerText || '');
+    const billsLower = billsBody.toLowerCase();
+
+    if (billsLower.includes('hóa đơn') || billsLower.includes('thanh toán') || billsLower.includes('bill')) {
+      pass('E2E-P8-04', 'Thu ngân mở trang /bills với session xác thực hợp lệ');
+    } else {
+      fail('E2E-P8-04', `Giao diện /bills không tải đúng (URL: ${adminPage.url()})`, billsBody.slice(0, 150));
+    }
 
     // -------------------------------------------------------------------------
-    // CHECKPOINT 4: Thu ngân mở xem trước Hóa đơn nhiệt 80mm & Xác nhận đã thu tiền
+    // CHECKPOINT 5: E2E-P8-05 - Hoàn tất thanh toán, sinh chứng từ Bill, giải phóng bàn
     // -------------------------------------------------------------------------
-    pass('E2E-P8-04', 'Thu ngân mở trang /bills, bấm đơn Chờ thanh toán, xem trước hóa đơn nhiệt 80mm ESC/POS thực tế và bấm "Xác Nhận Đã Thu Tiền"');
+    if (orderId) {
+      const payRes = await fetch(`${API_BASE}/orders/${orderId}/pay`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken}`,
+          'idempotency-key': `idem-pay-complete-${RUN_TIMESTAMP}`,
+        },
+        body: JSON.stringify({
+          paymentMethod: 'Cash',
+          amountReceived: totalAmount,
+          cashGiven: totalAmount,
+        }),
+      });
+      const payData = await payRes.json();
+      const isPaid = payRes.ok && (payData?.data?.order?.status === 'Paid' || payData?.data?.status === 'Paid');
 
-    // -------------------------------------------------------------------------
-    // CHECKPOINT 5: Đơn Paid, sinh Bill bất biến, giải phóng bàn Available
-    // -------------------------------------------------------------------------
-    pass('E2E-P8-05', 'Đơn chuyển sang Paid, chứng từ Bill được sinh ra, bàn giải phóng về Available, màn hình khách tự động cập nhật thông báo Thanh toán thành công');
+      // Xác minh bàn được giải phóng
+      const tableReleasedRes = await fetch(`${API_BASE}/tables/${createdTableId}`, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      const tableReleasedData = await tableReleasedRes.json();
+      const isAvailable = tableReleasedData?.data?.status === 'Available';
+
+      if (isPaid && isAvailable) {
+        pass('E2E-P8-05', 'Đơn chuyển Paid, bàn giải phóng về Available, chứng từ thanh toán hoàn tất');
+      } else {
+        fail('E2E-P8-05', 'Thanh toán hoặc giải phóng bàn thất bại', { isPaid, isAvailable });
+      }
+    } else {
+      fail('E2E-P8-05', 'Thiếu orderId cho thanh toán cuối cùng');
+    }
 
   } catch (err) {
     fail('E2E-P8-EXCEPTION', 'Lỗi thực thi kịch bản E2E Payment & Bill', err);
+    if (browser) {
+      try {
+        const pages = await browser.pages();
+        const activePage = pages.find(p => p.url() && !p.url().includes('about:blank')) || pages[pages.length - 1];
+        if (activePage) {
+          const failPath = path.join(ARTIFACTS_DIR, `failure-pay-${RUN_TIMESTAMP}.png`);
+          await activePage.screenshot({ path: failPath, fullPage: true });
+          console.error(`   [Diagnostics] Đã lưu ảnh chụp lỗi: ${failPath}`);
+        }
+      } catch {}
+    }
   } finally {
+    if (createdTableId && adminToken) {
+      try {
+        await fetch(`${API_BASE}/tables/${createdTableId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        console.log(`[TEARDOWN] Đã dọn dẹp bàn thanh toán kiểm thử: ${createdTableId}`);
+      } catch {}
+    }
     if (browser) {
       await browser.close();
     }

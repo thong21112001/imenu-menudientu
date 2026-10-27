@@ -8,6 +8,7 @@ import {
   generateVietQRUrl,
   apiClient,
   realtimeHub,
+  socketClient,
   buildReceiptData,
   EscPosEncoder,
   thermalPrinterService,
@@ -125,6 +126,11 @@ export default function BillsPage() {
     const handleBranchChange = (e: any) => {
       const newBranchId = e.detail?.branchId ?? null;
       setActiveBranchId(newBranchId);
+      const rest = storageService.getRestaurant();
+      const restId = (rest as any)?.id || (rest as any)?._id;
+      if (restId) {
+        socketClient.switchBranch(restId, newBranchId);
+      }
     };
     window.addEventListener('imenu:branch_changed', handleBranchChange);
 

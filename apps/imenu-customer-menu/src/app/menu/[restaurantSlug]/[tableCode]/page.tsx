@@ -353,11 +353,13 @@ export default function CustomerTableMenuPage() {
               }
             })
             .catch(() => {});
-        } else if (table.id) {
-          apiClient.orders
-            .getByTable(table.id)
+        } else if (restaurantSlug && tableCode) {
+          apiClient.customerOrders
+            .getTableContext({ restaurantSlug, tableCode, qrToken })
             .then((res) => {
-              if (res.data) setActiveOrder(res.data);
+              if (res.data?.activeOrder) {
+                setActiveOrder(res.data.activeOrder);
+              }
             })
             .catch(() => {});
         }

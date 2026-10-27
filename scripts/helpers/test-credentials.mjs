@@ -1,20 +1,34 @@
 /**
  * test-credentials.mjs
  *
- * Helper providing dynamic test credentials for E2E scripts without static plaintext secrets.
+ * Helper providing dynamic test credentials for E2E scripts from environment variables.
+ * Prevents committing static secrets or base64 encoded credentials to version control.
  */
 
 export function getTestFixtureSecret() {
-  return Buffer.from('UGFzc3dvcmRAMTIz', 'base64').toString('utf8');
+  return (
+    process.env.DEMO_USER_PASSWORD ||
+    process.env.DEMO_PASSWORD ||
+    process.env.NEXT_PUBLIC_DEMO_PASSWORD ||
+    ''
+  );
 }
 
 export function getAltFixtureSecret() {
-  return Buffer.from('VGVzdFBhc3N3b3JkQDEyMw==', 'base64').toString('utf8');
+  return (
+    process.env.ALT_TEST_PASSWORD ||
+    process.env.DEMO_USER_PASSWORD ||
+    process.env.DEMO_PASSWORD ||
+    ''
+  );
 }
 
 export function getDefaultSalesSecret() {
-  if (process.env.DEFAULT_SALES_PASSWORD) {
-    return process.env.DEFAULT_SALES_PASSWORD;
-  }
-  return Buffer.from('U2FsZXNAMjAyNiFTZWN1cmVk', 'base64').toString('utf8');
+  return (
+    process.env.DEFAULT_SALES_PASSWORD ||
+    process.env.DEMO_USER_PASSWORD ||
+    process.env.DEMO_PASSWORD ||
+    ''
+  );
 }
+

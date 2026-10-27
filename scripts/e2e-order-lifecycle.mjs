@@ -174,6 +174,20 @@ async function main() {
     branchId = restData?.data?.branches?.[0]?.id || restData?.data?.branches?.[0]?._id;
     if (restData?.data?.slug) restaurantSlug = restData.data.slug;
 
+    let item1Id = '';
+    let item2Id = '';
+    console.log('[SETUP] 2.5. Lấy danh sách món ăn thực tế cho kiểm thử...');
+    const menuItemsRes = await fetch(`${API_BASE}/menu-items?limit=10`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const menuItemsData = await menuItemsRes.json();
+    const availableItems = (menuItemsData?.data?.items || menuItemsData?.data || []).filter(i => i.isAvailable !== false);
+    if (availableItems.length > 0) {
+      item1Id = availableItems[0]?.id || availableItems[0]?._id;
+      item2Id = (availableItems[1]?.id || availableItems[1]?._id) || item1Id;
+    }
+    console.log(`[SETUP] Dynamic items resolved: item1=${item1Id}, item2=${item2Id}`);
+
     // Lấy zone ID
     const zonesRes = await fetch(`${API_BASE}/table-zones`, {
       headers: { Authorization: `Bearer ${adminToken}` },
@@ -231,10 +245,25 @@ async function main() {
     await posPage.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
 
     // Login session on POS page
+    await posPage.setCookie({
+      name: 'imenu_access_token',
+      value: adminToken,
+      domain: 'localhost',
+      path: '/',
+    });
     await posPage.goto(`${ADMIN_BASE}/login`, { waitUntil: 'domcontentloaded', timeout: 20000 });
-    await posPage.evaluate((token) => {
+    await posPage.evaluate((token, rest) => {
+      document.cookie = `imenu_access_token=${token}; path=/; max-age=604800; SameSite=Lax`;
       localStorage.setItem('imenu_access_token_v1', token);
-    }, adminToken);
+      localStorage.setItem('imenu_current_user_v1', JSON.stringify({
+        email: 'owner@sample.vn',
+        fullName: 'Nguyễn Minh An',
+        role: 'restaurant_admin',
+      }));
+      if (rest) {
+        localStorage.setItem('imenu_restaurant_v1', JSON.stringify(rest));
+      }
+    }, adminToken, restData?.data);
 
     // -------------------------------------------------------------------------
     // CHECKPOINT 1: E2E-01 - Tải ngữ cảnh bàn ăn QR
@@ -298,7 +327,7 @@ async function main() {
       await new Promise(r => setTimeout(r, 600));
     }
 
-    if (!orderId) {
+    if (!orderId && item1Id) {
       console.log('  [Fallback] Tạo đơn hàng qua API trực tiếp cho Round 1...');
       const createRes = await fetch(`${API_BASE}/orders/customer`, {
         method: 'POST',
@@ -307,7 +336,7 @@ async function main() {
           restaurantSlug,
           tableCode: TABLE_CODE,
           qrToken,
-          items: [{ menuItemId: '6abb31602bd815f68464f499', quantity: 1, selectedOptions: [], note: '' }],
+          items: [{ menuItemId: item1Id, quantity: 1, selectedOptions: [], note: '' }],
         }),
       });
       const createData = await createRes.json();
@@ -396,7 +425,7 @@ async function main() {
     let orderR2Data = await checkOrderR2.json();
     let hasRound2 = (orderR2Data?.data?.rounds?.length || 0) >= 2;
 
-    if (!hasRound2 && orderId) {
+    if (!hasRound2 && orderId && item2Id) {
       await fetch(`${API_BASE}/orders/customer/items`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'idempotency-key': `idem-r2-${RUN_TIMESTAMP}` },
@@ -405,7 +434,7 @@ async function main() {
           tableCode: TABLE_CODE,
           qrToken,
           orderId,
-          items: [{ menuItemId: '6abb31602bd815f68464f496', quantity: 1, selectedOptions: [], note: '' }],
+          items: [{ menuItemId: item2Id, quantity: 1, selectedOptions: [], note: '' }],
         }),
       });
       checkOrderR2 = await fetch(`${API_BASE}/orders/${orderId}`, { headers: { Authorization: `Bearer ${adminToken}` } });
@@ -545,12 +574,16 @@ async function main() {
     if (browser) {
       try {
         const pages = await browser.pages();
-        if (pages.length > 0) {
+        // Tìm tab đang chạy thực tế có URL thay vì tab rỗng [0]
+        const activePage = pages.find(p => p.url() && !p.url().includes('about:blank')) || pages[pages.length - 1];
+        if (activePage) {
           const failPath = path.join(ARTIFACTS_DIR, `failure-${RUN_TIMESTAMP}.png`);
-          await pages[0].screenshot({ path: failPath });
-          console.error(`   [Diagnostics] Đã lưu ảnh chụp lỗi: ${failPath}`);
+          await activePage.screenshot({ path: failPath, fullPage: true });
+          console.error(`   [Diagnostics] Đã lưu ảnh chụp lỗi thực tế từ ${activePage.url()}: ${failPath}`);
         }
-      } catch {}
+      } catch (screenErr) {
+        console.error('   [Diagnostics] Không thể chụp ảnh lỗi:', screenErr.message);
+      }
     }
   } finally {
     // -------------------------------------------------------------------------

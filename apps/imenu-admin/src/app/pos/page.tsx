@@ -7,6 +7,7 @@ import {
   soundEngine,
   realtimeHub,
   apiClient,
+  socketClient,
   matchVietnameseSearch,
 } from '@imenu/utils';
 import {
@@ -174,6 +175,11 @@ export default function PosTerminalPage() {
     const handleBranchChange = (e: any) => {
       const newBranchId = e.detail?.branchId ?? null;
       setActiveBranchId(newBranchId);
+      const rest = storageService.getRestaurant();
+      const restId = (rest as any)?.id || (rest as any)?._id;
+      if (restId) {
+        socketClient.switchBranch(restId, newBranchId);
+      }
       fetchBranchAndMenuData(newBranchId);
       fetchPendingOrders();
     };

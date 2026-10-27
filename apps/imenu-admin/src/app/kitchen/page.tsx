@@ -8,6 +8,7 @@ import {
   realtimeHub,
   soundEngine,
   apiClient,
+  socketClient,
   matchVietnameseSearch,
 } from '@imenu/utils';
 import {
@@ -155,7 +156,13 @@ export default function KitchenDisplaySystemPage() {
     loadOrders();
 
     const handleBranchChange = () => {
-      setActiveBranchId(storageService.getActiveBranchId());
+      const newBranchId = storageService.getActiveBranchId();
+      setActiveBranchId(newBranchId);
+      const rest = storageService.getRestaurant();
+      const restId = (rest as any)?.id || (rest as any)?._id;
+      if (restId) {
+        socketClient.switchBranch(restId, newBranchId);
+      }
       loadOrders(true);
     };
     window.addEventListener('imenu:branch_changed', handleBranchChange);

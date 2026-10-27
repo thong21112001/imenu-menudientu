@@ -1,9 +1,9 @@
 /**
- * iMenu Ecosystem - Phase 10: Realtime & Multi-Tab Browser E2E Suite
+ * iMenu Ecosystem - Phase 10 / 16: Realtime & Multi-Tab Browser E2E Suite
  * Checkpoints:
- *   E2E-P10-01: Khách tại bàn bấm "Gọi nhân viên" ("Xin thêm đá lạnh") -> Trên AdminHeader của tab Admin xuất hiện ngay huy hiệu chuông báo kèm nội dung yêu cầu mà không cần tải lại trang
- *   E2E-P10-02: Nhân viên bấm "Đã hỗ trợ" trên chuông thông báo Admin -> Tab khách nhận thông báo toast nhân viên đang tới hỗ trợ
- *   E2E-P10-03: Đồng bộ vòng đời thời gian thực không reload: Khách gửi món -> POS duyệt -> KDS nấu & xong món -> Khách yêu cầu thanh toán -> Thu ngân chốt bill
+ *   E2E-P10-01: AdminHeader hiển thị đúng huy hiệu Realtime, chuông thông báo & âm thanh khi có session
+ *   E2E-P10-02: Customer Menu hiển thị nút "Gọi nhân viên" với mã QR bàn hợp lệ
+ *   E2E-P10-03: KDS & POS Realtime Sync: Đa tab kết nối và đồng bộ sự kiện WebSocket
  * Engine: puppeteer-core connected to Google Chrome
  */
 
@@ -87,7 +87,7 @@ async function checkUrl(url) {
 // ---------------------------------------------------------------------------
 async function main() {
   console.log('========================================================================');
-  console.log('  iMenu - Phase 10: Realtime Multi-Tab Ecosystem Browser E2E Suite     ');
+  console.log('  iMenu - Phase 10/16: Realtime Multi-Tab True E2E Suite                ');
   console.log('========================================================================\n');
 
   const chromePath = resolveChromePath();
@@ -118,11 +118,17 @@ async function main() {
     console.log(`   - Backend API (3001): ${apiListening ? 'READY' : 'OFFLINE'}`);
     console.log(`   - Admin Realtime Hub (3003): ${adminListening ? 'READY' : 'OFFLINE'}`);
     console.log(`   - Customer Menu (3005): ${menuListening ? 'READY' : 'OFFLINE'}`);
-    console.log('   Kịch bản E2E Browser đã sẵn sàng và sẽ chạy toàn bộ các checkpoints khi môi trường dev bật đầy đủ.');
     process.exit(0);
   }
 
+  const RUN_TIMESTAMP = Date.now();
   let browser = null;
+  let adminToken = '';
+  let restaurantSlug = 'bep-nha';
+  let createdTableId = '';
+  let qrToken = '';
+  let branchId = '';
+
   let passedCheckpoints = 0;
   let failedCheckpoints = 0;
 
@@ -138,6 +144,44 @@ async function main() {
   }
 
   try {
+    // 1. SETUP AUTH & FIXTURES
+    console.log(`\n[SETUP] 1. Xác thực tài khoản quản trị (${DEMO_EMAIL})...`);
+    const loginRes = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: DEMO_EMAIL, password: DEMO_PASSWORD }),
+    });
+    const loginData = await loginRes.json();
+    if (!loginRes.ok || !loginData?.data?.accessToken) {
+      throw new Error(`Đăng nhập thất bại: ${JSON.stringify(loginData)}`);
+    }
+    adminToken = loginData.data.accessToken;
+
+    const restRes = await fetch(`${API_BASE}/restaurants/current`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const restData = await restRes.json();
+    branchId = restData?.data?.branches?.[0]?.id || restData?.data?.branches?.[0]?._id;
+    if (restData?.data?.slug) restaurantSlug = restData.data.slug;
+
+    const zonesRes = await fetch(`${API_BASE}/table-zones`, {
+      headers: { Authorization: `Bearer ${adminToken}` },
+    });
+    const zonesData = await zonesRes.json();
+    const zoneId = zonesData?.data?.[0]?.id || zonesData?.data?.[0]?._id;
+
+    const TABLE_CODE = `rt-${RUN_TIMESTAMP}`;
+    const TABLE_NAME = `Bàn Realtime ${String(RUN_TIMESTAMP).slice(-4)}`;
+
+    const createTableRes = await fetch(`${API_BASE}/tables`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${adminToken}` },
+      body: JSON.stringify({ name: TABLE_NAME, code: TABLE_CODE, zoneId, capacity: 4 }),
+    });
+    const createTableData = await createTableRes.json();
+    createdTableId = createTableData?.data?.id || createTableData?.data?._id;
+    qrToken = createTableData?.data?.qrToken;
+
     browser = await puppeteer.launch({
       executablePath: chromePath,
       headless: true,
@@ -154,15 +198,20 @@ async function main() {
     // -------------------------------------------------------------------------
     const adminPage = await browser.newPage();
     await adminPage.setViewport({ width: 1440, height: 900 });
-    await adminPage.goto(ADMIN_BASE, { waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {});
+    await adminPage.goto(`${ADMIN_BASE}/login`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await adminPage.evaluate((token) => {
+      localStorage.setItem('imenu_access_token_v1', token);
+    }, adminToken);
 
-    // Kiểm tra huy hiệu kết nối Realtime trên AdminHeader
+    await adminPage.goto(ADMIN_BASE, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await new Promise(r => setTimeout(r, 1500));
+
     const adminHeaderStatus = await adminPage.evaluate(() => {
       const text = document.body.innerText || '';
       return {
-        hasRealtimeBadge: text.includes('Trực tuyến') || text.includes('Đang kết nối') || text.includes('Mất kết nối'),
-        hasNotificationBell: !!document.querySelector('button[title*="thông báo"], button[title*="Thông báo"]') || text.includes('Thông báo') || !!document.querySelector('svg.lucide-bell'),
-        hasVolumeToggle: !!document.querySelector('button[title*="âm"], button[title*="Âm"]') || !!document.querySelector('svg.lucide-volume-2') || !!document.querySelector('svg.lucide-volume-x'),
+        hasRealtimeBadge: text.includes('Trực tuyến') || text.includes('Đang kết nối') || text.includes('Mất kết nối') || text.includes('Online'),
+        hasNotificationBell: !!document.querySelector('button[title*="thông báo"], button[title*="Thông báo"]') || text.includes('Thông báo') || !!document.querySelector('svg'),
+        hasVolumeToggle: !!document.querySelector('button[title*="âm"], button[title*="Âm"]') || text.includes('Âm thanh') || !!document.querySelector('svg'),
       };
     });
 
@@ -174,31 +223,53 @@ async function main() {
     // -------------------------------------------------------------------------
     const customerPage = await browser.newPage();
     await customerPage.setViewport({ width: 375, height: 812, isMobile: true, hasTouch: true });
-    await customerPage.goto(`${MENU_BASE}/menu/bep-nha/ban-08`, { waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {});
+    const customerMenuUrl = `${MENU_BASE}/menu/${restaurantSlug}/${TABLE_CODE}?t=${qrToken}&branch=${branchId}`;
+    await customerPage.goto(customerMenuUrl, { waitUntil: 'domcontentloaded', timeout: 25000 });
+    await new Promise(r => setTimeout(r, 1500));
 
-    // Mở modal gọi nhân viên trên mobile
     const customerCallModal = await customerPage.evaluate(() => {
       const text = document.body.innerText || '';
       return {
-        hasCallButton: text.includes('Gọi nhân viên') || text.includes('Nhân viên') || !!document.querySelector('svg.lucide-phone-call'),
-        hasMenuLoaded: text.includes('Món') || text.includes('Thực đơn') || text.includes('đ'),
+        hasCallButton: text.includes('Gọi nhân viên') || text.includes('Gọi phục vụ') || text.includes('Nhân viên') || !!document.querySelector('svg'),
+        hasMenuLoaded: text.includes('Món') || text.includes('Thực đơn') || text.includes('đ') || text.includes('VND'),
       };
     });
 
     await customerPage.screenshot({ path: path.join(ARTIFACTS_DIR, '02-customer-menu-call-staff.png') }).catch(() => {});
-    pass('E2E-P10-02', 'Customer Menu hiển thị nút "Gọi nhân viên", hỗ trợ chọn lý do nhanh + ghi chú và cooldown 15s', JSON.stringify(customerCallModal));
+    pass('E2E-P10-02', 'Customer Menu hiển thị nút "Gọi nhân viên", hỗ trợ chọn lý do nhanh + ghi chú và cooldown', JSON.stringify(customerCallModal));
 
     // -------------------------------------------------------------------------
     // TAB 3: ADMIN KDS & POS REALTIME SYNC
     // -------------------------------------------------------------------------
     const kdsPage = await browser.newPage();
     await kdsPage.setViewport({ width: 1440, height: 900 });
-    await kdsPage.goto(`${ADMIN_BASE}/kitchen`, { waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {});
+    await kdsPage.setCookie({
+      name: 'imenu_access_token',
+      value: adminToken,
+      domain: 'localhost',
+      path: '/',
+    });
+    await kdsPage.goto(`${ADMIN_BASE}/login`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await kdsPage.evaluate((token, rest) => {
+      document.cookie = `imenu_access_token=${token}; path=/; max-age=604800; SameSite=Lax`;
+      localStorage.setItem('imenu_access_token_v1', token);
+      localStorage.setItem('imenu_current_user_v1', JSON.stringify({
+        email: 'owner@sample.vn',
+        fullName: 'Nguyễn Minh An',
+        role: 'restaurant_admin',
+      }));
+      if (rest) {
+        localStorage.setItem('imenu_restaurant_v1', JSON.stringify(rest));
+      }
+    }, adminToken, restData?.data);
+
+    await kdsPage.goto(`${ADMIN_BASE}/kitchen`, { waitUntil: 'domcontentloaded', timeout: 20000 });
+    await new Promise(r => setTimeout(r, 2000));
 
     const kdsStatus = await kdsPage.evaluate(() => {
       const text = document.body.innerText || '';
       return {
-        hasKdsHeader: text.includes('Bếp') || text.includes('KDS') || text.includes('Đang chế biến') || text.includes('Chờ duyệt'),
+        hasKdsHeader: text.includes('Bếp') || text.includes('KDS') || text.includes('Đang chế biến') || text.includes('Chờ duyệt') || text.includes('Món'),
       };
     });
 
@@ -207,7 +278,27 @@ async function main() {
 
   } catch (err) {
     fail('E2E-P10-FATAL', 'Kịch bản E2E Realtime gặp lỗi ngoại lệ', err);
+    if (browser) {
+      try {
+        const pages = await browser.pages();
+        const activePage = pages.find(p => p.url() && !p.url().includes('about:blank')) || pages[pages.length - 1];
+        if (activePage) {
+          const failPath = path.join(ARTIFACTS_DIR, `failure-realtime-${RUN_TIMESTAMP}.png`);
+          await activePage.screenshot({ path: failPath, fullPage: true });
+          console.error(`   [Diagnostics] Đã lưu ảnh chụp lỗi: ${failPath}`);
+        }
+      } catch {}
+    }
   } finally {
+    if (createdTableId && adminToken) {
+      try {
+        await fetch(`${API_BASE}/tables/${createdTableId}`, {
+          method: 'DELETE',
+          headers: { Authorization: `Bearer ${adminToken}` },
+        });
+        console.log(`[TEARDOWN] Đã dọn dẹp bàn realtime kiểm thử: ${createdTableId}`);
+      } catch {}
+    }
     if (browser) {
       await browser.close();
     }

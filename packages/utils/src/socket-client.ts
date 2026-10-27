@@ -59,7 +59,8 @@ class SocketClient {
     if (tableId) this.currentTableId = tableId;
 
     if (this.socket && this.socket.connected) {
-      if (this.currentRestaurantId) {
+      const isStaffUser = Boolean(storageService.getAccessToken());
+      if (this.currentRestaurantId && isStaffUser) {
         this.joinRestaurant(this.currentRestaurantId, this.currentBranchId);
       }
       if (this.currentTableId) {
@@ -103,7 +104,8 @@ class SocketClient {
       console.log(`[SocketClient] Connected successfully: ${this.socket?.id} (isReconnection: ${isReconnection})`);
 
       // Re-join active rooms
-      if (this.currentRestaurantId) {
+      const isStaffUser = Boolean(storageService.getAccessToken());
+      if (this.currentRestaurantId && isStaffUser) {
         this.joinRestaurant(this.currentRestaurantId, this.currentBranchId);
       }
       if (this.currentTableId) {
