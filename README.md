@@ -530,12 +530,25 @@ Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai 
 
 ## 📄 10. Trạng Thái Dự Án & Nghiệm Thu (Project Status)
 
-### Phase 14: Thanh Lọc Không Gian Superadmin, Triệt Tiêu Mật Khẩu Tĩnh & Đồng Bộ Toàn Diện Tài Liệu — ✅ ĐÃ NGHIỆM THU & HOÀN TẤT TOÀN DIỆN LỘ TRÌNH 14/14 PHASES
+### Phase 15: Hoàn Thiện Phân Hệ Superadmin, Chế Độ Hỗ Trợ Kỹ Thuật & Đồng Bộ Phân Quyền RBAC — ✅ ĐÃ HOÀN THIỆN TOÀN DIỆN & ĐỒNG BỘ 15/15 PHASES
+- **Hoàn Thiện 4 Phân Hệ Quản Trị Nền Tảng (`/platform/*`)**:
+  - `Platform Dashboard (/platform/dashboard)`: Bảng điều khiển KPI tổng quan toàn sàn, theo dõi doanh thu kép (F&B GMV vs Doanh thu SaaS), tỷ lệ tăng trưởng điểm bán và hoa hồng NVKD thời gian thực.
+  - `Vòng Đời Nhà Hàng (/platform/restaurants)`: Tìm kiếm, lọc theo trạng thái, modal tạm khóa nhà hàng (`isSuspended: true`) kèm lý do vi phạm chi tiết, mở khóa và thu hồi lý do triệt để, modal nâng cấp/gia hạn gói cước với ngày hết hạn linh hoạt và ghi chú kiểm toán.
+  - `Đối Soát Doanh Thu Kép (/platform/revenues)`: Bộ lọc khoảng ngày (Từ ngày - Đến ngày) kết hợp API doanh thu kép để đối soát minh bạch giữa GMV bán lẻ của từng quán và phí dịch vụ phần mềm của nền tảng.
+  - `Kinh Doanh & Hoa Hồng (/platform/sales)`: Quản lý hồ sơ NVKD, modal chỉnh sửa tỷ lệ hoa hồng Setup/Renewal và thông tin tài khoản ngân hàng thụ hưởng, duyệt đơn ứng tuyển NVKD online cấp tài khoản tức thì, đối soát sổ cái hoa hồng và duyệt chi trả nguyên tử (`payout-batch`).
+- **Chế Độ Hỗ Trợ Kỹ Thuật Nhà Hàng (Superadmin Impersonation Support Mode)**:
+  - Cho phép Superadmin chọn một nhà hàng cụ thể trực tiếp trên `AdminHeader` để vào chế độ hỗ trợ kỹ thuật mà không cần đổi tài khoản.
+  - Hiển thị Sticky Support Banner màu hổ phách nổi bật kèm nút "Thoát hỗ trợ" một chạm.
+  - Mở rộng thanh điều hướng `AdminSidebar`: Cho phép Superadmin thao tác trên các trang cấu hình vận hành cơ sở (`/branches`, `/settings`) của nhà hàng mà không bị chặn quyền hay gặp lỗi `400 Bad Request`.
+- **Bảo Vệ Điều Hướng & Đăng Nhập Đa Không Gian**: Tự động chuyển hướng Superadmin vào `/platform/dashboard` ngay sau khi đăng nhập; bảo vệ tuyệt đối các trang quán lẻ khỏi truy cập nhầm lẫn.
+- **Hợp Đồng SDK Frontend (`@imenu/utils`)**: Đạt **57 / 57 ca test PASS (100%)** với các phương thức bổ sung `SDK-53` (`platform.getCommissions`), `SDK-54` (`restaurant.updateById`), và `SDK-55` (`branches.create` với optional `restaurantId`).
+
+### Phase 14: Thanh Lọc Không Gian Superadmin, Triệt Tiêu Mật Khẩu Tĩnh & Đồng Bộ Toàn Diện Tài Liệu — ✅ ĐÃ NGHIỆM THU
 - **Cô Lập 100% Không Gian Superadmin Vào Platform Control Center (`AUD-14.2`, `AUD-14.3`)**: Ẩn toàn bộ các mục điều hướng quán lẻ trên `AdminSidebar`, loại bỏ hoàn toàn Branch Switcher, Toggle giờ hoạt động và Nút tắt chuông trên `AdminHeader`. Bổ sung huy hiệu hoàng gia Superadmin (`Crown`), ngắt 100% sự kiện âm thanh chuông bếp/bàn ăn Socket.IO cho Superadmin.
 - **Bảo Vệ Điều Hướng Tuyệt Đối (`RouteAccessGuard`)**: Chặn mọi truy cập vô tình từ Superadmin vào các trang quán lẻ (`/tables`, `/pos`, `/kitchen`, `/bills`, `/reviews`, `/branches`, `/settings`, `/sales/*`) và chuyển hướng tức thì sang `/platform/dashboard`.
 - **Triệt Tiêu 100% Mật Khẩu Tĩnh & Dynamic Credentials Guard (`AUD-14.1`)**: Xóa bỏ vĩnh viễn các chuỗi mật khẩu tĩnh (`Password@123`, `123456`, v.v.) trong toàn bộ các tệp E2E Puppeteer (`e2e-order-lifecycle.mjs`, `e2e-kds-lifecycle.mjs`, `e2e-payment-bill-lifecycle.mjs`, `e2e-dashboard-reports.mjs`, `e2e-realtime-ecosystem.mjs`) và `sdk-contract.test.ts`. Thay thế bằng runtime dynamic helper `test-credentials.mjs`.
 - **Trình Tạo Mật Khẩu An Toàn Động (`/staff`)**: Trang quản lý nhân sự bổ sung nút sinh mật khẩu ngẫu nhiên an toàn cao kèm biểu tượng Sparkles và thông báo Toast sao chép mật khẩu tức thì.
-- **Đồng Bộ Hóa Master README Song Ngữ (`AUD-14.5`)**: Cập nhật toàn diện lộ trình 14/14 Phases trên cả 6 tệp tài liệu master.
+- **Đồng Bộ Hóa Master README Song Ngữ (`AUD-14.5`)**: Cập nhật toàn diện lộ trình các Phases trên cả 6 tệp tài liệu master.
 
 ### Phase 13: Trung Tâm Điều Hành Nền Tảng (Superadmin Platform Control Center) — ✅ ĐÃ NGHIỆM THU
 - **Giao Diện Điều Hành Toàn Sàn (`/platform/*`)**: Tổng quan hệ thống Platform Dashboard, Quản trị phê duyệt & kích hoạt nhà hàng (`/platform/restaurants`), Phân tích GMV toàn hệ thống theo 4 phương thức thanh toán (`/platform/revenues`), Quản lý đội ngũ NVKD & Giải ngân hoa hồng (`/platform/sales`).
