@@ -239,12 +239,14 @@ export const AdminSidebar: React.FC = () => {
   let visibleGroups: NavGroupConfig[] = [];
 
   if (isSuperAdmin) {
-    // Phase 15: Superadmin Platform Center & Chế độ Hỗ trợ Nhà hàng
-    visibleGroups = [...SUPERADMIN_NAV_GROUPS];
+    // Phase 14 & 15: Superadmin Platform Center & Chế độ Hỗ trợ Nhà hàng
+    visibleGroups = SUPERADMIN_NAV_GROUPS;
     if (selectedRestaurantId) {
-      visibleGroups.push({
-        id: 'restaurant_support',
-        label: `Hỗ trợ: ${restaurant?.name || 'Nhà hàng'}`,
+      visibleGroups = [
+        ...SUPERADMIN_NAV_GROUPS,
+        {
+          id: 'restaurant_support',
+          label: `Hỗ trợ: ${restaurant?.name || 'Nhà hàng'}`,
         items: [
           {
             name: 'Sơ đồ Bàn',
@@ -272,8 +274,9 @@ export const AdminSidebar: React.FC = () => {
             icon: BarChart3,
           },
         ],
-      });
-    }
+      },
+    ];
+  }
   } else if (isSalesRep) {
     visibleGroups = [SALES_NAV_GROUP_CONFIG];
   } else {

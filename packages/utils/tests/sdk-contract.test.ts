@@ -1453,6 +1453,77 @@ async function runSdkContractTests() {
       fail('SDK-52: platform.executePayoutBatch sai route hoặc body', { reqPayout, parsedPayout });
       failed++;
     }
+
+    // -------------------------------------------------------------------------
+    // TEST 53: Phase 15 - platform.getCommissions with query parameters
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.platform.getCommissions({
+      status: 'APPROVED',
+      salesId: 'sales-rep-99',
+      payoutPeriod: '2026-10-20',
+      page: 1,
+      limit: 50,
+    });
+    const reqPlatComms = capturedRequests[0];
+    if (
+      reqPlatComms?.method === 'GET' &&
+      reqPlatComms?.url === '/api/platform/commissions?status=APPROVED&salesId=sales-rep-99&payoutPeriod=2026-10-20&page=1&limit=50'
+    ) {
+      pass('SDK-53: platform.getCommissions map chính xác GET /api/platform/commissions với query parameters');
+      passed++;
+    } else {
+      fail('SDK-53: platform.getCommissions sai route hoặc query params', { reqPlatComms });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 54: Phase 15 - restaurant.updateById for Superadmin Support Mode
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.restaurant.updateById('rest-abc-789', {
+      name: 'Nhà Hàng Món Việt Cập Nhật',
+      phone: '0988776655',
+    });
+    const reqUpdateRest = capturedRequests[0];
+    const parsedUpdateRest = reqUpdateRest ? JSON.parse(reqUpdateRest.body) : {};
+    if (
+      reqUpdateRest?.method === 'PUT' &&
+      reqUpdateRest?.url === '/api/restaurants/rest-abc-789' &&
+      parsedUpdateRest.name === 'Nhà Hàng Món Việt Cập Nhật' &&
+      parsedUpdateRest.phone === '0988776655'
+    ) {
+      pass('SDK-54: restaurant.updateById map chính xác PUT /api/restaurants/:id');
+      passed++;
+    } else {
+      fail('SDK-54: restaurant.updateById sai route hoặc body', { reqUpdateRest, parsedUpdateRest });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 55: Phase 15 - branches.create with restaurantId for Superadmin
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.branches.create({
+      name: 'Chi Nhánh Quận 1 - Flagship',
+      address: '123 Đồng Khởi, Q1, HCM',
+      phone: '02838221133',
+      restaurantId: 'rest-abc-789',
+    });
+    const reqCreateBranch = capturedRequests[0];
+    const parsedCreateBranch = reqCreateBranch ? JSON.parse(reqCreateBranch.body) : {};
+    if (
+      reqCreateBranch?.method === 'POST' &&
+      reqCreateBranch?.url === '/api/branches' &&
+      parsedCreateBranch.name === 'Chi Nhánh Quận 1 - Flagship' &&
+      parsedCreateBranch.restaurantId === 'rest-abc-789'
+    ) {
+      pass('SDK-55: branches.create hỗ trợ truyền optional restaurantId cho Superadmin Impersonation mode');
+      passed++;
+    } else {
+      fail('SDK-55: branches.create sai route hoặc body', { reqCreateBranch, parsedCreateBranch });
+      failed++;
+    }
   } finally {
     await new Promise<void>((resolve) => mockServer.close(() => resolve()));
   }
