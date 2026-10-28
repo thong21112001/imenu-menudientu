@@ -530,6 +530,26 @@ To preserve architectural precision and avoid assumptions regarding Phase 9:
 
 ## 📄 10. Project Status & Acceptance
 
+### Phase 17: SaaS 2026–2027 Pixel-Perfect UI/UX Overhaul (Linear / Stripe / Vercel Aesthetic) — ⏳ PENDING ACCEPTANCE
+- **Minimalist Design Tokens & Core UI Components (`packages/ui`)**:
+  - Restructured Design Tokens: High-end neutral Slate/Zinc palette with monochrome accent colors and ultra-fine 1px hairline borders (`border-zinc-200/80` / `border-zinc-800/80`).
+  - Standardized 4px Grid Heights: `h-8` (32px), `h-9` (36px), and `h-10` (40px) unified across `Button`, `CustomSelect`, and `Input`.
+  - Standardized Corner Radii: `rounded-md` (6px) for controls/badges, `rounded-lg` (8px) for cards, and `rounded-xl` (12px) for dialogs/drawers; completely eradicated `rounded-3xl`.
+  - Total Elimination of Gimmicks: Purged heavy drop shadows (`shadow-xl`, `shadow-2xl`) and jumping hover animations (`scale-`, `-translate-y-`, `animate-bounce`).
+  - Minimalist `StatusChip` & `Badge`: Pill/rounded-md styling with subtle status micro-dots (`w-1.5 h-1.5 rounded-full`), removing cluttered icons.
+- **B2B Marketing & Client Landing Web (`apps/imenu-client-web`)**:
+  - Full redesign of `Header`, `Footer`, `InteractiveShowcases`, Landing Page `page.tsx`, and informational pages (`dang-nhap`, `dang-ky`, `huong-dan`, `kien-thuc`, `tuyen-dung-nhan-vien-kinh-doanh`, `chinh-sach-quyen-rieng-tu`, `xoa-du-lieu`) to SaaS Editorial/Minimalist standards.
+  - Bento Grid / Swiss Grid structure with subtle hairline dividers, deliberate whitespace, and crisp typography (`tracking-tight`).
+  - 100% elimination of AI clichés, decorative badges, glowing blobs, and flashy gradients (`Sparkles`, `Wand`, `Bot`, emojis).
+- **Admin Dashboard & Restaurant Operations (`apps/imenu-admin`)**:
+  - `AdminSidebar` & `AdminHeader`: Sleek navigation grouped into 4 distinct functional blocks, fine `stroke-[1.5]` 16px icons, zero distracting animations.
+  - Data-Dense SaaS Tables (`bills`, `menu`, `tables`, `staff`, `branches`, `platform/*`, `sales/*`): Compact table headers, hairline `divide-y` dividers, and mandatory `tabular-nums` across all numeric columns (prices, revenue, timestamps, percentages, order codes).
+  - High-Stress Operations Screens (`/pos`, `/kitchen`): Enhanced contrast, responsive action buttons, immediate visual feedback.
+- **100% Zero-Regression & Full Verification**:
+  - Clean TypeScript static verification and Turborepo production build across all applications (`apps/imenu-admin`, `apps/imenu-client-web`, `apps/imenu-customer-menu`).
+  - 5/5 real-browser Puppeteer E2E test suites (`e2e-order-lifecycle.mjs`, `e2e-kds-lifecycle.mjs`, `e2e-payment-bill-lifecycle.mjs`, `e2e-realtime-ecosystem.mjs`, `e2e-dashboard-reports.mjs`) achieved 27/27 checkpoints PASS (100%).
+  - 57/57 Frontend SDK contract test cases and 3/3 Secret-Zero guard test cases passed.
+
 ### Phase 16: E2E Stabilization & Production Readiness — ✅ FULLY COMPLETED & SYNCHRONIZED (16/16 PHASES - PRODUCTION READY)
 - **Full 5 Multi-App Puppeteer E2E Test Suite Stabilization**: Fixed edge case layout regressions, viewport adaptations, and timing delays in `e2e-order-lifecycle.mjs`, `e2e-kds-lifecycle.mjs`, `e2e-payment-bill-lifecycle.mjs`, `e2e-realtime-ecosystem.mjs`, `e2e-dashboard-reports.mjs`, completely clearing `test-artifacts/e2e-failures/`.
 - **Dynamic Production Environment Configuration**: All 3 apps (`@imenu/admin`, `@imenu/client-web`, `@imenu/customer-menu`) and `@imenu/utils` load backend and socket URLs via environment variables (`NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_WS_URL`) with zero hardcoded credentials.

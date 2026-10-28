@@ -530,6 +530,26 @@ Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai 
 
 ## 📄 10. Trạng Thái Dự Án & Nghiệm Thu (Project Status)
 
+### Phase 17: Đại Tu Giao Diện UI/UX Pixel-Perfect Chuẩn SaaS 2026–2027 (Linear / Stripe / Vercel Aesthetic) — ⏳ ĐANG CHỜ XÁC NHẬN NGHIỆM THU
+- **Hệ Thống Thiết Kế Tối Giản & Thành Phần UI Gốc (`packages/ui`)**:
+  - Tái cấu trúc Design Tokens: Bảng màu Slate/Zinc trung tính cao cấp kết hợp màu nhấn thương hiệu tối giản, áp dụng đường viền siêu mỏng 1px (`border-zinc-200/80` / `border-zinc-800/80`).
+  - Hệ lưới chiều cao chuẩn 4px: `h-8` (32px), `h-9` (36px), `h-10` (40px) đồng bộ giữa `Button`, `CustomSelect` và `Input`.
+  - Chuẩn hóa bo góc: `rounded-md` (6px) cho controls/badges, `rounded-lg` (8px) cho cards, `rounded-xl` (12px) cho dialogs/drawers; triệt tiêu hoàn toàn `rounded-3xl`.
+  - Loại bỏ hoàn toàn các hiệu ứng thừa: Khử toàn bộ bóng đổ nặng (`shadow-xl`, `shadow-2xl`) và hiệu ứng hover giật nảy (`scale-`, `-translate-y-`, `animate-bounce`).
+  - Nâng cấp `StatusChip` và `Badge`: Dạng pill/rounded-md tối giản với chấm tròn trạng thái micro dot (`w-1.5 h-1.5 rounded-full`), loại bỏ icon rườm rà.
+- **Trang Giới Thiệu & Landing Web B2B (`apps/imenu-client-web`)**:
+  - Tái thiết kế toàn diện `Header`, `Footer`, `InteractiveShowcases`, Landing Page `page.tsx` và các trang con (`dang-nhap`, `dang-ky`, `huong-dan`, `kien-thuc`, `tuyen-dung-nhan-vien-kinh-doanh`, `chinh-sach-quyen-rieng-tu`, `xoa-du-lieu`) theo phong cách Editorial/Minimalist.
+  - Bố cục Bento Grid / Swiss Grid với đường kẻ chia mảnh tinh tế, typography sắc nét (`tracking-tight`), khoảng trắng có chủ đích.
+  - Loại bỏ 100% các câu chữ/badge/icon kiểu "AI-generated" (`Sparkles`, `Wand`, `Bot`, emojis, glowing blobs, gradient lòe loẹt).
+- **Trang Quản Trị & Vận Hành Bán Hàng (`apps/imenu-admin`)**:
+  - `AdminSidebar` & `AdminHeader`: Tinh gọn thanh điều hướng 4 nhóm chức năng, icon nét mảnh `stroke-[1.5]` 16px, loại bỏ hiệu ứng rườm rà.
+  - Bảng dữ liệu Data-Dense SaaS Table (`bills`, `menu`, `tables`, `staff`, `branches`, `platform/*`, `sales/*`): Tối ưu mật độ dữ liệu, đường kẻ ngang hairline `divide-y`, hỗ trợ `tabular-nums` cho 100% cột số liệu (giá tiền, doanh thu, thời gian, phần trăm, mã đơn).
+  - Tối ưu màn hình vận hành cường độ cao (`/pos`, `/kitchen`): Tăng độ tương phản, nút thao tác dứt khoát, phản hồi nhanh.
+- **Khả Năng Tương Thích & Kiểm Thử Hồi Quy 100% (Zero-Regression)**:
+  - 100% vượt qua TypeScript static check và Turborepo production build (`apps/imenu-admin`, `apps/imenu-client-web`, `apps/imenu-customer-menu`).
+  - 5/5 Browser E2E Test Suites (`e2e-order-lifecycle.mjs`, `e2e-kds-lifecycle.mjs`, `e2e-payment-bill-lifecycle.mjs`, `e2e-realtime-ecosystem.mjs`, `e2e-dashboard-reports.mjs`) đạt 27/27 checkpoints PASS (100%).
+  - Đạt 57/57 SDK Contract test cases và 3/3 Secret-Zero guard test cases.
+
 ### Phase 16: Ổn Định Hóa E2E Toàn Diện & Sẵn Sàng Vận Hành Production — ✅ ĐÃ HOÀN THIỆN TOÀN DIỆN & ĐỒNG BỘ 16/16 PHASES (PRODUCTION READY)
 - **Ổn Định Hóa 5 Luồng Kiểm Thử E2E Trình Duyệt Thật (Puppeteer)**: Khắc phục triệt để các lỗi giao diện, kích thước viewport thích ứng và độ trễ mạng trong 5 kịch bản (`e2e-order-lifecycle.mjs`, `e2e-kds-lifecycle.mjs`, `e2e-payment-bill-lifecycle.mjs`, `e2e-realtime-ecosystem.mjs`, `e2e-dashboard-reports.mjs`), dọn sạch thư mục `test-artifacts/e2e-failures/`.
 - **Cấu Hình Production Biến Môi Trường Không Hardcode**: Toàn bộ 3 ứng dụng `@imenu/admin`, `@imenu/client-web`, `@imenu/customer-menu` và thư viện `@imenu/utils` nạp URL Backend API và WebSocket Gateway động qua `.env` (`NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_WS_URL`).
