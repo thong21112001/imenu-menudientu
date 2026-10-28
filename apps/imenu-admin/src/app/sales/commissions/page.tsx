@@ -191,7 +191,7 @@ export default function SalesCommissionsPage() {
           </div>
 
           {/* Table */}
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-xs overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -300,7 +300,7 @@ export default function SalesCommissionsPage() {
         </div>
 
         {/* ================= FORM CÀI ĐẶT TÀI KHOẢN NGÂN HÀNG (4 cols) ================= */}
-        <div className="lg:col-span-4 bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-5">
+        <div className="lg:col-span-4 bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-5">
           <div className="space-y-1">
             <h3 className="text-base font-black text-slate-900 flex items-center gap-2">
               <CreditCard className="w-5 h-5 text-emerald-700" />

@@ -263,7 +263,7 @@ export default function ReportsPage() {
       {/* =========================================================================
           KHU VỰC 1: HEADER & THANH CÔNG CỤ LỌC THỜI GIAN / CHI NHÁNH / XUẤT CSV
           ========================================================================= */}
-      <div className="p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-4">
+      <div className="p-5 rounded-xl bg-white border border-slate-200/80 shadow-xs space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2.5">
@@ -284,7 +284,7 @@ export default function ReportsPage() {
           <div className="flex items-center gap-2.5">
             <button
               onClick={() => loadData(activeBranchId, startDate, endDate, groupBy)}
-              className="p-2.5 rounded-2xl border border-slate-200 hover:bg-slate-100 text-slate-600 cursor-pointer transition-colors"
+              className="p-2.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 cursor-pointer transition-colors"
               title="Làm mới dữ liệu"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-[#176044]' : ''}`} />
@@ -315,7 +315,7 @@ export default function ReportsPage() {
         {/* Thanh công cụ lọc: Presets + Độ mịn + Chọn ngày tùy chỉnh */}
         <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
           {/* Nhóm nút chọn kỳ nhanh */}
-          <div className="inline-flex items-center p-1 rounded-2xl bg-slate-100 border border-slate-200 font-semibold">
+          <div className="inline-flex items-center p-1 rounded-lg bg-slate-100 border border-slate-200 font-semibold">
             {(
               [
                 { id: 'today', label: 'Hôm nay' },
@@ -582,7 +582,7 @@ export default function ReportsPage() {
                     : 'bg-purple-500';
 
                 return (
-                  <div key={pm.method} className="space-y-1.5 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                  <div key={pm.method} className="space-y-1.5 p-3 rounded-lg bg-slate-50 border border-slate-100">
                     <div className="flex items-center justify-between text-xs">
                       <span className="font-bold text-slate-800 flex items-center gap-1.5">
                         <span className={`w-2.5 h-2.5 rounded-full ${colorClass}`} />
@@ -620,7 +620,7 @@ export default function ReportsPage() {
             </p>
           </div>
 
-          <div className="inline-flex p-1 rounded-2xl bg-slate-100 text-xs font-bold">
+          <div className="inline-flex p-1 rounded-lg bg-slate-100 text-xs font-bold">
             <button
               onClick={() => setActiveTab('topItems')}
               className={`px-3 py-1.5 rounded-xl cursor-pointer transition-all ${
@@ -730,7 +730,7 @@ export default function ReportsPage() {
                   {topItemsList.map((item, idx) => (
                     <div
                       key={item.itemId || idx}
-                      className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2"
+                      className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
@@ -775,7 +775,7 @@ export default function ReportsPage() {
                 {categoriesList.map((cat) => (
                   <div
                     key={cat.categoryName}
-                    className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5"
+                    className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5"
                   >
                     <div className="flex items-center justify-between">
                       <strong className="text-xs text-slate-900">{cat.categoryName}</strong>
@@ -812,7 +812,7 @@ export default function ReportsPage() {
                 {branchBreakdownList.map((b) => (
                   <div
                     key={b.branchId}
-                    className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2.5"
+                    className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2.5"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">

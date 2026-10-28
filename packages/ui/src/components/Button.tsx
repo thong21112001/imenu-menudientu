@@ -19,29 +19,37 @@ export const Button: React.FC<ButtonProps> = ({
   disabled,
   ...props
 }) => {
-  const baseStyles = 'inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] cursor-pointer';
-  
+  const baseStyles =
+    'inline-flex items-center justify-center font-medium rounded-md transition-colors duration-150 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
+
+  // Strict 4px Grid Sizing: sm (32px), md (36px), lg (40px)
   const sizeStyles = {
-    sm: 'px-3 py-1.5 text-xs gap-1.5',
-    md: 'px-4 py-2.5 text-sm gap-2',
-    lg: 'px-6 py-3 text-base gap-2.5',
+    sm: 'h-8 px-3 text-xs gap-1.5',
+    md: 'h-9 px-3.5 text-xs sm:text-sm gap-2',
+    lg: 'h-10 px-4 text-sm gap-2',
   }[size];
 
   const variantStyles = {
-    primary: 'bg-[#124a36] hover:bg-[#09271d] text-white font-bold border border-[#124a36] hover:border-[#09271d] shadow-md shadow-[#124a36]/25 focus:ring-[#176044] active:bg-[#071f17]',
-    secondary: 'bg-[#e8f5ee] text-[#124a36] hover:bg-[#124a36] hover:text-white border-2 border-[#176044]/35 hover:border-[#124a36] font-bold shadow-sm focus:ring-[#176044]',
-    outline: 'border-2 border-slate-300 text-slate-800 bg-white hover:bg-[#f0f7f4] hover:text-[#124a36] hover:border-[#124a36] font-bold shadow-sm focus:ring-[#176044]',
-    ghost: 'text-slate-700 hover:bg-slate-100 hover:text-[#124a36] font-semibold',
-    danger: 'bg-rose-600 hover:bg-rose-700 text-white font-bold border border-rose-700 shadow-sm shadow-rose-600/20 focus:ring-rose-500',
-    amber: 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-[#09271d] font-extrabold border border-amber-600 shadow-md shadow-amber-500/25 focus:ring-amber-500',
+    primary:
+      'bg-emerald-700 hover:bg-emerald-800 text-white border border-emerald-800/80 shadow-2xs active:bg-emerald-900',
+    secondary:
+      'bg-zinc-100 hover:bg-zinc-200/80 text-zinc-900 border border-zinc-200 active:bg-zinc-200',
+    outline:
+      'bg-white hover:bg-zinc-50 text-zinc-800 border border-zinc-200/90 active:bg-zinc-100 shadow-2xs',
+    ghost:
+      'bg-transparent text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 active:bg-zinc-200/70 border border-transparent',
+    danger:
+      'bg-rose-600 hover:bg-rose-700 text-white border border-rose-700 active:bg-rose-800 shadow-2xs',
+    amber:
+      'bg-amber-500 hover:bg-amber-600 text-zinc-950 font-semibold border border-amber-600 active:bg-amber-700 shadow-2xs',
   }[variant];
 
   // Inline fallback style ensures button NEVER renders with invisible white background or white text on white
   const fallbackStyles: React.CSSProperties = {
-    ...(variant === 'primary' && { backgroundColor: '#124a36', color: '#ffffff' }),
-    ...(variant === 'secondary' && { backgroundColor: '#e8f5ee', color: '#124a36' }),
-    ...(variant === 'outline' && { backgroundColor: '#ffffff', color: '#1e2924' }),
-    ...(variant === 'amber' && { backgroundColor: '#f59e0b', color: '#09271d' }),
+    ...(variant === 'primary' && { backgroundColor: '#047857', color: '#ffffff' }),
+    ...(variant === 'secondary' && { backgroundColor: '#f4f4f5', color: '#18181b' }),
+    ...(variant === 'outline' && { backgroundColor: '#ffffff', color: '#18181b' }),
+    ...(variant === 'amber' && { backgroundColor: '#f59e0b', color: '#09090b' }),
     ...(variant === 'danger' && { backgroundColor: '#e11d48', color: '#ffffff' }),
   };
 
@@ -53,9 +61,9 @@ export const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {isLoading ? (
-        <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
+        <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
       ) : icon ? (
-        <span className="flex-shrink-0">{icon}</span>
+        <span className="shrink-0 flex items-center">{icon}</span>
       ) : null}
       {children}
     </button>

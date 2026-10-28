@@ -27,7 +27,6 @@ import {
   Receipt,
   Store,
   Layers,
-  Sparkles,
 } from 'lucide-react';
 
 function getTodayVnDate(): string {
@@ -185,7 +184,7 @@ export default function DashboardOverviewPage() {
       {/* =========================================================================
           KHU VỰC 1: HEADER + CHI NHÁNH + CHỌN NGÀY + ĐIỀU HƯỚNG NHANH
           ========================================================================= */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-5 rounded-xl bg-white border border-slate-200/80 shadow-xs">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-2xl font-black text-[#09271d] tracking-tight">

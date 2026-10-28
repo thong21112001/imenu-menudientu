@@ -93,7 +93,7 @@ export default function SalesDashboardPage() {
     <div className="space-y-6 pb-12 animate-in fade-in duration-300">
       
       {/* ================= HERO HEADER ================= */}
-      <div className="rounded-3xl bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-900 text-white p-6 sm:p-8 shadow-xl relative overflow-hidden">
+      <div className="rounded-xl bg-zinc-950 text-white p-6 sm:p-8 border border-zinc-800 shadow-xs relative overflow-hidden">
         <div className="absolute top-0 right-0 w-80 h-80 bg-amber-400/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -203,7 +203,7 @@ export default function SalesDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         
         {/* Cột trái: Bộ công cụ tiếp thị (7 cols) */}
-        <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-200 p-6 sm:p-7 shadow-xs space-y-5">
+        <div className="lg:col-span-7 bg-white rounded-xl border border-slate-200 p-6 sm:p-7 shadow-xs space-y-5">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-base font-black text-slate-900">Công Cụ Tiếp Thị Của Bạn</h2>
@@ -306,7 +306,7 @@ export default function SalesDashboardPage() {
         <div className="lg:col-span-5 space-y-6">
           
           {/* Card Ngân hàng nhận tiền */}
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-3">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-xs font-bold text-slate-900 uppercase flex items-center gap-1.5">
                 <CreditCard className="w-4 h-4 text-emerald-700" />
@@ -338,7 +338,7 @@ export default function SalesDashboardPage() {
           </div>
 
           {/* Card Tóm tắt 4 Tầng Hoa Hồng */}
-          <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-xs space-y-3">
+          <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-xs space-y-3">
             <h3 className="text-xs font-bold text-slate-900 uppercase flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4 text-amber-600" />
               Chính sách 4 tầng hoa hồng

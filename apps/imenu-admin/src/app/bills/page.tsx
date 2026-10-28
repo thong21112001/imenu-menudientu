@@ -415,7 +415,7 @@ export default function BillsPage() {
       )}
 
       {/* PAGE HEADER */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-5 rounded-lg border border-slate-200 shadow-sm">
         <div>
           <h1 className="text-2xl font-black text-[#09271d] flex items-center gap-2.5">
             <Receipt className="w-7 h-7 text-[#176044]" />
@@ -445,7 +445,7 @@ export default function BillsPage() {
       </div>
 
       {/* SEARCH & FILTERS TOOLBAR */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+      <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm space-y-3">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Search box */}
           <div className="relative lg:col-span-2">
@@ -546,12 +546,12 @@ export default function BillsPage() {
       {/* ORDERS / BILLS LIST */}
       <div className="space-y-3">
         {isLoading ? (
-          <div className="p-16 text-center bg-white rounded-2xl border border-slate-200 space-y-3">
+          <div className="p-16 text-center bg-white rounded-lg border border-slate-200 space-y-3">
             <Loader2 className="w-8 h-8 text-[#176044] animate-spin mx-auto" />
             <p className="text-xs font-bold text-slate-600">Đang đồng bộ danh sách hóa đơn từ máy chủ...</p>
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="p-16 text-center bg-white rounded-2xl border border-slate-200 space-y-2">
+          <div className="p-16 text-center bg-white rounded-lg border border-slate-200 space-y-2">
             <Receipt className="w-12 h-12 text-slate-300 mx-auto" />
             <p className="text-sm font-bold text-slate-700">Không tìm thấy hóa đơn nào khớp với bộ lọc</p>
             <p className="text-xs text-slate-400">Thử thay đổi từ khóa tìm kiếm hoặc chọn bộ lọc trạng thái khác</p>
@@ -630,7 +630,7 @@ export default function BillsPage() {
                     <span className="text-[10px] text-slate-400 block uppercase font-extrabold tracking-wider">
                       {isPaid ? 'Đã Thanh Toán' : 'Tổng Cần Thu'}
                     </span>
-                    <span className={`text-base sm:text-lg font-black ${isPaid ? 'text-emerald-700' : 'text-rose-600'}`}>
+                    <span className={`text-base sm:text-lg font-bold tabular-nums ${isPaid ? 'text-emerald-700' : 'text-rose-600'}`}>
                       {formatCurrencyVND(ord.totalAmount)}
                     </span>
                   </div>
@@ -766,7 +766,7 @@ export default function BillsPage() {
               {/* LEFT COLUMN: QUICK CHECKOUT PANEL (IF UNPAID) OR BILL AUDIT METRICS (IF PAID) */}
               <div className="lg:col-span-5 space-y-4">
                 {selectedOrderForBill.status !== 'Paid' ? (
-                  <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-2xl text-white space-y-4 shadow-xl">
+                  <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-lg text-white space-y-4 shadow-xl">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-3">
                       <h3 className="text-sm font-extrabold flex items-center gap-2 text-amber-400">
                         <DollarSign className="w-4 h-4" /> Chốt Thanh Toán Nhanh
@@ -923,7 +923,7 @@ export default function BillsPage() {
                   </div>
                 ) : (
                   /* BILL AUDIT INFO CARD (FOR PAID BILLS) */
-                  <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-2xl text-white space-y-4 shadow-xl">
+                  <div className="bg-slate-900/90 border border-slate-800 p-5 rounded-lg text-white space-y-4 shadow-xl">
                     <div className="flex items-center gap-2 text-emerald-400 border-b border-slate-800 pb-3">
                       <ShieldCheck className="w-5 h-5 text-emerald-400" />
                       <h3 className="text-sm font-extrabold">Chứng Từ Đã Thanh Toán</h3>

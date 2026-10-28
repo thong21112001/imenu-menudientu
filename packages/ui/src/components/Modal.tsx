@@ -18,7 +18,7 @@ export const Modal: React.FC<ModalProps> = ({
   title,
   subtitle,
   children,
-  maxWidth = 'md'
+  maxWidth = 'md',
 }) => {
   useEffect(() => {
     if (isOpen) {
@@ -43,7 +43,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
       style={{
         position: 'fixed',
         inset: 0,
@@ -51,8 +51,7 @@ export const Modal: React.FC<ModalProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.65)',
-        backdropFilter: 'blur(4px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.45)',
       }}
     >
       <div
@@ -62,25 +61,26 @@ export const Modal: React.FC<ModalProps> = ({
         aria-hidden="true"
       />
       <div
-        className={`relative w-full ${widthClass} bg-white rounded-3xl shadow-2xl overflow-hidden border border-[#e4e8e5] z-10 animate-scaleUp`}
+        className={`relative w-full ${widthClass} bg-white rounded-xl shadow-lg overflow-hidden border border-zinc-200/90 z-10`}
         style={{ position: 'relative', zIndex: 10 }}
         onClick={(e) => e.stopPropagation()}
       >
         {(title || subtitle) && (
-          <div className="flex items-start justify-between p-6 border-b border-[#e4e8e5] bg-[#faf9f5]">
+          <div className="flex items-start justify-between px-5 py-4 border-b border-zinc-200/80 bg-zinc-50/60">
             <div>
-              {title && <h3 className="text-lg font-bold text-[#0d3628]">{title}</h3>}
-              {subtitle && <p className="text-xs text-[#66736d] mt-0.5">{subtitle}</p>}
+              {title && <h3 className="text-sm font-semibold text-zinc-900">{title}</h3>}
+              {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
             </div>
             <button
               onClick={onClose}
-              className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 rounded-xl transition-colors"
+              className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200/60 rounded-md transition-colors cursor-pointer"
+              aria-label="Đóng"
             >
-              <X className="w-5 h-5" />
+              <X className="w-4 h-4 stroke-[1.5]" />
             </button>
           </div>
         )}
-        <div className="p-6 max-h-[80vh] overflow-y-auto">{children}</div>
+        <div className="p-5 max-h-[80vh] overflow-y-auto">{children}</div>
       </div>
     </div>
   );

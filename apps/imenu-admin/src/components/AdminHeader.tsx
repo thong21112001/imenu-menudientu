@@ -561,13 +561,13 @@ export const AdminHeader: React.FC = () => {
     <>
       {/* AUD-14.2 & Phase 15: Ambient Support Mode Banner for Superadmin */}
       {isSuperAdmin && selectedRestaurantId && (
-        <div className="w-full bg-linear-to-r from-purple-800 via-indigo-900 to-purple-900 text-white px-4 py-2 text-xs font-semibold flex items-center justify-between shadow-md sticky top-0 z-40 border-b border-purple-500/30">
+        <div className="w-full bg-zinc-950 text-white px-4 py-2 text-xs font-medium flex items-center justify-between sticky top-0 z-40 border-b border-zinc-800">
           <div className="flex items-center gap-2 truncate">
-            <Crown className="w-4 h-4 text-amber-300 shrink-0 animate-pulse" />
+            <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />
             <span>
-              Chế độ Hỗ trợ: <strong className="text-amber-300">{currentRestaurant?.name || 'Đang hỗ trợ nhà hàng'}</strong>
+              Chế độ Hỗ trợ: <strong className="text-zinc-100">{currentRestaurant?.name || 'Đang hỗ trợ nhà hàng'}</strong>
             </span>
-            <span className="text-purple-200 hidden sm:inline">
+            <span className="text-zinc-400 hidden sm:inline">
               ({currentRestaurant?.slug || ''}) • Toàn quyền xem và thao tác dữ liệu
             </span>
           </div>
@@ -576,7 +576,7 @@ export const AdminHeader: React.FC = () => {
               handleSelectRestaurant(null);
               window.location.href = '/platform/dashboard';
             }}
-            className="px-3 py-1 rounded-xl bg-purple-600/80 hover:bg-purple-600 text-white text-[11px] font-bold transition-all cursor-pointer shrink-0 ml-2 border border-purple-400/40 shadow-xs flex items-center gap-1"
+            className="px-2.5 py-1 rounded-md bg-zinc-800 hover:bg-zinc-700 text-white text-[11px] font-medium transition-colors cursor-pointer shrink-0 ml-2 border border-zinc-700 flex items-center gap-1"
           >
             <span>Thoát hỗ trợ</span>
             <span>✕</span>
@@ -584,7 +584,7 @@ export const AdminHeader: React.FC = () => {
         </div>
       )}
 
-      <header className="h-16 bg-white border-b border-[#e4e8e5] sticky top-0 z-30 flex items-center justify-between px-3 sm:px-6 shadow-2xs w-full min-w-0 max-w-full">
+      <header className="h-14 bg-white border-b border-zinc-200/80 sticky top-0 z-30 flex items-center justify-between px-3 sm:px-6 shadow-2xs w-full min-w-0 max-w-full">
         <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           {/* Sidebar Toggle Button */}
           <button
@@ -853,14 +853,14 @@ export const AdminHeader: React.FC = () => {
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-rose-500 text-white rounded-full text-[9px] font-bold flex items-center justify-center animate-bounce shadow-xs">
+                <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 bg-rose-600 text-white rounded-full text-[9px] font-semibold flex items-center justify-center shadow-xs">
                   {unreadCount > 99 ? '99+' : unreadCount}
                 </span>
               )}
             </button>
 
             {showNotificationList && (
-              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-3xl shadow-2xl border border-slate-200 p-3.5 space-y-3 z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-lg border border-zinc-200 p-3 space-y-2.5 z-50 text-xs animate-in fade-in slide-in-from-top-2 duration-150">
                 {/* Header Modal */}
                 <div className="flex items-center justify-between pb-2 border-b border-slate-100">
                   <div className="flex items-center gap-2">
@@ -1045,7 +1045,7 @@ export const AdminHeader: React.FC = () => {
             </button>
 
             {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-xl border border-slate-200 p-2 z-50 text-xs">
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-zinc-200 p-2 z-50 text-xs">
                 <div className="p-2.5 border-b border-slate-100 mb-1">
                   <p className="font-bold text-slate-900 truncate">{user?.fullName || 'Chưa cập nhật tên'}</p>
                   <p className="text-[11px] text-slate-500 truncate">{user?.email || ''}</p>
@@ -1085,7 +1085,7 @@ export const AdminHeader: React.FC = () => {
       {/* Modal Tạm đóng cửa chi nhánh */}
       {showCloseModal && currentBranch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-5 shadow-xl space-y-4 border border-zinc-200">
             <div className="flex items-center gap-3 text-amber-600">
               <div className="w-10 h-10 rounded-2xl bg-amber-100 grid place-items-center shrink-0">
                 <AlertTriangle className="w-5 h-5" />

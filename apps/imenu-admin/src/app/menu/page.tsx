@@ -740,7 +740,7 @@ export default function MenuManagementPage() {
 
       {/* ================= QUICK STATS CARDS ================= */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 w-full min-w-0">
-        <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 text-[#124a36] grid place-items-center font-bold shrink-0">
             <UtensilsCrossed className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
@@ -750,7 +750,7 @@ export default function MenuManagementPage() {
           </div>
         </div>
 
-        <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-teal-50 text-teal-700 grid place-items-center font-bold shrink-0">
             <Eye className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
@@ -760,7 +760,7 @@ export default function MenuManagementPage() {
           </div>
         </div>
 
-        <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-red-50 text-red-700 grid place-items-center font-bold shrink-0">
             <EyeOff className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
@@ -770,7 +770,7 @@ export default function MenuManagementPage() {
           </div>
         </div>
 
-        <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-700 grid place-items-center font-bold shrink-0">
             <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
@@ -782,7 +782,7 @@ export default function MenuManagementPage() {
       </div>
 
       {/* ================= SEARCH & STATUS FILTER BAR ================= */}
-      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3 w-full min-w-0">
+      <div className="bg-white p-3.5 sm:p-4 rounded-lg border border-slate-200 shadow-xs space-y-3 w-full min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full">
           {/* Search box */}
           <div className="relative flex-1 min-w-0 w-full">
@@ -890,14 +890,14 @@ export default function MenuManagementPage() {
 
       {/* ================= LOADING & EMPTY STATE ================= */}
       {isLoading ? (
-        <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 text-slate-400 space-y-3">
+        <div className="bg-white p-12 text-center rounded-lg border border-slate-200 text-slate-400 space-y-3">
           <Loader2 className="w-8 h-8 mx-auto text-[#176044] animate-spin" />
           <p className="text-xs text-slate-500 font-bold">Đang tải danh sách món ăn từ máy chủ...</p>
         </div>
       ) : menuItems.length === 0 ? (
         /* ================= EMPTY RESTAURANT ONBOARDING HERO CARD ================= */
-        <div className="bg-linear-to-b from-white to-slate-50/60 p-8 sm:p-12 text-center rounded-3xl border border-dashed border-[#176044]/30 shadow-xs space-y-5">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-3xl bg-emerald-50 border border-emerald-100/80 text-[#176044] flex items-center justify-center shadow-xs">
+        <div className="bg-linear-to-b from-white to-slate-50/60 p-8 sm:p-12 text-center rounded-xl border border-dashed border-[#176044]/30 shadow-xs space-y-5">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-xl bg-emerald-50 border border-emerald-100/80 text-[#176044] flex items-center justify-center shadow-xs">
             <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-[#176044]" />
           </div>
           <div className="max-w-md mx-auto space-y-2">
@@ -941,7 +941,7 @@ export default function MenuManagementPage() {
         </div>
       ) : filteredItems.length === 0 ? (
         /* ================= FILTER / SEARCH EMPTY STATE ================= */
-        <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 text-slate-400 space-y-4">
+        <div className="bg-white p-12 text-center rounded-lg border border-slate-200 text-slate-400 space-y-4">
           <UtensilsCrossed className="w-12 h-12 mx-auto text-slate-300" />
           <div className="space-y-1">
             <h3 className="text-base font-extrabold text-slate-700">Không tìm thấy món ăn phù hợp</h3>
@@ -974,7 +974,7 @@ export default function MenuManagementPage() {
             return (
               <Card
                 key={item.id}
-                className={`p-3.5 sm:p-4 rounded-2xl flex flex-col justify-between hover:shadow-md transition-shadow relative group min-w-0 w-full ${
+                className={`p-3.5 sm:p-4 rounded-lg flex flex-col justify-between hover:shadow-md transition-shadow relative group min-w-0 w-full ${
                   !item.isAvailable ? 'bg-slate-50/80 border-slate-200' : 'bg-white border-slate-200'
                 }`}
               >
@@ -1022,7 +1022,7 @@ export default function MenuManagementPage() {
 
                   {/* Main Content Info: Image + Title + Price */}
                   <div className="flex items-start gap-3">
-                    <div className="relative w-20 h-20 rounded-2xl overflow-hidden shrink-0 border border-slate-200 bg-slate-100 shadow-2xs">
+                    <div className="relative w-20 h-20 rounded-lg overflow-hidden shrink-0 border border-slate-200 bg-slate-100 shadow-2xs">
                       <img
                         src={item.imageUrl}
                         alt={item.name}

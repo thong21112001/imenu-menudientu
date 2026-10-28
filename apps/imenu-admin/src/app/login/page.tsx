@@ -11,7 +11,6 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  Sparkles,
   Store,
   CheckCircle2,
   AlertCircle,
@@ -20,7 +19,6 @@ import {
   ChefHat,
   Smartphone,
   BarChart3,
-  Crown,
   Briefcase,
   CreditCard,
   UtensilsCrossed,
@@ -50,7 +48,7 @@ const DEMO_ACCOUNTS: DemoAccountItem[] = [
     name: 'Nguyễn Minh An',
     desc: 'Toàn quyền quản trị chi nhánh chính & toàn chuỗi',
     icon: Store,
-    badgeColor: 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:border-emerald-400 hover:bg-emerald-100/70',
+    badgeColor: 'bg-emerald-50 text-emerald-800 border-emerald-200',
     iconColor: 'text-emerald-600',
     targetRoute: '/',
   },
@@ -62,7 +60,7 @@ const DEMO_ACCOUNTS: DemoAccountItem[] = [
     name: 'Trần Quốc Bảo',
     desc: 'Quản lý vận hành ca, sơ đồ bàn, KDS và nhân sự',
     icon: Briefcase,
-    badgeColor: 'bg-blue-50 text-blue-800 border-blue-200 hover:border-blue-400 hover:bg-blue-100/70',
+    badgeColor: 'bg-blue-50 text-blue-800 border-blue-200',
     iconColor: 'text-blue-600',
     targetRoute: '/',
   },
@@ -74,7 +72,7 @@ const DEMO_ACCOUNTS: DemoAccountItem[] = [
     name: 'Lê Thu Thảo',
     desc: 'Order bàn, thu tiền VietQR/tiền mặt & in bill 80mm',
     icon: CreditCard,
-    badgeColor: 'bg-teal-50 text-teal-800 border-teal-200 hover:border-teal-400 hover:bg-teal-100/70',
+    badgeColor: 'bg-teal-50 text-teal-800 border-teal-200',
     iconColor: 'text-teal-600',
     targetRoute: '/pos',
   },
@@ -86,8 +84,8 @@ const DEMO_ACCOUNTS: DemoAccountItem[] = [
     name: 'Hoàng Văn Bếp',
     desc: 'Màn hình KDS nhận vé chế biến & báo hết món tức thì',
     icon: ChefHat,
-    badgeColor: 'bg-orange-50 text-orange-800 border-orange-200 hover:border-orange-400 hover:bg-orange-100/70',
-    iconColor: 'text-orange-600',
+    badgeColor: 'bg-amber-50 text-amber-800 border-amber-200',
+    iconColor: 'text-amber-600',
     targetRoute: '/kitchen',
   },
   {
@@ -98,8 +96,8 @@ const DEMO_ACCOUNTS: DemoAccountItem[] = [
     name: 'Phạm Văn Phục',
     desc: 'Hỗ trợ khách tại bàn, mở bàn, kiểm tra món và gọi đồ',
     icon: UtensilsCrossed,
-    badgeColor: 'bg-amber-50 text-amber-800 border-amber-200 hover:border-amber-400 hover:bg-amber-100/70',
-    iconColor: 'text-amber-600',
+    badgeColor: 'bg-zinc-50 text-zinc-800 border-zinc-200',
+    iconColor: 'text-zinc-600',
     targetRoute: '/tables',
   },
 ];
@@ -215,100 +213,94 @@ function LoginForm() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-[#061b14] via-[#09271d] to-[#04120d] flex items-center justify-center p-4 sm:p-6 lg:p-8">
-      {/* Background Glow Decorations */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-40 -left-40 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
-      </div>
-
-      <div className="w-full max-w-5xl bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl overflow-hidden border border-white/20 grid grid-cols-1 lg:grid-cols-12 relative z-10">
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <div className="w-full max-w-5xl bg-white rounded-xl shadow-xs overflow-hidden border border-zinc-200/90 grid grid-cols-1 lg:grid-cols-12 relative z-10">
+        
         {/* Left Side: Brand Showcase & Highlights */}
-        <div className="lg:col-span-5 bg-linear-to-br from-[#09271d] via-[#0c3527] to-[#061b14] text-white p-8 sm:p-10 flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none" />
-
+        <div className="lg:col-span-5 bg-zinc-950 text-white p-8 sm:p-10 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-zinc-800">
           <div>
-            <div className="flex items-center gap-3">
-              <Logo light size="lg" />
-              <span className="px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 rounded-full">
+            <div className="flex items-center gap-2.5">
+              <Logo light size="sm" />
+              <span className="px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider bg-zinc-800 text-zinc-300 border border-zinc-700 rounded-md">
                 Admin POS
               </span>
             </div>
 
-            <h1 className="text-2xl sm:text-3xl font-black text-white mt-10 mb-3 leading-tight tracking-tight">
+            <h1 className="text-xl sm:text-2xl font-bold text-white mt-10 mb-2.5 tracking-tight leading-snug">
               Trung tâm Quản trị & <br />
-              <span className="bg-linear-to-r from-emerald-400 via-teal-300 to-cyan-300 bg-clip-text text-transparent">
+              <span className="text-emerald-400 font-semibold">
                 Vận hành iMenu
               </span>
             </h1>
 
-            <p className="text-xs sm:text-sm text-emerald-100/70 leading-relaxed font-normal">
+            <p className="text-xs text-zinc-400 leading-relaxed font-normal">
               Kiểm soát sơ đồ bàn thông minh, điều phối màn hình bếp KDS thời gian thực và quản lý doanh thu minh bạch.
             </p>
 
             {/* Core Feature Highlights */}
-            <div className="mt-8 space-y-3.5">
-              <div className="flex items-center gap-3 text-xs text-emerald-100/90 bg-white/5 border border-white/10 rounded-xl p-2.5">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
-                  <Smartphone className="w-4 h-4 text-emerald-400" />
+            <div className="mt-8 space-y-2.5">
+              <div className="flex items-center gap-2.5 text-xs text-zinc-300 bg-zinc-900 border border-zinc-800 rounded-md p-2.5">
+                <div className="w-6 h-6 rounded-md bg-zinc-800 flex items-center justify-center shrink-0">
+                  <Smartphone className="w-3.5 h-3.5 text-emerald-400" />
                 </div>
                 <span>POS bán hàng tại bàn & mã QR VietQR tự động</span>
               </div>
 
-              <div className="flex items-center gap-3 text-xs text-emerald-100/90 bg-white/5 border border-white/10 rounded-xl p-2.5">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
-                  <ChefHat className="w-4 h-4 text-teal-400" />
+              <div className="flex items-center gap-2.5 text-xs text-zinc-300 bg-zinc-900 border border-zinc-800 rounded-md p-2.5">
+                <div className="w-6 h-6 rounded-md bg-zinc-800 flex items-center justify-center shrink-0">
+                  <ChefHat className="w-3.5 h-3.5 text-emerald-400" />
                 </div>
                 <span>Màn hình bếp KDS đồng bộ tức thì, không sót món</span>
               </div>
 
-              <div className="flex items-center gap-3 text-xs text-emerald-100/90 bg-white/5 border border-white/10 rounded-xl p-2.5">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center shrink-0">
-                  <BarChart3 className="w-4 h-4 text-cyan-400" />
+              <div className="flex items-center gap-2.5 text-xs text-zinc-300 bg-zinc-900 border border-zinc-800 rounded-md p-2.5">
+                <div className="w-6 h-6 rounded-md bg-zinc-800 flex items-center justify-center shrink-0">
+                  <BarChart3 className="w-3.5 h-3.5 text-emerald-400" />
                 </div>
                 <span>Báo cáo doanh thu & phân quyền nhân sự chi tiết</span>
               </div>
             </div>
           </div>
 
-          <div className="pt-8 mt-6 border-t border-white/10 flex items-center justify-between text-[11px] text-emerald-300/60">
+          <div className="pt-6 mt-6 border-t border-zinc-800 flex items-center justify-between text-[11px] text-zinc-400">
             <span>Bảo mật chuẩn JWT đa tầng</span>
-            <span className="flex items-center gap-1">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" /> Hệ thống sẵn sàng
+            <span className="flex items-center gap-1 text-emerald-400">
+              <ShieldCheck className="w-3.5 h-3.5" /> Hệ thống sẵn sàng
             </span>
           </div>
         </div>
 
         {/* Right Side: Login Form */}
-        <div className="lg:col-span-7 p-6 sm:p-10 lg:p-12 flex flex-col justify-center bg-white">
+        <div className="lg:col-span-7 p-6 sm:p-8 lg:p-10 flex flex-col justify-center bg-white">
           <div className="max-w-md w-full mx-auto">
-            <div className="mb-6">
-              <h2 className="text-2xl font-black text-slate-900 tracking-tight">
+            <div className="mb-5">
+              <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
                 Đăng nhập quản trị
               </h2>
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-zinc-500 mt-0.5">
                 Vui lòng nhập tài khoản để vào hệ thống vận hành nhà hàng
               </p>
             </div>
 
             {/* Error Notification Alert */}
             {error && (
-              <div className="mb-5 p-3.5 rounded-2xl bg-rose-50 border border-rose-200/80 flex items-start gap-3 text-xs text-rose-700 animate-in fade-in duration-200">
+              <div className="mb-4 p-3 rounded-md bg-rose-50/80 border border-rose-200/90 flex items-start gap-2.5 text-xs text-rose-700 animate-in fade-in duration-150">
                 <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
                 <div className="leading-relaxed flex-1">{error}</div>
               </div>
             )}
 
             {/* Quick Demo Accounts Selection */}
-            <div className="mb-6 p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80">
-              <div className="flex items-center justify-between mb-2.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Tài khoản mẫu 5 Roles Vận Hành (Bấm để thử):
+            <div className="mb-5 p-3 rounded-md bg-zinc-50 border border-zinc-200/80">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-zinc-600 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 inline-block" />
+                  Tài khoản mẫu 5 Roles Vận Hành:
                 </span>
-                <span className="text-[10px] text-slate-400 font-medium">Tự động điền mật khẩu</span>
+                <span className="text-[10px] text-zinc-400 font-medium">Tự điền pass</span>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                 {DEMO_ACCOUNTS.map((acc) => {
                   const Icon = acc.icon;
                   const isSelected = selectedAccountKey === acc.key;
@@ -317,23 +309,23 @@ function LoginForm() {
                       key={acc.key}
                       type="button"
                       onClick={() => handleSelectAccount(acc)}
-                      className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                      className={`p-2 rounded-md border text-left transition-colors cursor-pointer flex flex-col justify-between ${
                         isSelected
-                          ? 'bg-white shadow-xs border-slate-400 ring-2 ring-emerald-500/40'
-                          : 'bg-white/80 hover:bg-white border-slate-200/90 hover:border-slate-300'
+                          ? 'bg-white shadow-xs border-zinc-900 ring-1 ring-zinc-900'
+                          : 'bg-white border-zinc-200/80 hover:border-zinc-300'
                       }`}
                       title={`${acc.name} - ${acc.desc}`}
                     >
                       <div className="flex items-center justify-between w-full mb-1">
-                        <span className="text-[11px] font-bold text-slate-800 flex items-center gap-1 truncate">
-                          <Icon className={`w-3.5 h-3.5 shrink-0 ${acc.iconColor}`} />
+                        <span className="text-[11px] font-semibold text-zinc-900 flex items-center gap-1 truncate">
+                          <Icon className={`w-3 h-3 shrink-0 ${acc.iconColor}`} />
                           <span className="truncate">{acc.role}</span>
                         </span>
                         {isSelected && (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
                         )}
                       </div>
-                      <span className="text-[10px] text-slate-500 font-mono truncate block">
+                      <span className="text-[10px] text-zinc-500 font-mono truncate block tabular-nums">
                         {acc.email}
                       </span>
                     </button>
@@ -347,26 +339,26 @@ function LoginForm() {
                 if (!currentAcc) return null;
                 const Icon = currentAcc.icon;
                 return (
-                  <div className="mt-2.5 pt-2 border-t border-slate-200/70 flex items-center gap-2 text-[11px] text-slate-600">
-                    <span className="font-semibold text-slate-800 flex items-center gap-1 shrink-0">
-                      <Icon className={`w-3.5 h-3.5 ${currentAcc.iconColor}`} />
+                  <div className="mt-2 pt-2 border-t border-zinc-200/60 flex items-center gap-1.5 text-[11px] text-zinc-600">
+                    <span className="font-semibold text-zinc-900 flex items-center gap-1 shrink-0">
+                      <Icon className={`w-3 h-3 ${currentAcc.iconColor}`} />
                       {currentAcc.name}:
                     </span>
-                    <span className="text-slate-500 truncate">{currentAcc.desc}</span>
+                    <span className="text-zinc-500 truncate">{currentAcc.desc}</span>
                   </div>
                 );
               })()}
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-3.5">
               {/* Email / Username Input */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">
+                <label className="block text-xs font-medium text-zinc-700 mb-1">
                   Email hoặc Tên đăng nhập <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Mail className="w-4 h-4" />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                    <Mail className="w-3.5 h-3.5" />
                   </div>
                   <input
                     type="text"
@@ -374,21 +366,21 @@ function LoginForm() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="owner@sample.vn"
-                    className="w-full pl-10 pr-4 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-600 focus:border-transparent transition-all placeholder:text-slate-400 font-medium text-slate-900"
+                    className="w-full h-9 pl-9 pr-3 text-xs bg-white border border-zinc-200 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors placeholder:text-zinc-400 text-zinc-900"
                   />
                 </div>
               </div>
 
               {/* Password Input */}
               <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-xs font-bold text-slate-700">
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-medium text-zinc-700">
                     Mật khẩu <span className="text-rose-500">*</span>
                   </label>
                 </div>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <Lock className="w-4 h-4" />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-zinc-400">
+                    <Lock className="w-3.5 h-3.5" />
                   </div>
                   <input
                     type={showPassword ? 'text' : 'password'}
@@ -396,33 +388,33 @@ function LoginForm() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2.5 text-sm bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-emerald-600 focus:border-transparent transition-all placeholder:text-slate-400 font-medium text-slate-900"
+                    className="w-full h-9 pl-9 pr-9 text-xs bg-white border border-zinc-200 rounded-md focus:outline-none focus:ring-1 focus:ring-zinc-900 focus:border-zinc-900 transition-colors placeholder:text-zinc-400 text-zinc-900"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-400 hover:text-zinc-600 transition-colors cursor-pointer"
                     title={showPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'}
                   >
                     {showPassword ? (
-                      <EyeOff className="w-4 h-4" />
+                      <EyeOff className="w-3.5 h-3.5" />
                     ) : (
-                      <Eye className="w-4 h-4" />
+                      <Eye className="w-3.5 h-3.5" />
                     )}
                   </button>
                 </div>
               </div>
 
               {/* Remember Me */}
-              <div className="flex items-center justify-between pt-1">
+              <div className="flex items-center justify-between pt-0.5">
                 <label className="flex items-center gap-2 cursor-pointer select-none">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="w-4 h-4 rounded-md border-slate-300 text-emerald-600 focus:ring-emerald-500 transition-colors"
+                    className="w-3.5 h-3.5 rounded border-zinc-300 text-emerald-600 focus:ring-emerald-500 transition-colors"
                   />
-                  <span className="text-xs text-slate-600 font-medium">
+                  <span className="text-xs text-zinc-600">
                     Ghi nhớ đăng nhập
                   </span>
                 </label>
@@ -432,17 +424,17 @@ function LoginForm() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full mt-2 py-3 px-4 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-emerald-700/20 active:scale-[0.99] transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full h-9 mt-1 px-4 bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium rounded-md shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {loading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     <span>Đang xác thực thông tin...</span>
                   </>
                 ) : (
                   <>
                     <span>Đăng nhập hệ thống</span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-3.5 h-3.5" />
                   </>
                 )}
               </button>
@@ -458,8 +450,8 @@ export default function LoginPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#09271d] flex items-center justify-center text-white">
-          <Loader2 className="w-8 h-8 animate-spin text-emerald-400" />
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center text-zinc-900">
+          <Loader2 className="w-6 h-6 animate-spin text-zinc-700" />
         </div>
       }
     >

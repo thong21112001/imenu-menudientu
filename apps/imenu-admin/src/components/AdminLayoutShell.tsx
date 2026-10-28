@@ -136,11 +136,11 @@ export const AdminLayoutShell: React.FC<{ children: React.ReactNode }> = ({ chil
             closeSidebar,
           }}
         >
-          <div className="min-h-screen bg-[#f4f6f4] antialiased text-[#1e2924] flex w-full max-w-full overflow-x-hidden">
+          <div className="min-h-screen bg-[#f8fafc] antialiased text-zinc-900 flex w-full max-w-full overflow-x-hidden">
             {/* Mobile Backdrop Overlay */}
             {isMobile && isSidebarOpen && (
               <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 transition-opacity duration-300"
+                className="fixed inset-0 bg-black/40 z-40 transition-opacity duration-200"
                 onClick={closeSidebar}
                 aria-label="Đóng thanh điều hướng"
               />

@@ -578,7 +578,7 @@ export default function QrCodesGeneratorPage() {
 
       {/* ================= STATS SUMMARY CARDS ================= */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 w-full min-w-0">
-        <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-50 text-[#124a36] grid place-items-center font-bold shrink-0">
             <QrCode className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
@@ -588,7 +588,7 @@ export default function QrCodesGeneratorPage() {
           </div>
         </div>
 
-        <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-teal-50 text-teal-700 grid place-items-center font-bold shrink-0">
             <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
@@ -598,7 +598,7 @@ export default function QrCodesGeneratorPage() {
           </div>
         </div>
 
-        <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-50 text-amber-700 grid place-items-center font-bold shrink-0">
             <Ban className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
@@ -608,7 +608,7 @@ export default function QrCodesGeneratorPage() {
           </div>
         </div>
 
-        <div className="bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-slate-200 shadow-xs flex items-center gap-2.5 sm:gap-3 min-w-0">
           <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-slate-100 text-slate-700 grid place-items-center font-bold shrink-0">
             <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
@@ -620,7 +620,7 @@ export default function QrCodesGeneratorPage() {
       </div>
 
       {/* ================= SEARCH & CONTROL FILTER BAR ================= */}
-      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200 shadow-xs space-y-3 w-full min-w-0">
+      <div className="bg-white p-3.5 sm:p-4 rounded-lg border border-slate-200 shadow-xs space-y-3 w-full min-w-0">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 w-full">
           {/* Search Box */}
           <div className="relative flex-1 min-w-0 w-full">
@@ -752,8 +752,8 @@ export default function QrCodesGeneratorPage() {
       {/* ================= EMPTY STATE ================= */}
       {filteredTables.length === 0 && (
         tables.length === 0 ? (
-          <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 text-slate-400 space-y-4 w-full min-w-0 shadow-xs">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-emerald-50 text-[#124a36] grid place-items-center">
+          <div className="bg-white p-12 text-center rounded-lg border border-slate-200 text-slate-400 space-y-4 w-full min-w-0 shadow-xs">
+            <div className="w-16 h-16 mx-auto rounded-lg bg-emerald-50 text-[#124a36] grid place-items-center">
               <QrCode className="w-8 h-8" />
             </div>
             <div>
@@ -782,7 +782,7 @@ export default function QrCodesGeneratorPage() {
             </div>
           </div>
         ) : (
-          <div className="bg-white p-12 text-center rounded-2xl border border-slate-200 text-slate-400 space-y-3 w-full min-w-0">
+          <div className="bg-white p-12 text-center rounded-lg border border-slate-200 text-slate-400 space-y-3 w-full min-w-0">
             <QrCode className="w-12 h-12 mx-auto text-slate-300" />
             <h3 className="text-base font-extrabold text-slate-700">Không tìm thấy mã QR bàn phù hợp</h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto">
@@ -814,7 +814,7 @@ export default function QrCodesGeneratorPage() {
             return (
               <div
                 key={tbl.id}
-                className={`print-qr-card bg-white rounded-2xl border-2 transition-all flex flex-col justify-between items-center text-center p-4 sm:p-5 relative group min-w-0 w-full ${
+                className={`print-qr-card bg-white rounded-lg border-2 transition-all flex flex-col justify-between items-center text-center p-4 sm:p-5 relative group min-w-0 w-full ${
                   isRevoked
                     ? 'border-amber-200/80 bg-amber-50/20'
                     : 'border-slate-200 hover:border-[#124a36]/40 hover:shadow-lg'
@@ -858,7 +858,7 @@ export default function QrCodesGeneratorPage() {
                 {/* QR Code Graphic Box */}
                 <div className="my-3 w-full flex flex-col items-center justify-center">
                   {isRevoked ? (
-                    <div className="w-[160px] h-[160px] rounded-2xl bg-slate-100 border-2 border-dashed border-amber-300 flex flex-col items-center justify-center p-3 text-center space-y-2">
+                    <div className="w-[160px] h-[160px] rounded-lg bg-slate-100 border-2 border-dashed border-amber-300 flex flex-col items-center justify-center p-3 text-center space-y-2">
                       <Lock className="w-7 h-7 text-amber-600" />
                       <span className="text-xs font-bold text-amber-900">Mã QR đã thu hồi</span>
                       <p className="text-[10px] text-slate-500 leading-tight">
@@ -872,7 +872,7 @@ export default function QrCodesGeneratorPage() {
                       </button>
                     </div>
                   ) : (
-                    <div className="p-2 bg-white rounded-2xl border-2 border-emerald-950/20 shadow-xs flex flex-col items-center justify-center">
+                    <div className="p-2 bg-white rounded-lg border-2 border-emerald-950/20 shadow-xs flex flex-col items-center justify-center">
                       <QrCodeRenderer value={tableUrl} size={145} title="" />
                     </div>
                   )}
@@ -1278,7 +1278,7 @@ export default function QrCodesGeneratorPage() {
         maxWidth="md"
       >
         <div className="space-y-4">
-          <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2">
+          <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2">
             <div className="flex items-center gap-2 font-bold">
               <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
               <span>Lựa chọn hành động cho {targetTable?.name}:</span>

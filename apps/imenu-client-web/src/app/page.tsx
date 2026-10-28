@@ -18,7 +18,6 @@ import {
   TrendingUp,
   ArrowRight,
   CheckCircle2,
-  Sparkles,
   ShieldCheck,
   Zap,
   Users,
@@ -29,25 +28,15 @@ import {
   CreditCard,
   Printer,
   ChevronDown,
-  HelpCircle,
   Clock,
   Layers,
   Check,
-  X,
-  Flame,
-  ArrowUpRight,
-  Gift,
   Laptop,
-  CheckCircle,
-  AlertCircle,
   RotateCw,
-  Bell,
-  Sliders,
-  DollarSign,
-  Coffee,
-  FileText,
   BookOpen,
   Briefcase,
+  HelpCircle,
+  Tag,
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -61,19 +50,19 @@ export default function LandingPage() {
   const faqs = [
     {
       q: 'Gói Cơ bản 0đ có bị giới hạn thời gian hay số lượng đơn hàng không?',
-      a: 'Hoàn toàn KHÔNG! Gói Cơ bản 0đ của iMenu là miễn phí vĩnh viễn, không giới hạn thời gian sử dụng, không giới hạn số lượng món ăn và không giới hạn số bàn. Chúng tôi cam kết đồng hành dài lâu cùng các quán ăn, quán cà phê khởi nghiệp số hóa quy trình vận hành thiết yếu.',
+      a: 'Hoàn toàn không. Gói Cơ bản 0đ của iMenu là miễn phí lâu dài, không giới hạn thời gian sử dụng, không giới hạn số lượng món ăn và không giới hạn số bàn. Chúng tôi cam kết đồng hành cùng các quán ăn, quán cà phê khởi nghiệp số hóa quy trình vận hành thiết yếu.',
     },
     {
       q: 'Quán của tôi cần mua thêm thiết bị phần cứng chuyên dụng gì để bắt đầu dùng iMenu?',
-      a: 'Hoàn toàn không cần mua thêm máy POS đắt đỏ! iMenu hoạt động 100% trên nền tảng Cloud Web. Bạn có thể sử dụng bất kỳ điện thoại thông minh, máy tính bảng (iPad/Android) hoặc laptop sẵn có của quán. Khách hàng cũng chỉ cần dùng điện thoại cá nhân quét mã QR để gọi món.',
+      a: 'Hoàn toàn không cần mua thêm máy POS đắt đỏ. iMenu hoạt động 100% trên nền tảng Cloud Web. Bạn có thể sử dụng bất kỳ điện thoại thông minh, máy tính bảng (iPad/Android) hoặc laptop sẵn có của quán. Khách hàng cũng chỉ cần dùng điện thoại cá nhân quét mã QR để gọi món.',
     },
     {
       q: 'Khách hàng có bắt buộc phải tải app hay đăng ký tài khoản để quét QR gọi món không?',
-      a: 'Tuyệt đối KHÔNG! Khách hàng chỉ cần mở camera điện thoại (iPhone, Samsung, Xiaomi...) hoặc ứng dụng Zalo quét mã QR tại bàn là menu điện tử mở ra ngay tức thì trên trình duyệt web, trải nghiệm mượt mà không cần cài đặt bất kỳ ứng dụng nào.',
+      a: 'Tuyệt đối không. Khách hàng chỉ cần mở camera điện thoại (iPhone, Samsung, Xiaomi...) hoặc ứng dụng Zalo quét mã QR tại bàn là menu điện tử mở ra ngay tức thì trên trình duyệt web, trải nghiệm mượt mà không cần cài đặt bất kỳ ứng dụng nào.',
     },
     {
       q: 'Mất bao lâu để thiết lập xong thực đơn và đưa iMenu vào phục vụ tại quán?',
-      a: 'Chỉ từ 3 đến 5 phút! Sau khi đăng ký tài khoản, hệ thống cung cấp sẵn bộ thực đơn mẫu phong phú (Cơm, Phở, Lẩu nướng, Cà phê, Trà sữa). Bạn có thể áp dụng ngay hoặc tải ảnh món, điều chỉnh giá và in bộ mã QR bàn tự động chỉ với vài cú nhấp chuột.',
+      a: 'Chỉ từ 3 đến 5 phút. Sau khi đăng ký tài khoản, hệ thống cung cấp sẵn bộ thực đơn mẫu phong phú (Cơm, Phở, Lẩu nướng, Cà phê, Trà sữa). Bạn có thể áp dụng ngay hoặc tải ảnh món, điều chỉnh giá và in bộ mã QR bàn tự động chỉ với vài cú nhấp chuột.',
     },
     {
       q: 'iMenu phù hợp với những mô hình kinh doanh F&B nào?',
@@ -90,1028 +79,936 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-slate-900 selection:bg-emerald-100 selection:text-emerald-900">
+    <div className="min-h-screen bg-white text-zinc-900 selection:bg-zinc-100 selection:text-zinc-900">
       <Header />
 
       {/* =========================================================================
-       * PHÂN KHU 1: HERO SECTION & CAM KẾT KHỞI ĐẦU
+       * PHÂN KHU 1: HERO SECTION & ĐỊNH VỊ GIẢI PHÁP
        * ========================================================================= */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-emerald-50/30 to-white pt-12 pb-20 lg:pt-20 lg:pb-28 border-b border-slate-200/80">
+      <section className="relative overflow-hidden bg-zinc-50/60 pt-12 pb-16 lg:pt-16 lg:pb-24 border-b border-zinc-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
-            
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-center">
             {/* Hero Left Content */}
-            <div className="lg:col-span-7 space-y-6 sm:space-y-8 text-center lg:text-left">
-              {/* Định vị giải pháp */}
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/90 text-xs font-bold text-emerald-800 uppercase tracking-wider shadow-xs">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                Giải pháp số hóa cho Nhà hàng, Quán ăn, Cafe & Trà sữa Việt
+            <div className="lg:col-span-7 space-y-5 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-white border border-zinc-200/90 text-xs font-semibold text-zinc-800 shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
+                Nền tảng số hóa F&B cho Nhà hàng, Quán ăn & Cà phê Việt
               </div>
 
-              {/* Tiêu đề ấn tượng */}
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.15]">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-bold text-zinc-950 tracking-tight leading-[1.12]">
                 Vận hành nhanh gọn, <br />
-                <span className="bg-gradient-to-r from-emerald-700 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
-                  phục vụ trọn vẹn.
-                </span>
+                <span className="text-emerald-700">phục vụ trọn vẹn.</span>
               </h1>
 
-              {/* Mô tả giải pháp */}
-              <p className="text-base sm:text-lg text-slate-600 max-w-xl mx-auto lg:mx-0 leading-relaxed">
-                Giải pháp số hóa toàn diện giúp khách chủ động quét mã QR gọi món tại bàn hoặc đặt mang đi, đơn tự động chuyển vào màn hình bếp KDS và thanh toán VietQR Napas 247 tức thì.
+              <p className="text-sm sm:text-base text-zinc-600 max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal">
+                Giải pháp toàn diện giúp khách chủ động quét mã QR gọi món tại bàn hoặc đặt mang đi, đơn tự động đồng bộ vào màn hình bếp KDS và thanh toán VietQR Napas 247 tức thì.
               </p>
 
               {/* CTAs */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 sm:gap-4 pt-1">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 pt-1">
                 <Link href="/dang-ky">
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    className="bg-emerald-700 hover:bg-emerald-800 text-white font-bold shadow-lg shadow-emerald-700/25 px-6 py-3"
-                  >
-                    Sử dụng miễn phí 0đ <ArrowRight className="w-4 h-4 ml-2" />
+                  <Button variant="primary" size="lg" className="h-10 px-5 text-sm font-medium">
+                    Sử dụng miễn phí 0đ <ArrowRight className="w-4 h-4 ml-1.5 stroke-[1.5]" />
                   </Button>
                 </Link>
 
                 <Link href="/#workflow">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="border-slate-300 text-slate-700 hover:bg-slate-50 font-bold px-5 py-3"
-                  >
+                  <Button variant="outline" size="lg" className="h-10 px-4 text-sm font-medium">
                     Xem cách hoạt động
                   </Button>
                 </Link>
 
                 <Link href="/huong-dan">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="border-emerald-600/30 text-emerald-800 hover:bg-emerald-50 font-bold px-5 py-3"
-                  >
-                    📖 Hướng dẫn 7 bước
+                  <Button variant="outline" size="lg" className="h-10 px-4 text-sm font-medium border-emerald-700/30 text-emerald-900 hover:bg-emerald-50/50">
+                    <BookOpen className="w-4 h-4 mr-1.5 stroke-[1.5] text-emerald-700" /> Hướng dẫn 7 bước
                   </Button>
                 </Link>
               </div>
 
-              {/* 3 Cam kết vàng */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 pt-2 text-xs font-semibold text-slate-600">
+              {/* 3 Cam kết */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 pt-2 text-xs font-medium text-zinc-500">
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 flex-shrink-0 stroke-[1.5]" />
                   <span>Không cần thẻ ngân hàng</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 flex-shrink-0 stroke-[1.5]" />
                   <span>Thiết lập trong 5 phút</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
-                  <span>Chạy thẳng trên trình duyệt — Không cần mua máy POS</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 flex-shrink-0 stroke-[1.5]" />
+                  <span>Chạy thẳng trên trình duyệt</span>
                 </div>
               </div>
             </div>
 
-            {/* Hero Right: Interactive 3-Screen Live Simulator */}
+            {/* Hero Right: Live Simulator */}
             <div className="lg:col-span-5 relative w-full">
               <HeroSystemPreview />
             </div>
-
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-       * PHÂN KHU 2: ĐỊNH VỊ "iMENU LÀ GÌ?" & LỐI TẮT GIẢI PHÁP (ECOSYSTEM OVERVIEW)
+       * PHÂN KHU 2: HỆ SINH THÁI ĐỒNG BỘ THỜI GIAN THỰC
        * ========================================================================= */}
-      <section className="py-16 bg-white border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          
-          {/* Overview Heading */}
-          <div className="max-w-3xl mx-auto text-center space-y-3">
-            <span className="text-xs font-bold text-emerald-700 tracking-widest uppercase">
-              Định Vị Nền Tảng
+      <section className="py-16 bg-white border-b border-zinc-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="max-w-3xl mx-auto text-center space-y-2">
+            <span className="text-[11px] font-semibold text-emerald-700 tracking-wider uppercase">
+              Định vị nền tảng
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-              iMenu là gì? Hệ sinh thái F&B thông minh trên nền tảng đám mây
+            <h2 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight">
+              iMenu là gì? Hệ sinh thái F&B trên nền tảng đám mây
             </h2>
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              iMenu kết nối 5 trụ cột quan trọng nhất trong vận hành nhà hàng: <strong>Thực đơn QR điện tử</strong>, <strong>POS phục vụ tại bàn</strong>, <strong>Màn hình Bếp KDS</strong>, <strong>Thanh toán VietQR Napas 247</strong> và <strong>Báo cáo doanh thu thời gian thực</strong> — tất cả gói gọn trong một đường link web duy nhất, không cần cài đặt phần mềm.
+            <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed font-normal">
+              Kết nối 5 mắt xích quan trọng nhất trong vận hành quán: <strong>Thực đơn QR điện tử</strong>, <strong>POS phục vụ tại bàn</strong>, <strong>Màn hình Bếp KDS</strong>, <strong>Thanh toán VietQR Napas 247</strong> và <strong>Báo cáo doanh thu thời gian thực</strong> — tất cả gói gọn trong một đường link web duy nhất, không cần cài đặt phần mềm.
             </p>
           </div>
 
           {/* 3 Thẻ Giá Trị Cốt Lõi */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-800 grid place-items-center font-bold text-base">
-                <Laptop className="w-5 h-5 text-emerald-700" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="p-5 rounded-lg bg-zinc-50 border border-zinc-200/80 space-y-2.5">
+              <div className="w-8 h-8 rounded-md bg-white border border-zinc-200 text-zinc-800 grid place-items-center">
+                <Laptop className="w-4 h-4 stroke-[1.5]" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">
-                Không cần cài đặt hay mua phần cứng riêng
+              <h3 className="text-sm font-semibold text-zinc-900">
+                Không cần phần cứng chuyên dụng
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                Tận dụng tối đa điện thoại cá nhân, máy tính bảng hoặc máy tính có sẵn. Khách hàng dùng ngay trình duyệt, không bắt tải app hay tốn dung lượng bộ nhớ.
+              <p className="text-xs text-zinc-600 leading-relaxed">
+                Tận dụng tối đa điện thoại cá nhân, máy tính bảng hoặc laptop có sẵn. Khách hàng dùng ngay camera/Zalo, không bắt tải app hay tốn dung lượng bộ nhớ.
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 grid place-items-center font-bold text-base">
-                <RotateCw className="w-5 h-5 text-teal-700" />
+            <div className="p-5 rounded-lg bg-zinc-50 border border-zinc-200/80 space-y-2.5">
+              <div className="w-8 h-8 rounded-md bg-white border border-zinc-200 text-zinc-800 grid place-items-center">
+                <RotateCw className="w-4 h-4 stroke-[1.5]" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">
-                Một nhịp vận hành liền mạch thời gian thực
+              <h3 className="text-sm font-semibold text-zinc-900">
+                Vận hành đồng bộ thời gian thực
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                Khách gọi món tại bàn, máy thu ngân reo chuông thông báo, bếp nhận phiếu chế biến theo chuẩn FIFO và khách thanh toán VietQR — toàn bộ khớp lệnh trong chớp mắt qua WebSocket.
+              <p className="text-xs text-zinc-600 leading-relaxed">
+                Khách gọi món tại bàn, máy thu ngân phát chuông thông báo, bếp nhận phiếu chế biến theo chuẩn FIFO và khách thanh toán VietQR — toàn bộ khớp lệnh tức thì qua WebSocket.
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-800 grid place-items-center font-bold text-base">
-                <Sparkles className="w-5 h-5 text-amber-700" />
+            <div className="p-5 rounded-lg bg-zinc-50 border border-zinc-200/80 space-y-2.5">
+              <div className="w-8 h-8 rounded-md bg-white border border-zinc-200 text-zinc-800 grid place-items-center">
+                <ShieldCheck className="w-4 h-4 stroke-[1.5] text-emerald-700" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">
+              <h3 className="text-sm font-semibold text-zinc-900">
                 Miễn phí lâu dài ở gói Cơ bản 0đ
               </h3>
-              <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              <p className="text-xs text-zinc-600 leading-relaxed">
                 Cam kết hỗ trợ các chủ quán ăn, quán cà phê Việt chuyển đổi số với gói Cơ bản 0đ vĩnh viễn, không ép buộc nâng cấp, an tâm mở rộng kinh doanh mà không lo gánh nặng chi phí.
               </p>
             </div>
           </div>
 
-          {/* Dải thương hiệu đồng hành */}
-          <div className="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-center gap-6 sm:gap-12 text-slate-400 text-xs sm:text-sm font-semibold">
-            <span className="text-slate-800 font-bold">Quán Việt tin dùng:</span>
-            <span className="text-slate-600 hover:text-emerald-700 transition-colors">Bếp Nhà Restaurant</span>
-            <span className="text-slate-600 hover:text-emerald-700 transition-colors">Coffee Anh Hiền</span>
-            <span className="text-slate-600 hover:text-emerald-700 transition-colors">Mộc Quán Bistro</span>
-            <span className="text-slate-600 hover:text-emerald-700 transition-colors">An Nhiên Tea & Coffee</span>
-            <span className="text-slate-600 hover:text-emerald-700 transition-colors">Phở Vương Hà Nội</span>
+          {/* Dải thương hiệu tin dùng */}
+          <div className="pt-2 border-t border-zinc-100 flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-zinc-400 text-xs font-medium">
+            <span className="text-zinc-700 font-semibold">Quán Việt tin dùng:</span>
+            <span>Bếp Nhà Restaurant</span>
+            <span>Coffee Anh Hiền</span>
+            <span>Mộc Quán Bistro</span>
+            <span>An Nhiên Tea & Coffee</span>
+            <span>Phở Vương Hà Nội</span>
           </div>
-
         </div>
       </section>
 
       {/* =========================================================================
-       * PHÂN KHU 3: SPOTLIGHT MỚI: BÁN MANG ĐI & ĐẶT TRƯỚC ONLINE (ID="TAKEAWAY")
+       * PHÂN KHU 3: BÁN MANG ĐI & ĐẶT TRƯỚC ONLINE (ID="TAKEAWAY")
        * ========================================================================= */}
-      <section id="takeaway" className="py-20 bg-gradient-to-b from-amber-50/40 via-white to-slate-50 border-b border-slate-200/80">
+      <section id="takeaway" className="py-16 bg-zinc-50/50 border-b border-zinc-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-            
-            {/* Cột trái: Giải bài toán Takeaway & 3 bước */}
-            <div className="lg:col-span-6 space-y-6">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100 border border-amber-300 text-xs font-bold text-amber-900 uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5 text-amber-700" />
-                Spotlight Mới · Giải pháp đột phá cho bán mang đi
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            {/* Cột trái: 3 bước */}
+            <div className="lg:col-span-6 space-y-5">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-white border border-zinc-200 text-xs font-semibold text-zinc-800">
+                <ShoppingBag className="w-3.5 h-3.5 text-amber-700 stroke-[1.5]" />
+                Kênh Bán Mang Đi & Đặt Trước Online
               </div>
 
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight leading-tight">
-                Bán Mang Đi & Đặt Trước Online — <br />
-                <span className="text-amber-700">Tiền về trước, món làm sau.</span>
+              <h2 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight leading-snug">
+                Tiền về trước, món làm sau. <br />
+                <span className="text-amber-800 font-semibold">Chấm dứt nỗi lo bom hàng.</span>
               </h2>
 
-              <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+              <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
                 Chấm dứt hoàn toàn tình trạng khách nhắn tin gọi món qua Zalo, Messenger làm nhân viên rối loạn giờ cao điểm, quên đơn hoặc bị bom hàng. Quy trình 3 bước tự động hóa khép kín:
               </p>
 
-              <div className="space-y-4 pt-1">
-                {/* Bước 1 */}
-                <div className="flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 grid place-items-center flex-shrink-0 font-bold text-xs mt-0.5">
+              <div className="space-y-3 pt-1">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded bg-zinc-100 border border-zinc-200 text-zinc-800 grid place-items-center shrink-0 font-mono text-xs font-semibold mt-0.5">
                     01
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">Mã QR & Link Menu không gắn bàn</h4>
-                    <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                      Chia sẻ đường link lên Zalo OA, Fanpage Facebook, Bio TikTok hoặc in standee trước cửa quán. Khách tự truy cập xem thực đơn mọi lúc mọi nơi.
+                    <h4 className="text-xs font-semibold text-zinc-900">Mã QR & Link Menu không gắn bàn</h4>
+                    <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">
+                      Chia sẻ đường link lên Zalo OA, Fanpage Facebook, Bio TikTok hoặc in standee trước cửa quán. Khách tự xem thực đơn mọi lúc.
                     </p>
                   </div>
                 </div>
 
-                {/* Bước 2 */}
-                <div className="flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 grid place-items-center flex-shrink-0 font-bold text-xs mt-0.5">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded bg-zinc-100 border border-zinc-200 text-zinc-800 grid place-items-center shrink-0 font-mono text-xs font-semibold mt-0.5">
                     02
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">Khách chọn giờ lấy & Thanh toán VietQR trước</h4>
-                    <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                      Hệ thống tự động sinh mã VietQR Napas 247 chính xác từng đồng kèm nội dung đơn hàng. Khách quét chuyển khoản ngay từ ứng dụng ngân hàng bất kỳ.
+                    <h4 className="text-xs font-semibold text-zinc-900">Khách chọn giờ lấy & Thanh toán VietQR trước</h4>
+                    <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">
+                      Hệ thống tự động sinh mã VietQR Napas 247 chính xác từng đồng kèm nội dung đơn hàng. Khách quét chuyển khoản ngay từ app ngân hàng.
                     </p>
                   </div>
                 </div>
 
-                {/* Bước 3 */}
-                <div className="flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-800 grid place-items-center flex-shrink-0 font-bold text-xs mt-0.5">
+                <div className="flex items-start gap-3">
+                  <div className="w-6 h-6 rounded bg-zinc-100 border border-zinc-200 text-zinc-800 grid place-items-center shrink-0 font-mono text-xs font-semibold mt-0.5">
                     03
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-slate-900">Đơn đã trả tiền tự chuyển thẳng vào Bếp</h4>
-                    <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                      Quán chỉ bắt đầu chế biến khi đã chắc chắn nhận đủ tiền vào tài khoản, hoàn toàn xóa bỏ nỗi lo khách đặt rồi không đến lấy (bom hàng).
+                    <h4 className="text-xs font-semibold text-zinc-900">Đơn đã thanh toán tự chuyển thẳng vào Bếp</h4>
+                    <p className="text-xs text-zinc-500 mt-0.5 leading-relaxed">
+                      Quán chỉ bắt đầu chế biến khi đã chắc chắn nhận đủ tiền vào tài khoản, hoàn toàn xóa bỏ nỗi lo khách đặt rồi không đến lấy.
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-2">
+              <div className="pt-1">
                 <Link href="/dang-ky">
-                  <Button variant="primary" className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs sm:text-sm py-3 px-6 shadow-md shadow-amber-600/20">
-                    Kích hoạt kênh mang đi miễn phí ngay <ArrowRight className="w-4 h-4 ml-1.5" />
+                  <Button variant="primary" size="md" className="h-9 px-4 text-xs font-medium">
+                    Kích hoạt kênh mang đi miễn phí ngay <ArrowRight className="w-3.5 h-3.5 ml-1.5 stroke-[1.5]" />
                   </Button>
                 </Link>
               </div>
             </div>
 
-            {/* Cột phải: Thẻ giao diện mô phỏng trực quan đơn Bán Mang Đi */}
+            {/* Cột phải: Mô phỏng đơn Takeaway */}
             <div className="lg:col-span-6">
-              <div className="p-6 sm:p-8 bg-white rounded-3xl border-2 border-amber-200/90 shadow-xl space-y-6">
-                
-                <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="p-5 sm:p-6 bg-white rounded-lg border border-zinc-200/90 shadow-xs space-y-4">
+                <div className="flex items-center justify-between pb-2.5 border-b border-zinc-100 text-xs">
                   <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
-                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wide">
+                    <span className="w-2 h-2 rounded-full bg-emerald-600" />
+                    <span className="font-semibold text-zinc-900">
                       Mô phỏng đơn hàng mang đi thời gian thực
                     </span>
                   </div>
-                  <span className="text-[11px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                  <span className="text-[10px] font-semibold text-zinc-700 bg-zinc-100 px-2 py-0.5 rounded border border-zinc-200">
                     Kênh Takeaway
                   </span>
                 </div>
 
-                {/* Thẻ đơn hàng #TW-108 */}
-                <div className="p-5 rounded-2xl bg-slate-900 text-white space-y-4 shadow-md">
+                {/* Thẻ đơn hàng */}
+                <div className="p-4 rounded-md bg-zinc-900 text-white space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-[11px] font-mono text-amber-400 font-bold block">
+                      <span className="text-[10px] font-mono text-zinc-400 block font-medium">
                         ĐƠN MANG ĐI #TW-108
                       </span>
-                      <h4 className="text-sm font-bold text-white mt-0.5">
+                      <h4 className="text-xs font-semibold text-white mt-0.5">
                         Khách: Anh Minh Hoàng (0912.888.xxx)
                       </h4>
                     </div>
                     <div className="text-right">
-                      <span className="text-[10px] text-slate-400 block font-semibold">Giờ hẹn lấy</span>
-                      <span className="text-xs font-bold text-amber-300 bg-amber-950/80 px-2 py-0.5 rounded border border-amber-800 font-mono">
+                      <span className="text-[10px] text-zinc-400 block">Giờ hẹn lấy</span>
+                      <span className="text-xs font-medium text-amber-300 font-mono tabular-nums">
                         Sau 15 phút (11:45)
                       </span>
                     </div>
                   </div>
 
-                  <div className="space-y-2 py-2 border-t border-b border-slate-800 text-xs">
-                    <div className="flex justify-between items-center text-slate-300">
-                      <span>2x Cơm Gà Xối Mỡ Da Giòn (Thêm cơm)</span>
-                      <span className="font-mono text-white font-semibold">110.000₫</span>
+                  <div className="space-y-1.5 py-2 border-t border-b border-zinc-800 text-xs">
+                    <div className="flex justify-between items-center text-zinc-300">
+                      <span>2x Cơm Gà Xối Mỡ Da Giòn</span>
+                      <span className="font-mono text-white tabular-nums">110.000₫</span>
                     </div>
-                    <div className="flex justify-between items-center text-slate-300">
-                      <span>2x Trà Đào Cam Sả (Ít ngọt, 100% đá)</span>
-                      <span className="font-mono text-white font-semibold">55.000₫</span>
+                    <div className="flex justify-between items-center text-zinc-300">
+                      <span>2x Trà Đào Cam Sả (Ít ngọt)</span>
+                      <span className="font-mono text-white tabular-nums">55.000₫</span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-xs pt-1">
+                  <div className="flex items-center justify-between text-xs pt-0.5">
                     <div>
-                      <span className="text-[10px] text-slate-400 block">Trạng thái thanh toán</span>
-                      <span className="text-emerald-400 font-bold flex items-center gap-1.5 mt-0.5">
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <span className="text-[10px] text-zinc-400 block">Trạng thái thanh toán</span>
+                      <span className="text-emerald-400 font-medium flex items-center gap-1.5 mt-0.5">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 stroke-[1.5]" />
                         Đã thanh toán VietQR (165.000₫)
                       </span>
                     </div>
-                    <span className="text-xs font-extrabold text-amber-400 bg-amber-900/60 px-3 py-1 rounded-xl border border-amber-700/80 flex items-center gap-1">
-                      <Flame className="w-3.5 h-3.5" />
-                      Tự động chuyển Bếp KDS
+                    <span className="text-xs font-medium text-zinc-300 bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700">
+                      Tự động vào Bếp KDS
                     </span>
                   </div>
                 </div>
 
-                {/* Lợi thế không chiết khấu */}
-                <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200 text-xs text-emerald-950 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white grid place-items-center font-bold text-xs flex-shrink-0">
+                {/* 0% Phí chiết khấu */}
+                <div className="p-3 rounded-md bg-emerald-50 border border-emerald-200/80 text-xs text-emerald-950 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-700 text-white font-mono font-bold text-[10px]">
                       0%
-                    </div>
+                    </span>
                     <div>
-                      <strong className="block font-bold">Không mất 25% – 30% phí chiết khấu</strong>
-                      <span className="text-[11px] text-emerald-800">Quán nhận trọn 100% doanh thu trực tiếp từ khách hàng.</span>
+                      <strong className="block font-semibold">Không mất 25% – 30% phí chiết khấu</strong>
+                      <span className="text-[11px] text-emerald-800">Quán nhận trọn 100% doanh thu trực tiếp từ khách.</span>
                     </div>
                   </div>
-                  <span className="text-xs font-bold text-emerald-700 whitespace-nowrap">Tiết kiệm tối đa</span>
+                  <span className="text-[11px] font-semibold text-emerald-800 whitespace-nowrap">Tiết kiệm tối đa</span>
                 </div>
-
               </div>
             </div>
-
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-       * PHÂN KHU 4: TẤT CẢ TRONG MỘT — MỘT NHỊP VẬN HÀNH LIỀN MẠCH (ID="FEATURES")
+       * PHÂN KHU 4: TẤT CẢ TRONG MỘT (ID="FEATURES")
        * ========================================================================= */}
-      <section id="features" className="py-20 sm:py-24 bg-slate-50/70 border-b border-slate-200/80">
+      <section id="features" className="py-16 sm:py-20 bg-white border-b border-zinc-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
-          <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
-            <span className="text-xs font-bold text-emerald-700 tracking-widest uppercase">
-              Tất Cả Trong Một
+          <div className="text-center max-w-3xl mx-auto mb-12 space-y-2">
+            <span className="text-[11px] font-semibold text-emerald-700 tracking-wider uppercase">
+              Tất cả trong một
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight">
               Một nhịp vận hành liền mạch, từ bàn ăn đến gian bếp
             </h2>
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              6 phân hệ cốt lõi liên kết chặt chẽ giúp nhân viên giảm bớt thao tác chân tay, đầu bếp không bị sót vé và thực khách hài lòng tuyệt đối.
+            <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed font-normal">
+              6 phân hệ cốt lõi liên kết chặt chẽ giúp nhân viên giảm thao tác thủ công, đầu bếp không bị sót vé và thực khách hài lòng.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-            
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {/* Thẻ 1 */}
-            <Card hoverable className="p-7 space-y-4 border-slate-200/80 bg-white shadow-xs flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 grid place-items-center text-xl font-bold border border-emerald-100">
-                  <UtensilsCrossed className="w-6 h-6" />
+            <Card hoverable className="p-5 space-y-3 flex flex-col justify-between">
+              <div className="space-y-2.5">
+                <div className="w-9 h-9 rounded-md bg-zinc-100 text-zinc-800 grid place-items-center border border-zinc-200">
+                  <UtensilsCrossed className="w-4 h-4 stroke-[1.5]" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">Thực đơn điện tử đa biến thể</h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Thiết lập danh mục linh hoạt, ảnh món sắc nét, quản lý biến thể (Size L/M, Đường/Đá, Topping) và bật tắt trạng thái hết món (86) tức thì.
+                <h3 className="text-sm font-semibold text-zinc-900">Thực đơn điện tử đa biến thể</h3>
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  Thiết lập danh mục linh hoạt, quản lý biến thể (Size L/M, Đường/Đá, Topping) và bật tắt trạng thái hết món (86) tức thì.
                 </p>
               </div>
-              <Link href="/huong-dan" className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 pt-2">
-                Khám phá tính năng <ArrowRight className="w-3.5 h-3.5" />
+              <Link href="/huong-dan" className="text-xs font-medium text-emerald-700 hover:text-emerald-800 flex items-center gap-1 pt-1">
+                Khám phá tính năng <ArrowRight className="w-3 h-3 stroke-[1.5]" />
               </Link>
             </Card>
 
             {/* Thẻ 2 */}
-            <Card hoverable className="p-7 space-y-4 border-slate-200/80 bg-white shadow-xs flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 grid place-items-center text-xl font-bold border border-amber-100">
-                  <QrCode className="w-6 h-6" />
+            <Card hoverable className="p-5 space-y-3 flex flex-col justify-between">
+              <div className="space-y-2.5">
+                <div className="w-9 h-9 rounded-md bg-zinc-100 text-zinc-800 grid place-items-center border border-zinc-200">
+                  <QrCode className="w-4 h-4 stroke-[1.5]" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">Order bằng mã QR tại bàn</h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Khách quét camera điện thoại để tự xem menu và gửi đơn theo từng đợt (Rounds). Tích hợp nút gọi nhân viên và gọi thanh toán ngay trên màn hình.
+                <h3 className="text-sm font-semibold text-zinc-900">Order bằng mã QR tại bàn</h3>
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  Khách quét camera điện thoại để tự xem menu và gửi đơn theo từng đợt (Rounds). Tích hợp nút gọi nhân viên và gọi thanh toán.
                 </p>
               </div>
-              <a href="http://localhost:3005/menu/bep-nha/ban-08" target="_blank" rel="noreferrer" className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 pt-2">
-                Dùng thử menu bàn 08 ↗
-              </a>
+              <Link href="/huong-dan" className="text-xs font-medium text-emerald-700 hover:text-emerald-800 flex items-center gap-1 pt-1">
+                Xem quy trình tại bàn <ArrowRight className="w-3 h-3 stroke-[1.5]" />
+              </Link>
             </Card>
 
             {/* Thẻ 3 */}
-            <Card hoverable className="p-7 space-y-4 border-slate-200/80 bg-white shadow-xs flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 grid place-items-center text-xl font-bold border border-emerald-100">
-                  <Smartphone className="w-6 h-6" />
+            <Card hoverable className="p-5 space-y-3 flex flex-col justify-between">
+              <div className="space-y-2.5">
+                <div className="w-9 h-9 rounded-md bg-zinc-100 text-zinc-800 grid place-items-center border border-zinc-200">
+                  <Smartphone className="w-4 h-4 stroke-[1.5]" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">POS phục vụ & Gộp/Chuyển bàn</h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Sơ đồ bàn trực quan theo tầng/khu vực. Hỗ trợ thu ngân duyệt đợt gọi món QR của khách, chuyển bàn, gộp bàn và chuyển món giữa các bàn an toàn.
+                <h3 className="text-sm font-semibold text-zinc-900">POS phục vụ & Chuyển bàn</h3>
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  Sơ đồ bàn trực quan theo tầng/khu vực. Hỗ trợ thu ngân duyệt đợt gọi món QR của khách, chuyển bàn, gộp bàn an toàn.
                 </p>
               </div>
-              <Link href="/dang-ky" className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 pt-2">
-                Trải nghiệm miễn phí <ArrowRight className="w-3.5 h-3.5" />
+              <Link href="/dang-ky" className="text-xs font-medium text-emerald-700 hover:text-emerald-800 flex items-center gap-1 pt-1">
+                Trải nghiệm miễn phí <ArrowRight className="w-3 h-3 stroke-[1.5]" />
               </Link>
             </Card>
 
             {/* Thẻ 4 */}
-            <Card hoverable className="p-7 space-y-4 border-slate-200/80 bg-white shadow-xs flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 grid place-items-center text-xl font-bold border border-teal-100">
-                  <ChefHat className="w-6 h-6" />
+            <Card hoverable className="p-5 space-y-3 flex flex-col justify-between">
+              <div className="space-y-2.5">
+                <div className="w-9 h-9 rounded-md bg-zinc-100 text-zinc-800 grid place-items-center border border-zinc-200">
+                  <ChefHat className="w-4 h-4 stroke-[1.5]" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">Màn hình Bếp KDS thời gian thực</h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Giao diện Dark Mode chuẩn công nghiệp, tự động phân luồng đơn theo thứ tự FIFO (Vào trước ra trước), đếm ngược SLA và chuông báo khi món nấu xong.
+                <h3 className="text-sm font-semibold text-zinc-900">Màn hình Bếp KDS chuẩn FIFO</h3>
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  Giao diện tối ưu công nghiệp, tự động phân luồng đơn vào trước ra trước, đếm ngược SLA và chuông báo khi món nấu xong.
                 </p>
               </div>
-              <Link href="/huong-dan" className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 pt-2">
-                Xem quy trình bếp KDS <ArrowRight className="w-3.5 h-3.5" />
+              <Link href="/huong-dan" className="text-xs font-medium text-emerald-700 hover:text-emerald-800 flex items-center gap-1 pt-1">
+                Xem quy trình bếp KDS <ArrowRight className="w-3 h-3 stroke-[1.5]" />
               </Link>
             </Card>
 
             {/* Thẻ 5 */}
-            <Card hoverable className="p-7 space-y-4 border-slate-200/80 bg-white shadow-xs flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 grid place-items-center text-xl font-bold border border-amber-100">
-                  <Receipt className="w-6 h-6" />
+            <Card hoverable className="p-5 space-y-3 flex flex-col justify-between">
+              <div className="space-y-2.5">
+                <div className="w-9 h-9 rounded-md bg-zinc-100 text-zinc-800 grid place-items-center border border-zinc-200">
+                  <Receipt className="w-4 h-4 stroke-[1.5]" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">Thanh toán VietQR & In nhiệt 80mm</h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Sinh mã VietQR động chuẩn Napas 247 đúng số tiền từng hóa đơn. In phiếu tạm tính chuẩn máy in nhiệt 80mm (ESC/POS) qua mạng LAN hoặc Bluetooth.
+                <h3 className="text-sm font-semibold text-zinc-900">Thanh toán VietQR & In nhiệt 80mm</h3>
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  Sinh mã VietQR động chuẩn Napas 247 đúng số tiền từng hóa đơn. In phiếu tạm tính chuẩn máy in nhiệt 80mm (ESC/POS) qua LAN/Bluetooth.
                 </p>
               </div>
-              <Link href="/#pricing" className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 pt-2">
-                Xem ưu đãi tặng máy in ↗
+              <Link href="/#pricing" className="text-xs font-medium text-emerald-700 hover:text-emerald-800 flex items-center gap-1 pt-1">
+                Xem ưu đãi máy in <ArrowRight className="w-3 h-3 stroke-[1.5]" />
               </Link>
             </Card>
 
             {/* Thẻ 6 */}
-            <Card hoverable className="p-7 space-y-4 border-slate-200/80 bg-white shadow-xs flex flex-col justify-between">
-              <div className="space-y-4">
-                <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 grid place-items-center text-xl font-bold border border-blue-100">
-                  <TrendingUp className="w-6 h-6" />
+            <Card hoverable className="p-5 space-y-3 flex flex-col justify-between">
+              <div className="space-y-2.5">
+                <div className="w-9 h-9 rounded-md bg-zinc-100 text-zinc-800 grid place-items-center border border-zinc-200">
+                  <TrendingUp className="w-4 h-4 stroke-[1.5]" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-900">Báo cáo doanh thu & Chi nhánh tức thì</h3>
-                <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                  Theo dõi biểu đồ doanh thu theo giờ, phân tích top món bán chạy, quản lý danh sách đơn đã thanh toán và so sánh hiệu quả giữa các chi nhánh.
+                <h3 className="text-sm font-semibold text-zinc-900">Báo cáo doanh thu & Đa chi nhánh</h3>
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  Theo dõi biểu đồ doanh thu theo giờ, phân tích top món bán chạy, quản lý danh sách đơn đã thanh toán và so sánh hiệu quả giữa các cơ sở.
                 </p>
               </div>
-              <Link href="/dang-ky" className="text-xs font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 pt-2">
-                Bắt đầu theo dõi doanh thu <ArrowRight className="w-3.5 h-3.5" />
+              <Link href="/dang-ky" className="text-xs font-medium text-emerald-700 hover:text-emerald-800 flex items-center gap-1 pt-1">
+                Bắt đầu theo dõi doanh thu <ArrowRight className="w-3 h-3 stroke-[1.5]" />
               </Link>
             </Card>
-
           </div>
         </div>
       </section>
 
       {/* =========================================================================
-       * PHÂN KHU 5: TRẢI NGHIỆM TẠI BÀN — KHÁCH CHỦ ĐỘNG, NHÂN VIÊN THẢNH THƠI (ID="WORKFLOW")
+       * PHÂN KHU 5: TRẢI NGHIỆM TẠI BÀN (ID="WORKFLOW")
        * ========================================================================= */}
-      <section id="workflow" className="py-20 sm:py-24 bg-white border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-16">
-          
-          <div className="text-center max-w-3xl mx-auto space-y-3">
-            <span className="text-xs font-bold text-emerald-700 tracking-widest uppercase">
-              Trải Nghiệm Tại Bàn
+      <section id="workflow" className="py-16 sm:py-20 bg-zinc-50/50 border-b border-zinc-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
+          <div className="text-center max-w-3xl mx-auto space-y-2">
+            <span className="text-[11px] font-semibold text-emerald-700 tracking-wider uppercase">
+              Trải nghiệm tại bàn
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight">
               Khách chủ động chọn món. Nhân viên thảnh thơi phục vụ.
             </h2>
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              Quy trình 4 bước khép kín giúp quán vận hành nhẹ nhàng, giảm tối đa nhầm lẫn món và gia tăng tốc độ quay vòng bàn vào giờ cao điểm:
+            <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed font-normal">
+              Quy trình 4 bước khép kín giúp quán vận hành nhẹ nhàng, giảm tối đa nhầm lẫn món và gia tăng tốc độ quay vòng bàn:
             </p>
           </div>
 
-          {/* 4 Bước Quy Trình Khép Kín */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3 relative">
-              <div className="w-9 h-9 rounded-full bg-emerald-700 text-white font-bold text-sm grid place-items-center shadow-xs">
+          {/* 4 Bước Quy Trình */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="p-4 rounded-lg bg-white border border-zinc-200 space-y-2">
+              <div className="w-7 h-7 rounded bg-zinc-100 text-zinc-800 font-mono text-xs font-bold grid place-items-center border border-zinc-200">
                 01
               </div>
-              <h3 className="text-base font-bold text-slate-900">Quét mã & Chọn món</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Mỗi bàn ăn có mã QR riêng biệt. Khách quét camera để xem thực đơn, chọn size, topping, thêm ghi chú và gửi order.
+              <h3 className="text-xs font-semibold text-zinc-900">Quét mã & Chọn món</h3>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Mỗi bàn ăn có mã QR riêng biệt. Khách quét camera xem menu, chọn size, topping, thêm ghi chú và gửi order.
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3 relative">
-              <div className="w-9 h-9 rounded-full bg-emerald-700 text-white font-bold text-sm grid place-items-center shadow-xs">
+            <div className="p-4 rounded-lg bg-white border border-zinc-200 space-y-2">
+              <div className="w-7 h-7 rounded bg-zinc-100 text-zinc-800 font-mono text-xs font-bold grid place-items-center border border-zinc-200">
                 02
               </div>
-              <h3 className="text-base font-bold text-slate-900">Nhân viên xác nhận</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Chuông thông báo reo trên máy thu ngân; nhân viên đối soát nhanh và bấm duyệt để đơn được chuyển sang bếp.
+              <h3 className="text-xs font-semibold text-zinc-900">Nhân viên xác nhận</h3>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Chuông thông báo reo trên POS thu ngân; nhân viên đối soát nhanh và bấm duyệt để đơn được chuyển sang bếp.
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3 relative">
-              <div className="w-9 h-9 rounded-full bg-emerald-700 text-white font-bold text-sm grid place-items-center shadow-xs">
+            <div className="p-4 rounded-lg bg-white border border-zinc-200 space-y-2">
+              <div className="w-7 h-7 rounded bg-zinc-100 text-zinc-800 font-mono text-xs font-bold grid place-items-center border border-zinc-200">
                 03
               </div>
-              <h3 className="text-base font-bold text-slate-900">Bếp chuẩn bị & Phục vụ</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
+              <h3 className="text-xs font-semibold text-zinc-900">Bếp chuẩn bị & Phục vụ</h3>
+              <p className="text-xs text-zinc-500 leading-relaxed">
                 Màn hình KDS hiển thị món theo thứ tự FIFO; đầu bếp hoàn thành bấm báo xong để phục vụ mang ra bàn cho khách.
               </p>
             </div>
 
-            <div className="p-6 rounded-2xl bg-slate-50 border border-slate-200/80 space-y-3 relative">
-              <div className="w-9 h-9 rounded-full bg-emerald-700 text-white font-bold text-sm grid place-items-center shadow-xs">
+            <div className="p-4 rounded-lg bg-white border border-zinc-200 space-y-2">
+              <div className="w-7 h-7 rounded bg-zinc-100 text-zinc-800 font-mono text-xs font-bold grid place-items-center border border-zinc-200">
                 04
               </div>
-              <h3 className="text-base font-bold text-slate-900">Tạm tính & Thanh toán VietQR</h3>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Khách tự xem phiếu tạm tính trên điện thoại, quét mã VietQR chuyển khoản chính xác từng đồng hoặc gọi thu ngân mang tiền thừa.
+              <h3 className="text-xs font-semibold text-zinc-900">Tạm tính & Thanh toán VietQR</h3>
+              <p className="text-xs text-zinc-500 leading-relaxed">
+                Khách tự xem phiếu tạm tính trên điện thoại, quét mã VietQR chuyển khoản chính xác từng đồng hoặc gọi thu ngân.
               </p>
             </div>
           </div>
 
-          {/* Dẫn sang trang Hướng dẫn 7 bước */}
-          <div className="text-center pt-2">
+          <div className="text-center pt-1">
             <Link href="/huong-dan">
-              <Button variant="secondary" size="md" className="font-bold inline-flex items-center gap-2">
-                Xem cẩm nang vận hành chi tiết 7 bước (kèm hình ảnh minh họa thực tế) <ArrowRight className="w-4 h-4" />
+              <Button variant="secondary" size="md" className="h-9 px-4 text-xs font-medium">
+                Xem cẩm nang vận hành chi tiết 7 bước <ArrowRight className="w-3.5 h-3.5 ml-1.5 stroke-[1.5]" />
               </Button>
             </Link>
           </div>
 
-          {/* Nhúng InteractiveTableMenuSimulator */}
-          <div className="pt-6">
+          {/* InteractiveTableMenuSimulator */}
+          <div className="pt-4">
             <InteractiveTableMenuSimulator />
           </div>
-
         </div>
       </section>
 
       {/* =========================================================================
-       * PHÂN KHU 6: BẢNG SO SÁNH TRUNG THỰC (ID="COMPARISON")
+       * PHÂN KHU 6: BẢNG SO SÁNH (ID="COMPARISON")
        * ========================================================================= */}
-      <section id="comparison" className="py-20 sm:py-24 bg-slate-50/70 border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
-          
-          <div className="text-center max-w-3xl mx-auto space-y-3">
-            <span className="text-xs font-bold text-emerald-700 tracking-widest uppercase">
-              Bảng So Sánh Trung Thực
+      <section id="comparison" className="py-16 sm:py-20 bg-white border-b border-zinc-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="text-center max-w-3xl mx-auto space-y-2">
+            <span className="text-[11px] font-semibold text-emerald-700 tracking-wider uppercase">
+              Bảng so sánh
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight">
               iMenu Cloud vs. Phần Mềm POS Truyền Thống
             </h2>
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              Những khác biệt mang tính quyết định giúp nhà hàng tinh gọn chi phí, giảm thiểu sai sót và tăng tốc phục vụ.
+            <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed font-normal">
+              Những khác biệt mang tính quyết định giúp nhà hàng tinh gọn chi phí và tăng tốc phục vụ.
             </p>
           </div>
 
-          {/* Bảng so sánh responsive */}
-          <div className="overflow-x-auto rounded-3xl border border-slate-200/90 shadow-xl bg-white">
+          {/* Bảng so sánh */}
+          <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
             <table className="w-full text-left border-collapse text-xs sm:text-sm">
               <thead>
-                <tr className="border-b border-slate-200 bg-slate-50">
-                  <th className="p-4 sm:p-5 font-bold text-slate-700 w-1/3">Tiêu chí vận hành</th>
-                  <th className="p-4 sm:p-5 font-bold text-slate-500 w-1/3">Phần mềm POS cũ & Menu giấy</th>
-                  <th className="p-4 sm:p-5 font-extrabold text-emerald-900 bg-emerald-50/80 w-1/3 border-l border-r border-emerald-200">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0" />
-                      <span>Nền tảng iMenu Cloud</span>
-                    </div>
+                <tr className="border-b border-zinc-200 bg-zinc-50/80">
+                  <th className="p-3.5 sm:p-4 font-semibold text-zinc-700 w-1/3">Tiêu chí vận hành</th>
+                  <th className="p-3.5 sm:p-4 font-semibold text-zinc-500 w-1/3">POS truyền thống & Menu giấy</th>
+                  <th className="p-3.5 sm:p-4 font-semibold text-emerald-900 bg-emerald-50/50 w-1/3 border-l border-emerald-200">
+                    Nền tảng iMenu Cloud
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {/* 1. Thiết bị */}
+              <tbody className="divide-y divide-zinc-100 text-zinc-700">
                 <tr>
-                  <td className="p-4 sm:p-5 font-bold text-slate-900">Thiết bị & Phần cứng</td>
-                  <td className="p-4 sm:p-5 text-rose-600">
-                    Bắt buộc mua máy POS cảm ứng chuyên dụng đắt đỏ (8–15 triệu đồng/máy).
+                  <td className="p-3.5 sm:p-4 font-medium text-zinc-900">Thiết bị & Phần cứng</td>
+                  <td className="p-3.5 sm:p-4 text-zinc-500">
+                    Bắt buộc mua máy POS cảm ứng chuyên dụng (8–15 triệu đồng/máy).
                   </td>
-                  <td className="p-4 sm:p-5 font-bold text-emerald-700 bg-emerald-50/30 border-l border-r border-emerald-200">
+                  <td className="p-3.5 sm:p-4 font-medium text-emerald-800 bg-emerald-50/20 border-l border-emerald-200">
                     Tận dụng ngay điện thoại, tablet, laptop sẵn có của quán (Chi phí thiết bị 0đ).
                   </td>
                 </tr>
 
-                {/* 2. Khách quét QR */}
                 <tr>
-                  <td className="p-4 sm:p-5 font-bold text-slate-900">Khách quét QR tự gọi món</td>
-                  <td className="p-4 sm:p-5 text-slate-500">
+                  <td className="p-3.5 sm:p-4 font-medium text-zinc-900">Khách quét QR tự gọi món</td>
+                  <td className="p-3.5 sm:p-4 text-zinc-500">
                     Thường tính thêm phí module riêng hoặc không có tính năng gọi món đa đợt (Rounds).
                   </td>
-                  <td className="p-4 sm:p-5 font-bold text-emerald-700 bg-emerald-50/30 border-l border-r border-emerald-200">
-                    Tích hợp sẵn; quét camera là vào menu ngay, không cần cài đặt thêm bất kỳ app nào.
+                  <td className="p-3.5 sm:p-4 font-medium text-emerald-800 bg-emerald-50/20 border-l border-emerald-200">
+                    Tích hợp sẵn; quét camera là vào menu ngay, không cần cài đặt thêm app.
                   </td>
                 </tr>
 
-                {/* 3. Bếp KDS & 86 */}
                 <tr>
-                  <td className="p-4 sm:p-5 font-bold text-slate-900">Màn hình Bếp KDS & Báo hết món (86)</td>
-                  <td className="p-4 sm:p-5 text-slate-500">
-                    Phụ thuộc máy in phiếu giấy dễ kẹt, dễ ướt rách; báo hết món chậm trễ gây bực bội.
+                  <td className="p-3.5 sm:p-4 font-medium text-zinc-900">Màn hình Bếp KDS & Báo hết món (86)</td>
+                  <td className="p-3.5 sm:p-4 text-zinc-500">
+                    Phụ thuộc máy in phiếu giấy dễ kẹt; báo hết món chậm trễ gây bực bội.
                   </td>
-                  <td className="p-4 sm:p-5 font-bold text-emerald-700 bg-emerald-50/30 border-l border-r border-emerald-200">
+                  <td className="p-3.5 sm:p-4 font-medium text-emerald-800 bg-emerald-50/20 border-l border-emerald-200">
                     Đồng bộ thời gian thực qua WebSocket; 1 chạm ẩn món hết hàng trên toàn hệ thống.
                   </td>
                 </tr>
 
-                {/* 4. VietQR động */}
                 <tr>
-                  <td className="p-4 sm:p-5 font-bold text-slate-900">Thanh toán VietQR động</td>
-                  <td className="p-4 sm:p-5 text-slate-500">
+                  <td className="p-3.5 sm:p-4 font-medium text-zinc-900">Thanh toán VietQR động</td>
+                  <td className="p-3.5 sm:p-4 text-zinc-500">
                     Dán mã QR tĩnh, khách phải tự gõ số tiền và nội dung, dễ thừa thiếu hoặc nhầm lẫn.
                   </td>
-                  <td className="p-4 sm:p-5 font-bold text-emerald-700 bg-emerald-50/30 border-l border-r border-emerald-200">
+                  <td className="p-3.5 sm:p-4 font-medium text-emerald-800 bg-emerald-50/20 border-l border-emerald-200">
                     Tự động tạo mã VietQR Napas 247 khớp đúng số tiền của từng bàn và chi nhánh.
                   </td>
                 </tr>
 
-                {/* 5. Thời gian làm quen */}
                 <tr>
-                  <td className="p-4 sm:p-5 font-bold text-slate-900">Thời gian làm quen của nhân viên</td>
-                  <td className="p-4 sm:p-5 text-slate-500">
+                  <td className="p-3.5 sm:p-4 font-medium text-zinc-900">Thời gian làm quen của nhân viên</td>
+                  <td className="p-3.5 sm:p-4 text-zinc-500">
                     Giao diện nhiều tầng lớp phức tạp, mất 2–3 ngày đào tạo khi có nhân viên mới.
                   </td>
-                  <td className="p-4 sm:p-5 font-bold text-emerald-700 bg-emerald-50/30 border-l border-r border-emerald-200">
-                    Giao diện tối giản trực quan, nhân viên nắm bắt và thành thạo chỉ trong dưới 5 phút.
+                  <td className="p-3.5 sm:p-4 font-medium text-emerald-800 bg-emerald-50/20 border-l border-emerald-200">
+                    Giao diện tối giản trực quan, nhân viên nắm bắt và thành thạo chỉ trong 5 phút.
                   </td>
                 </tr>
 
-                {/* 6. Gói miễn phí lâu dài */}
                 <tr>
-                  <td className="p-4 sm:p-5 font-bold text-slate-900">Gói miễn phí lâu dài</td>
-                  <td className="p-4 sm:p-5 text-rose-600">
+                  <td className="p-3.5 sm:p-4 font-medium text-zinc-900">Gói miễn phí lâu dài</td>
+                  <td className="p-3.5 sm:p-4 text-zinc-500">
                     Chỉ cho dùng thử từ 7 đến 15 ngày rồi khóa tài khoản, ép mua hợp đồng dài hạn.
                   </td>
-                  <td className="p-4 sm:p-5 font-bold text-emerald-700 bg-emerald-50/30 border-l border-r border-emerald-200">
+                  <td className="p-3.5 sm:p-4 font-medium text-emerald-800 bg-emerald-50/20 border-l border-emerald-200">
                     Gói Cơ bản 0đ vĩnh viễn, không ép nâng cấp, dữ liệu bảo toàn 100%.
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-
         </div>
       </section>
 
       {/* =========================================================================
-       * PHÂN KHU 7: BẢNG GIÁ LINH HOẠT & ƯU ĐÃI TẶNG MÁY IN HÓA ĐƠN (ID="PRICING")
+       * PHÂN KHU 7: BẢNG GIÁ (ID="PRICING")
        * ========================================================================= */}
-      <section id="pricing" className="py-20 sm:py-24 bg-white border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-12">
-          
-          <div className="text-center max-w-3xl mx-auto space-y-3">
-            <span className="text-xs font-bold text-emerald-700 tracking-widest uppercase">
-              Bảng Giá Linh Hoạt
+      <section id="pricing" className="py-16 sm:py-20 bg-zinc-50/50 border-b border-zinc-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="text-center max-w-3xl mx-auto space-y-2">
+            <span className="text-[11px] font-semibold text-emerald-700 tracking-wider uppercase">
+              Bảng giá linh hoạt
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight">
               Bắt đầu miễn phí 0đ. Nâng cấp khi quán sẵn sàng.
             </h2>
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+            <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed font-normal">
               Mọi tài khoản tạo mới đều được tặng ngay 1 tháng trải nghiệm toàn bộ tính năng cao cấp.
             </p>
           </div>
 
-          {/* Banner đầu mục */}
-          <div className="max-w-4xl mx-auto p-4 sm:p-5 rounded-2xl bg-emerald-50 border border-emerald-200/90 text-center shadow-xs">
-            <span className="text-xs sm:text-sm font-bold text-emerald-900 flex items-center justify-center gap-2">
-              <Sparkles className="w-4 h-4 text-amber-500 flex-shrink-0" />
-              ✦ Tặng 1 tháng trải nghiệm miễn phí gói Nâng cao cho mọi nhà hàng mới — Hết hạn tự chuyển về gói Cơ bản 0đ, không cần thẻ thanh toán.
-            </span>
-          </div>
-
-          {/* 3 Gói Dịch Vụ */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {/* Gói 1: Cơ bản */}
-            <Card className="p-8 flex flex-col justify-between border border-slate-200 bg-white hover:border-slate-300 transition-colors shadow-xs">
-              <div className="space-y-4">
+            <Card className="p-6 flex flex-col justify-between bg-white border border-zinc-200">
+              <div className="space-y-3">
                 <Badge variant="neutral">CƠ BẢN</Badge>
-                <h3 className="text-xl font-bold text-slate-900">Vận hành thiết yếu</h3>
-                <p className="text-xs text-slate-500">Dành cho quán ăn, quán nước nhỏ mới mở cần số hóa quy trình cơ bản.</p>
-                <div className="pt-2">
-                  <span className="text-4xl font-extrabold text-slate-900">0đ</span>
-                  <span className="text-xs text-slate-500 ml-1">/ vĩnh viễn</span>
+                <h3 className="text-base font-bold text-zinc-900">Vận hành thiết yếu</h3>
+                <p className="text-xs text-zinc-500">Dành cho quán ăn, quán nước nhỏ mới mở cần số hóa quy trình cơ bản.</p>
+                <div className="pt-1">
+                  <span className="text-3xl font-bold text-zinc-900 tabular-nums">0đ</span>
+                  <span className="text-xs text-zinc-500 ml-1">/ vĩnh viễn</span>
                 </div>
-                <hr className="border-slate-100" />
-                <ul className="space-y-3 text-xs text-slate-600">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Quản lý danh mục & thực đơn món</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Nhân viên ghi order POS tại bàn</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Màn hình Bếp KDS cơ bản</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Sơ đồ quản lý bàn ăn & trạng thái</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> In phiếu tạm tính chuẩn 80mm</li>
+                <hr className="border-zinc-100" />
+                <ul className="space-y-2 text-xs text-zinc-600">
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Quản lý danh mục & thực đơn món</li>
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Nhân viên ghi order POS tại bàn</li>
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Màn hình Bếp KDS cơ bản</li>
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Sơ đồ quản lý bàn ăn & trạng thái</li>
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> In phiếu tạm tính chuẩn 80mm</li>
                 </ul>
               </div>
-              <Link href="/dang-ky" className="mt-8">
-                <Button variant="outline" className="w-full font-bold">
+              <Link href="/dang-ky" className="mt-6">
+                <Button variant="outline" className="w-full text-xs font-medium h-9">
                   Bắt đầu miễn phí 0đ
                 </Button>
               </Link>
             </Card>
 
-            {/* Gói 2: Tiêu chuẩn (Khuyên dùng) */}
-            <Card className="p-8 flex flex-col justify-between border-2 border-emerald-600 shadow-xl relative bg-white ring-4 ring-emerald-500/10">
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-gradient-to-r from-emerald-700 to-teal-600 text-white text-[10px] font-bold tracking-wider uppercase shadow-sm">
-                Khuyên Dùng
-              </div>
-              <div className="space-y-4">
-                <Badge variant="brand">TIÊU CHUẨN</Badge>
-                <h3 className="text-xl font-bold text-slate-900">Phục vụ thông minh</h3>
-                <p className="text-xs text-slate-500">Tự động hóa trải nghiệm gọi món, giảm bớt nhân lực chạy bàn.</p>
-                <div className="pt-2">
-                  <span className="text-4xl font-extrabold text-emerald-700">250.000đ</span>
-                  <span className="text-xs text-slate-500 ml-1">/ tháng</span>
+            {/* Gói 2: Tiêu chuẩn */}
+            <Card className="p-6 flex flex-col justify-between bg-white border border-emerald-700/80 relative shadow-xs">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <Badge variant="brand">TIÊU CHUẨN</Badge>
+                  <span className="text-[10px] font-semibold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    Khuyên dùng
+                  </span>
                 </div>
-                <hr className="border-slate-100" />
-                <strong className="text-xs text-slate-800 block">Tất cả gói Cơ bản, cộng thêm:</strong>
-                <ul className="space-y-3 text-xs text-slate-600">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Menu điện tử QR trên điện thoại khách</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Khách tự chọn món & gửi đơn nhiều đợt</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Kênh Bán mang đi & Đặt trước online (Takeaway)</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Đồng bộ Real-time Bàn - Bếp - Thu ngân</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-600" /> Phân quyền nhân viên theo ca trực</li>
+                <h3 className="text-base font-bold text-zinc-900">Phục vụ thông minh</h3>
+                <p className="text-xs text-zinc-500">Tự động hóa trải nghiệm gọi món, giảm bớt nhân lực chạy bàn.</p>
+                <div className="pt-1">
+                  <span className="text-3xl font-bold text-emerald-700 tabular-nums">250.000đ</span>
+                  <span className="text-xs text-zinc-500 ml-1">/ tháng</span>
+                </div>
+                <hr className="border-zinc-100" />
+                <ul className="space-y-2 text-xs text-zinc-600">
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Menu điện tử QR trên điện thoại khách</li>
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Khách tự chọn món & gửi đơn nhiều đợt</li>
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Kênh Bán mang đi & Đặt trước VietQR</li>
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Đồng bộ Realtime Bàn - Bếp - Thu ngân</li>
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Phân quyền nhân viên theo ca trực</li>
                 </ul>
               </div>
-              <Link href="/dang-ky" className="mt-8">
-                <Button variant="primary" className="w-full bg-emerald-700 hover:bg-emerald-800 font-bold shadow-md shadow-emerald-700/20">
+              <Link href="/dang-ky" className="mt-6">
+                <Button variant="primary" className="w-full text-xs font-medium h-9">
                   Dùng thử 1 tháng miễn phí
                 </Button>
               </Link>
             </Card>
 
-            {/* Gói 3: Nâng cao (Đề xuất cho chuỗi) */}
-            <Card className="p-8 flex flex-col justify-between border-2 border-amber-300 bg-gradient-to-b from-white to-amber-50/20 shadow-md">
-              <div className="space-y-4">
+            {/* Gói 3: Nâng cao */}
+            <Card className="p-6 flex flex-col justify-between bg-white border border-zinc-200">
+              <div className="space-y-3">
                 <Badge variant="amber">NÂNG CAO</Badge>
-                <h3 className="text-xl font-bold text-slate-900">Quản trị chuỗi</h3>
-                <p className="text-xs text-slate-500">Kiểm soát tập trung và báo cáo doanh thu toàn chuỗi F&B.</p>
-                <div className="pt-2">
-                  <span className="text-4xl font-extrabold text-amber-600">500.000đ</span>
-                  <span className="text-xs text-slate-500 ml-1">/ tháng</span>
+                <h3 className="text-base font-bold text-zinc-900">Quản trị chuỗi</h3>
+                <p className="text-xs text-zinc-500">Kiểm soát tập trung và báo cáo doanh thu toàn chuỗi F&B.</p>
+                <div className="pt-1">
+                  <span className="text-3xl font-bold text-amber-700 tabular-nums">500.000đ</span>
+                  <span className="text-xs text-zinc-500 ml-1">/ tháng</span>
                 </div>
-                <hr className="border-slate-100" />
-                <strong className="text-xs text-slate-800 block">Tất cả gói Tiêu chuẩn, cộng thêm:</strong>
-                <ul className="space-y-3 text-xs text-slate-600">
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-amber-600" /> Thanh toán VietQR động tự động nhận tiền</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-amber-600" /> Quản lý chuỗi nhiều chi nhánh tập trung (Multi-Branch)</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-amber-600" /> Menu, giá bán & tài khoản ngân hàng riêng từng quán</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-amber-600" /> Báo cáo hợp nhất doanh thu toàn hệ thống</li>
-                  <li className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-amber-600" /> Ưu tiên hỗ trợ kỹ thuật trực tiếp 24/7</li>
+                <hr className="border-zinc-100" />
+                <ul className="space-y-2 text-xs text-zinc-600">
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Thanh toán VietQR động tự động nhận tiền</li>
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Quản lý chuỗi nhiều chi nhánh (Multi-Branch)</li>
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Menu, giá bán & tài khoản ngân hàng riêng từng quán</li>
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Báo cáo hợp nhất doanh thu toàn hệ thống</li>
+                  <li className="flex items-center gap-2"><Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2]" /> Ưu tiên hỗ trợ kỹ thuật trực tiếp 24/7</li>
                 </ul>
               </div>
-              <Link href="/dang-ky" className="mt-8">
-                <Button variant="amber" className="w-full font-bold">
+              <Link href="/dang-ky" className="mt-6">
+                <Button variant="outline" className="w-full text-xs font-medium h-9">
                   Trải nghiệm đầy đủ
                 </Button>
               </Link>
             </Card>
-
           </div>
 
-          {/* ================= KHỐI ƯU ĐÃI ĐĂNG KÝ (HARDWARE GIFT CARD) ================= */}
-          <div className="p-6 sm:p-8 rounded-3xl bg-gradient-to-br from-amber-50 via-amber-100/50 to-emerald-50 border-2 border-amber-300 shadow-xl flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-start gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-amber-500 text-white grid place-items-center flex-shrink-0 shadow-md">
-                <Gift className="w-7 h-7 text-white" />
+          {/* Ưu đãi máy in */}
+          <div className="p-5 sm:p-6 rounded-lg bg-zinc-50 border border-zinc-200 flex flex-col md:flex-row items-center justify-between gap-5">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-md bg-white border border-zinc-200 text-zinc-800 grid place-items-center shrink-0">
+                <Printer className="w-5 h-5 stroke-[1.5]" />
               </div>
               <div className="space-y-1">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-200/80 text-amber-900 text-[10px] font-extrabold uppercase tracking-wide">
-                  Ưu đãi phần cứng độc quyền
-                </div>
-                <h3 className="text-lg sm:text-xl font-extrabold text-slate-900">
-                  🎁 Ưu đãi đăng ký gói trả phí: Tặng ngay Máy In Hóa Đơn Nhiệt 80mm trị giá 1.500.000đ
+                <h3 className="text-sm font-semibold text-zinc-900">
+                  Ưu đãi phần cứng: Tặng Máy In Hóa Đơn Nhiệt 80mm khi đăng ký gói trả phí
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-600 max-w-2xl leading-relaxed">
-                  Áp dụng khi đăng ký gói <strong>Tiêu chuẩn</strong> hoặc <strong>Nâng cao</strong>. Máy in khổ giấy 80mm chuẩn ESC/POS, tốc độ in cao 200mm/s, tự động cắt giấy, kết nối mạng LAN / USB / Bluetooth cắm là chạy ngay!
+                <p className="text-xs text-zinc-600 max-w-2xl leading-relaxed">
+                  Áp dụng khi đăng ký gói <strong>Tiêu chuẩn</strong> hoặc <strong>Nâng cao</strong>. Máy in khổ 80mm chuẩn ESC/POS, tốc độ in 200mm/s, tự động cắt giấy, cắm là chạy.
                 </p>
               </div>
             </div>
 
-            <Link href="/dang-ky" className="flex-shrink-0 w-full md:w-auto">
-              <Button
-                variant="primary"
-                size="lg"
-                className="w-full md:w-auto bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs sm:text-sm px-6 py-3 shadow-md shadow-amber-600/20"
-              >
-                Nhận ưu đãi máy in ngay <ArrowRight className="w-4 h-4 ml-1.5" />
+            <Link href="/dang-ky" className="shrink-0 w-full md:w-auto">
+              <Button variant="primary" size="md" className="w-full md:w-auto text-xs font-medium h-9 px-4">
+                Nhận ưu đãi máy in <ArrowRight className="w-3.5 h-3.5 ml-1.5 stroke-[1.5]" />
               </Button>
             </Link>
           </div>
-
         </div>
       </section>
 
       {/* =========================================================================
-       * PHÂN KHU 8: PHÂN QUYỀN RÕ RÀNG Ở MỌI CẤP ĐỘ (ID="ROLES")
+       * PHÂN KHU 8: PHÂN QUYỀN RBAC (ID="ROLES")
        * ========================================================================= */}
-      <section id="roles" className="py-20 sm:py-24 bg-slate-50/70 border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
-          
-          <div className="text-center max-w-3xl mx-auto space-y-3">
-            <span className="text-xs font-bold text-emerald-700 tracking-widest uppercase">
-              Phân Quyền Chặt Chẽ
+      <section id="roles" className="py-16 sm:py-20 bg-white border-b border-zinc-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="text-center max-w-3xl mx-auto space-y-2">
+            <span className="text-[11px] font-semibold text-emerald-700 tracking-wider uppercase">
+              Phân quyền chặt chẽ
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight">
               Phân quyền 5 cấp độ bảo mật nghiêm ngặt
             </h2>
-            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+            <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed font-normal">
               Đảm bảo đúng người, đúng việc và ngăn chặn thất thoát dữ liệu ở từng chi nhánh.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
-            {/* Vai trò 1 */}
-            <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-3 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 grid place-items-center mx-auto border border-emerald-100">
-                <Zap className="w-6 h-6" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-200 space-y-2 text-center">
+              <div className="w-9 h-9 rounded-md bg-white border border-zinc-200 text-zinc-800 grid place-items-center mx-auto">
+                <Zap className="w-4 h-4 stroke-[1.5]" />
               </div>
-              <h3 className="text-sm font-bold text-slate-900">Quản trị hệ thống</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <h3 className="text-xs font-semibold text-zinc-900">Quản trị hệ thống</h3>
+              <p className="text-[11px] text-zinc-500 leading-relaxed">
                 Kiểm soát toàn bộ nền tảng, quản lý tài nguyên và cấu hình bảo mật toàn cục.
               </p>
             </div>
 
-            {/* Vai trò 2 */}
-            <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-3 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 grid place-items-center mx-auto border border-teal-100">
-                <Building2 className="w-6 h-6" />
+            <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-200 space-y-2 text-center">
+              <div className="w-9 h-9 rounded-md bg-white border border-zinc-200 text-zinc-800 grid place-items-center mx-auto">
+                <Building2 className="w-4 h-4 stroke-[1.5]" />
               </div>
-              <h3 className="text-sm font-bold text-slate-900">Quản trị chuỗi HQ</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Theo dõi chỉ số toàn chuỗi, điều phối danh mục thực đơn chung và xem báo cáo hợp nhất.
+              <h3 className="text-xs font-semibold text-zinc-900">Quản trị chuỗi HQ</h3>
+              <p className="text-[11px] text-zinc-500 leading-relaxed">
+                Theo dõi chỉ số toàn chuỗi, điều phối danh mục thực đơn và xem báo cáo hợp nhất.
               </p>
             </div>
 
-            {/* Vai trò 3 */}
-            <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-3 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-700 grid place-items-center mx-auto border border-blue-100">
-                <Store className="w-6 h-6" />
+            <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-200 space-y-2 text-center">
+              <div className="w-9 h-9 rounded-md bg-white border border-zinc-200 text-zinc-800 grid place-items-center mx-auto">
+                <Store className="w-4 h-4 stroke-[1.5]" />
               </div>
-              <h3 className="text-sm font-bold text-slate-900">Quản lý chi nhánh</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <h3 className="text-xs font-semibold text-zinc-900">Quản lý chi nhánh</h3>
+              <p className="text-[11px] text-zinc-500 leading-relaxed">
                 Quản trị thực đơn, giá bán, bàn ăn và tài khoản ngân hàng nhận tiền riêng của cơ sở.
               </p>
             </div>
 
-            {/* Vai trò 4 */}
-            <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-3 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-700 grid place-items-center mx-auto border border-amber-100">
-                <UserCheck className="w-6 h-6" />
+            <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-200 space-y-2 text-center">
+              <div className="w-9 h-9 rounded-md bg-white border border-zinc-200 text-zinc-800 grid place-items-center mx-auto">
+                <UserCheck className="w-4 h-4 stroke-[1.5]" />
               </div>
-              <h3 className="text-sm font-bold text-slate-900">Thu ngân & Phục vụ POS</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                Vận hành sơ đồ bàn, duyệt đợt gọi món QR, gộp/chuyển bàn và in phiếu tính tiền cho khách.
+              <h3 className="text-xs font-semibold text-zinc-900">Thu ngân & Phục vụ POS</h3>
+              <p className="text-[11px] text-zinc-500 leading-relaxed">
+                Vận hành sơ đồ bàn, duyệt đợt gọi món QR, gộp/chuyển bàn và in phiếu tính tiền.
               </p>
             </div>
 
-            {/* Vai trò 5 */}
-            <div className="p-5 rounded-2xl bg-white border border-slate-200/90 shadow-xs space-y-3 text-center">
-              <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-700 grid place-items-center mx-auto border border-purple-100">
-                <Users className="w-6 h-6" />
+            <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-200 space-y-2 text-center">
+              <div className="w-9 h-9 rounded-md bg-white border border-zinc-200 text-zinc-800 grid place-items-center mx-auto">
+                <Users className="w-4 h-4 stroke-[1.5]" />
               </div>
-              <h3 className="text-sm font-bold text-slate-900">Đầu bếp KDS</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
+              <h3 className="text-xs font-semibold text-zinc-900">Đầu bếp KDS</h3>
+              <p className="text-[11px] text-zinc-500 leading-relaxed">
                 Xem vé bếp theo thứ tự gọi món FIFO, đánh dấu món hoàn thành và báo hết hàng (86).
               </p>
             </div>
           </div>
-
         </div>
       </section>
 
       {/* =========================================================================
-       * PHÂN KHU LỐI TẮT: KIẾN THỨC CHỦ QUÁN & CƠ HỘI HỢP TÁC KINH DOANH (BENTO CARDS)
+       * PHÂN KHU 9: KIẾN THỨC VẬN HÀNH & HỢP TÁC KINH DOANH (BENTO)
        * ========================================================================= */}
-      <section className="py-16 sm:py-20 bg-gradient-to-b from-white via-slate-50/80 to-white border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
-          
-          <div className="text-center space-y-2.5 max-w-2xl mx-auto">
-            <span className="text-xs font-bold text-emerald-700 tracking-widest uppercase">
-              Đồng Hành & Phát Triển Cùng iMenu
+      <section className="py-16 bg-zinc-50/50 border-b border-zinc-200/80">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+          <div className="text-center space-y-1.5 max-w-2xl mx-auto">
+            <span className="text-[11px] font-semibold text-emerald-700 tracking-wider uppercase">
+              Tài nguyên & Hợp tác
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl font-bold text-zinc-950 tracking-tight">
               Kiến thức vận hành thực chiến & Cơ hội hợp tác
             </h2>
-            <p className="text-sm text-slate-600">
-              Cung cấp giải pháp quản trị bài bản cho chủ quán F&B và chính sách thu nhập hấp dẫn cho đối tác phát triển thị trường toàn quốc.
+            <p className="text-xs text-zinc-600">
+              Giải pháp quản trị bài bản cho chủ quán F&B và chính sách thu nhập hấp dẫn cho đối tác phát triển thị trường.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-            {/* Thẻ 1: Dành cho Chủ quán F&B */}
-            <div className="group relative rounded-3xl bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 text-white p-7 sm:p-9 shadow-xl border border-emerald-800/80 flex flex-col justify-between overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="space-y-4 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+            {/* Card 1: Cẩm nang */}
+            <div className="p-6 rounded-lg bg-white border border-zinc-200 space-y-4 flex flex-col justify-between">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-800/80 border border-emerald-600/60 text-xs font-extrabold text-emerald-200">
-                    <BookOpen className="w-3.5 h-3.5 text-emerald-300" />
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-[11px] font-semibold text-emerald-900">
+                    <BookOpen className="w-3.5 h-3.5 text-emerald-700 stroke-[1.5]" />
                     Dành Cho Chủ Quán F&B
                   </span>
-                  <span className="text-[11px] text-emerald-300/80 font-medium">Cập nhật 2026</span>
+                  <span className="text-[11px] text-zinc-400 font-mono">2026</span>
                 </div>
 
-                <h3 className="text-xl sm:text-2xl font-extrabold leading-snug text-white">
-                  📚 Cẩm nang & Kiến thức vận hành F&B thực chiến
+                <h3 className="text-lg font-bold text-zinc-900 tracking-tight">
+                  Cẩm nang & Kiến thức vận hành F&B thực chiến
                 </h3>
 
-                <p className="text-sm text-emerald-100/80 leading-relaxed">
-                  Cách tính giá vốn (Food Cost), ghi sổ doanh thu 2026, giải pháp chống nhân viên &ldquo;đá bill&rdquo;, thất thoát nguyên liệu và tối ưu quy trình gọi món QR tại bàn.
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  Cách tính giá vốn (Food Cost), ghi sổ doanh thu bỏ thuế khoán 2026, chống nhân viên &ldquo;đá bill&rdquo;, thất thoát nguyên liệu và tối ưu quy trình gọi món QR tại bàn.
                 </p>
 
-                <div className="grid grid-cols-2 gap-2.5 pt-2 text-xs text-emerald-200/90 font-medium">
+                <div className="grid grid-cols-2 gap-2 pt-1 text-xs text-zinc-700 font-medium">
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    <span>Quản trị Food Cost chuẩn</span>
+                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2] shrink-0" />
+                    <span>Quản trị Food Cost</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2] shrink-0" />
                     <span>Chống thất thoát bill</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2] shrink-0" />
                     <span>Bếp FIFO không tắc nghẽn</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2] shrink-0" />
                     <span>Kinh nghiệm marketing quán</span>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-8 relative z-10">
-                <Link href="/kien-thuc" className="inline-block w-full sm:w-auto">
-                  <Button
-                    variant="primary"
-                    size="md"
-                    className="w-full sm:w-auto bg-emerald-400 hover:bg-emerald-300 text-emerald-950 font-bold px-6 py-2.5 shadow-lg shadow-emerald-950/40 border-0 flex items-center justify-center gap-2"
-                  >
-                    <span>Đọc cẩm nang chủ quán</span>
-                    <ArrowRight className="w-4 h-4" />
+              <div className="pt-2">
+                <Link href="/kien-thuc">
+                  <Button variant="outline" size="sm" className="h-8 text-xs font-medium">
+                    Đọc cẩm nang chủ quán <ArrowRight className="w-3.5 h-3.5 ml-1.5 stroke-[1.5]" />
                   </Button>
                 </Link>
               </div>
             </div>
 
-            {/* Thẻ 2: Dành cho Nhân viên kinh doanh & Cộng tác viên */}
-            <div className="group relative rounded-3xl bg-gradient-to-br from-slate-900 via-amber-950/70 to-slate-900 text-white p-7 sm:p-9 shadow-xl border border-amber-800/60 flex flex-col justify-between overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-
-              <div className="space-y-4 relative z-10">
+            {/* Card 2: Tuyển dụng */}
+            <div className="p-6 rounded-lg bg-white border border-zinc-200 space-y-4 flex flex-col justify-between">
+              <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-900/80 border border-amber-600/60 text-xs font-extrabold text-amber-200">
-                    <Briefcase className="w-3.5 h-3.5 text-amber-300" />
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-[11px] font-semibold text-amber-900">
+                    <Briefcase className="w-3.5 h-3.5 text-amber-700 stroke-[1.5]" />
                     Cơ Hội Hợp Tác & Tuyển Dụng
                   </span>
-                  <span className="text-[11px] font-extrabold text-amber-300 bg-amber-950/90 border border-amber-500/40 px-2.5 py-0.5 rounded-full">
+                  <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">
                     Hoa hồng 50%
                   </span>
                 </div>
 
-                <h3 className="text-xl sm:text-2xl font-extrabold leading-snug text-white">
-                  💼 Tuyển Nhân viên Kinh doanh & Đối tác Phát triển Thị trường Toàn quốc
+                <h3 className="text-lg font-bold text-zinc-900 tracking-tight">
+                  Tuyển Nhân viên Kinh doanh & Đối tác Thị trường
                 </h3>
 
-                <p className="text-sm text-slate-300 leading-relaxed">
-                  Làm việc từ xa chủ động thời gian, nhận ngay <strong>50% phí triển khai (tối thiểu 500K/quán)</strong> cùng <strong>20% hoa hồng duy trì hằng năm</strong> cho mỗi khách hàng tái ký trọn đời.
+                <p className="text-xs text-zinc-600 leading-relaxed">
+                  Làm việc linh hoạt toàn quốc, nhận ngay <strong>50% phí triển khai (tối thiểu 500K/quán)</strong> cùng <strong>20% hoa hồng duy trì hằng năm</strong> cho mỗi khách hàng tái ký.
                 </p>
 
-                <div className="grid grid-cols-2 gap-2.5 pt-2 text-xs text-amber-200/90 font-medium">
+                <div className="grid grid-cols-2 gap-2 pt-1 text-xs text-zinc-700 font-medium">
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Hoa hồng 50% tiền tươi</span>
+                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2] shrink-0" />
+                    <span>Hoa hồng 50% thanh toán nhanh</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>20% doanh thu tái ký trọn đời</span>
+                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2] shrink-0" />
+                    <span>20% doanh thu tái ký hằng năm</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Làm việc tự do toàn quốc</span>
+                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2] shrink-0" />
+                    <span>Chủ động thời gian toàn quốc</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                    <span>Hỗ trợ tài liệu & đào tạo A-Z</span>
+                    <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[2] shrink-0" />
+                    <span>Hỗ trợ tài liệu & đào tạo bài bản</span>
                   </div>
                 </div>
               </div>
 
-              <div className="pt-8 relative z-10">
-                <Link href="/tuyen-dung-nhan-vien-kinh-doanh" className="inline-block w-full sm:w-auto">
-                  <Button
-                    variant="primary"
-                    size="md"
-                    className="w-full sm:w-auto bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-6 py-2.5 shadow-lg shadow-amber-950/40 border-0 flex items-center justify-center gap-2"
-                  >
-                    <span>Xem chính sách thu nhập & Ứng tuyển</span>
-                    <ArrowRight className="w-4 h-4" />
+              <div className="pt-2">
+                <Link href="/tuyen-dung-nhan-vien-kinh-doanh">
+                  <Button variant="outline" size="sm" className="h-8 text-xs font-medium">
+                    Xem chính sách thu nhập & Ứng tuyển <ArrowRight className="w-3.5 h-3.5 ml-1.5 stroke-[1.5]" />
                   </Button>
                 </Link>
               </div>
             </div>
           </div>
-
         </div>
       </section>
 
       {/* =========================================================================
-       * PHÂN KHU 9: CÂU HỎI THƯỜNG GẶP (ID="FAQ") & CTA CUỐI TRANG
+       * PHÂN KHU 10: FAQ & CTA CHÂN TRANG
        * ========================================================================= */}
-      <section id="faq" className="py-20 sm:py-24 bg-white border-b border-slate-200/80">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-14">
-          
-          <div className="text-center space-y-3">
-            <span className="text-xs font-bold text-emerald-700 tracking-widest uppercase">
-              Giải Đáp Thắc Mắc
+      <section id="faq" className="py-16 sm:py-20 bg-white border-b border-zinc-200/80">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+          <div className="text-center space-y-2">
+            <span className="text-[11px] font-semibold text-emerald-700 tracking-wider uppercase">
+              Giải đáp thắc mắc
             </span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-bold text-zinc-950 tracking-tight">
               Câu hỏi thường gặp của chủ quán
             </h2>
-            <p className="text-sm sm:text-base text-slate-600">
+            <p className="text-xs sm:text-sm text-zinc-600">
               Những điều các chủ nhà hàng, quán ăn và cà phê quan tâm nhất khi chuyển đổi sang iMenu.
             </p>
           </div>
 
-          {/* Accordion 7 Câu Hỏi */}
-          <div className="space-y-3.5">
+          <div className="space-y-2.5">
             {faqs.map((faq, index) => {
               const isOpen = openFaqIndex === index;
               return (
                 <div
                   key={index}
-                  className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-xs transition-colors"
+                  className="rounded-lg border border-zinc-200 bg-white overflow-hidden transition-colors"
                 >
                   <button
                     type="button"
                     onClick={() => toggleFaq(index)}
-                    className="w-full p-5 text-left flex items-center justify-between gap-4 font-bold text-sm sm:text-base text-slate-900 hover:text-emerald-800 transition-colors"
+                    className="w-full p-4 text-left flex items-center justify-between gap-4 font-semibold text-xs sm:text-sm text-zinc-900 hover:text-emerald-800 transition-colors cursor-pointer"
                   >
                     <span>{faq.q}</span>
                     <ChevronDown
-                      className={`w-4 h-4 text-emerald-700 flex-shrink-0 transition-transform duration-200 ${
-                        isOpen ? 'rotate-180' : ''
+                      className={`w-4 h-4 text-zinc-400 stroke-[1.5] flex-shrink-0 transition-transform duration-150 ${
+                        isOpen ? 'rotate-180 text-emerald-700' : ''
                       }`}
                     />
                   </button>
 
                   {isOpen && (
-                    <div className="px-5 pb-5 text-xs sm:text-sm text-slate-600 leading-relaxed border-t border-slate-100 pt-3 animate-fadeIn">
+                    <div className="px-4 pb-4 text-xs text-zinc-600 leading-relaxed border-t border-zinc-100 pt-3 animate-fadeIn font-normal">
                       {faq.a}
                     </div>
                   )}
@@ -1119,42 +1016,40 @@ export default function LandingPage() {
               );
             })}
           </div>
-
         </div>
       </section>
 
       {/* ================= CTA BANNER CUỐI TRANG ================= */}
-      <section className="py-16 sm:py-20 bg-slate-50">
+      <section className="py-16 bg-zinc-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="p-8 sm:p-14 rounded-3xl bg-gradient-to-br from-emerald-950 via-emerald-900 to-teal-950 text-white border border-emerald-800/80 shadow-2xl flex flex-col lg:flex-row items-center justify-between gap-8">
-            <div className="space-y-3 text-center lg:text-left">
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-400 flex items-center justify-center lg:justify-start gap-1.5">
-                <Sparkles className="w-4 h-4 text-amber-400" />
+          <div className="p-8 sm:p-12 rounded-lg bg-zinc-900 text-white border border-zinc-800 flex flex-col lg:flex-row items-center justify-between gap-6">
+            <div className="space-y-2 text-center lg:text-left">
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-400">
                 Miễn phí 0đ trọn đời gói Cơ bản
               </span>
-              <h3 className="text-2xl sm:text-3xl font-extrabold text-white">
+              <h3 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
                 Sẵn sàng để nhà hàng vận hành nhẹ nhàng hơn?
               </h3>
-              <p className="text-xs sm:text-sm text-emerald-100/80 max-w-xl">
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-xl">
                 Đăng ký ngay hôm nay để trải nghiệm miễn phí toàn bộ tính năng cao cấp trong 1 tháng. Không cần thẻ tín dụng, đưa vào phục vụ khách chỉ sau 5 phút.
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
               <Link href="/dang-ky" className="w-full sm:w-auto">
                 <Button
                   variant="primary"
                   size="lg"
-                  className="w-full whitespace-nowrap bg-white text-emerald-950 hover:bg-emerald-50 shadow-lg border-0 font-bold px-6 py-3"
+                  className="w-full whitespace-nowrap h-10 px-5 text-sm font-medium"
                 >
-                  Tạo quán ngay bây giờ <ArrowRight className="w-4 h-4 ml-2" />
+                  Tạo quán ngay bây giờ <ArrowRight className="w-4 h-4 ml-1.5 stroke-[1.5]" />
                 </Button>
               </Link>
               <Link href="/huong-dan" className="w-full sm:w-auto">
                 <Button
                   variant="outline"
                   size="lg"
-                  className="w-full whitespace-nowrap border-emerald-500/50 text-emerald-100 hover:bg-emerald-900 font-bold px-5 py-3"
+                  className="w-full whitespace-nowrap h-10 px-4 text-sm font-medium bg-zinc-800 text-white border-zinc-700 hover:bg-zinc-700"
                 >
                   Xem hướng dẫn 7 bước
                 </Button>
