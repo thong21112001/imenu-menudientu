@@ -36,6 +36,7 @@ import {
   LayoutGrid,
   List,
   RotateCcw,
+  RefreshCw,
   X,
 } from 'lucide-react';
 
