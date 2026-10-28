@@ -38,7 +38,6 @@ import {
   Check,
   Copy,
   Download,
-  Sparkles,
   Percent,
   DollarSign,
   AlertCircle,
@@ -408,8 +407,8 @@ export default function BillsPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {toastMessage && (
-        <div className="fixed top-5 right-5 z-50 bg-[#09271d] text-white px-4 py-3 rounded-xl shadow-2xl border border-emerald-500/30 flex items-center gap-3 text-xs font-semibold animate-slideLeft">
-          <Sparkles className="w-4 h-4 text-emerald-400" />
+        <div className="fixed top-5 right-5 z-50 bg-[#09271d] text-white px-4 py-3 rounded-lg shadow-md border border-emerald-500/30 flex items-center gap-3 text-xs font-semibold animate-slideLeft">
+          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           <span>{toastMessage}</span>
         </div>
       )}

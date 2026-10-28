@@ -28,7 +28,6 @@ import {
   Clock,
   User,
   Phone,
-  Sparkles,
 } from 'lucide-react';
 
 export default function ReviewsManagementPage() {
@@ -215,7 +214,7 @@ export default function ReviewsManagementPage() {
       {hasNewLiveReview && (
         <div className="bg-amber-500/10 border border-amber-500/20 text-amber-900 px-4 py-3 rounded-2xl flex items-center justify-between shadow-sm animate-in fade-in">
           <div className="flex items-center gap-2.5 text-xs sm:text-sm font-semibold">
-            <Sparkles className="w-5 h-5 text-amber-600 animate-pulse" />
+            <Star className="w-5 h-5 text-amber-500" />
             <span>Có đánh giá mới vừa được khách hàng gửi!</span>
           </div>
           <Button

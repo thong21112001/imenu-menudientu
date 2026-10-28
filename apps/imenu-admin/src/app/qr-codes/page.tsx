@@ -10,7 +10,6 @@ import {
   QrCode,
   Filter,
   Wifi,
-  Sparkles,
   Smartphone,
   CheckCircle2,
   ExternalLink,
@@ -548,7 +547,7 @@ export default function QrCodesGeneratorPage() {
             <Button
               variant="outline"
               onClick={handleSeedDefaultTables}
-              icon={<Sparkles className="w-4 h-4 text-emerald-600" />}
+              icon={<Plus className="w-4 h-4 text-emerald-600" />}
               className="cursor-pointer bg-emerald-50 hover:bg-emerald-100 border-emerald-300 text-emerald-800 shadow-2xs w-full sm:w-auto text-xs py-2 px-2.5 justify-center font-bold"
             >
               Khởi tạo sơ đồ mẫu (12 bàn)
@@ -766,7 +765,7 @@ export default function QrCodesGeneratorPage() {
               <Button
                 variant="outline"
                 onClick={handleSeedDefaultTables}
-                icon={<Sparkles className="w-4 h-4 text-emerald-600" />}
+                icon={<Plus className="w-4 h-4 text-emerald-600" />}
                 className="cursor-pointer border-emerald-300 text-[#124a36] bg-emerald-50/60 hover:bg-emerald-100/80 font-bold"
               >
                 Khởi tạo sơ đồ mẫu (12 bàn)
@@ -824,7 +823,7 @@ export default function QrCodesGeneratorPage() {
                 <div className="space-y-1 w-full border-b border-slate-100 pb-2.5">
                   <div className="flex items-center justify-between gap-1 w-full">
                     <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-[#124a36] text-[10px] font-extrabold uppercase tracking-wider">
-                      <Sparkles className="w-3 h-3 text-amber-500 shrink-0" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 inline-block" />
                       <span className="truncate max-w-[110px]">{restaurant.name || 'Bếp Nhà'}</span>
                     </div>
 

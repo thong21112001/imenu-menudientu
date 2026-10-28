@@ -22,7 +22,6 @@ import {
   Plus,
   Check,
   KeyRound,
-  Sparkles,
   ArrowRightLeft,
   Loader2,
   ArrowRight,
@@ -805,7 +804,7 @@ export default function StaffPage() {
     switch (roleCode) {
       case 'SYSTEM_ADMIN':
       case 'system_admin':
-        return <Badge variant="brand">👑 Super Admin</Badge>;
+        return <Badge variant="brand">Super Admin</Badge>;
       case 'RESTAURANT_ADMIN':
       case 'restaurant_admin':
         return <Badge variant="brand">{roleName}</Badge>;
@@ -964,7 +963,7 @@ export default function StaffPage() {
                       loadStaffData({ page: 1, restaurantId: val });
                     }}
                     options={[
-                      { value: 'all', label: '🌐 Tất cả nhà hàng' },
+                      { value: 'all', label: 'Tất cả nhà hàng' },
                       ...restaurants.map((r) => ({
                         value: (r._id || r.id) as string,
                         label: r.name,
@@ -1018,7 +1017,7 @@ export default function StaffPage() {
                       loadStaffData({ page: 1, branchId: val });
                     }}
                     options={[
-                      { value: 'all', label: '🏢 Tất cả chi nhánh' },
+                      { value: 'all', label: 'Tất cả chi nhánh' },
                       ...branches.map((b) => ({
                         value: (b._id || b.id) as string,
                         label: b.name,
@@ -1796,7 +1795,7 @@ export default function StaffPage() {
                     onClick={() => setUserPassword(generateSecurePassword())}
                     className="text-[11px] font-bold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer transition-colors"
                   >
-                    <Sparkles className="w-3 h-3" /> Tạo ngẫu nhiên
+                    <RefreshCw className="w-3 h-3" /> Tạo ngẫu nhiên
                   </button>
                 </div>
                 <input
@@ -2023,7 +2022,7 @@ export default function StaffPage() {
             </div>
 
             <p className="text-[11px] text-slate-500 leading-relaxed bg-amber-50/70 border border-amber-200/60 p-3 rounded-xl">
-              💡 <strong>Lưu ý:</strong> Sau khi điều chuyển, nhân sự sẽ được cấp lại phạm vi dữ liệu theo chi
+              <strong>Lưu ý:</strong> Sau khi điều chuyển, nhân sự sẽ được cấp lại phạm vi dữ liệu theo chi
               nhánh mới. Chỉ Chủ nhà hàng/Trụ sở chính mới có quyền thực hiện thao tác này.
             </p>
 

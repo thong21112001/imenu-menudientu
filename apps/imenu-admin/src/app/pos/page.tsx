@@ -28,7 +28,6 @@ import {
   Minus,
   Trash2,
   Send,
-  Sparkles,
   AlertCircle,
   Tag,
   Check,
@@ -650,7 +649,7 @@ export default function PosTerminalPage() {
       {/* Top Banner: Branch Status & Info */}
       <div className="bg-white rounded-lg p-4 border border-slate-200/80 shadow-sm flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#176044] to-[#1f7e59] flex items-center justify-center text-white shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-sm">
             <Store className="w-5 h-5" />
           </div>
           <div>
@@ -915,7 +914,7 @@ export default function PosTerminalPage() {
                   : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80 hover:border-slate-300'
               }`}
             >
-              <span>🍽️ Tất cả</span>
+              <span>Tất cả</span>
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                   selectedCategoryId === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
@@ -1025,7 +1024,7 @@ export default function PosTerminalPage() {
                       {/* Popular Badge */}
                       {isAvailable && item.isPopular && !hasDeal && (
                         <div className="absolute top-1.5 left-1.5 bg-amber-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-sm flex items-center gap-0.5">
-                          <Sparkles className="w-2.5 h-2.5" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
                           <span>Bán chạy</span>
                         </div>
                       )}

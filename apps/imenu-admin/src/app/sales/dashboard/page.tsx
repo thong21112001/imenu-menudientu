@@ -12,7 +12,6 @@ import {
   Copy,
   Check,
   ExternalLink,
-  Sparkles,
   Award,
   Calendar,
   CreditCard,
@@ -99,7 +98,7 @@ export default function SalesDashboardPage() {
         <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-400/15 border border-amber-400/30 text-amber-300 text-xs font-extrabold">
-              <Sparkles className="w-3.5 h-3.5" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
               <span>Cổng Đối Tác Kinh Doanh iMenu (Partner Portal)</span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">

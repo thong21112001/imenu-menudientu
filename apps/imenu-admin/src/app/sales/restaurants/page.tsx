@@ -18,7 +18,6 @@ import {
   X,
   Phone,
   MapPin,
-  Sparkles,
   ShieldCheck,
 } from 'lucide-react';
 

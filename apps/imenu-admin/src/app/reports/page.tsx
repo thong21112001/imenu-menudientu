@@ -629,7 +629,7 @@ export default function ReportsPage() {
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              🔥 Top Món Bán Chạy ({topItemsList.length})
+              Top Món Bán Chạy ({topItemsList.length})
             </button>
             <button
               onClick={() => setActiveTab('categories')}
@@ -639,7 +639,7 @@ export default function ReportsPage() {
                   : 'text-slate-500 hover:text-slate-800'
               }`}
             >
-              📂 Cơ Cấu Danh Mục ({categoriesList.length})
+              Cơ Cấu Danh Mục ({categoriesList.length})
             </button>
             {branchBreakdownList.length > 0 && (
               <button
@@ -650,7 +650,7 @@ export default function ReportsPage() {
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                🏢 Phân Bổ Chi Nhánh ({branchBreakdownList.length})
+                Phân Bổ Chi Nhánh ({branchBreakdownList.length})
               </button>
             )}
           </div>

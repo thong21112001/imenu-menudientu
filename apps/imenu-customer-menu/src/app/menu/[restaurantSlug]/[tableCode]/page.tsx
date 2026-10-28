@@ -43,7 +43,6 @@ import {
   Receipt,
   PhoneCall,
   CheckCircle2,
-  Sparkles,
   X,
   ChevronRight,
   Send,
@@ -1800,7 +1799,7 @@ export default function CustomerTableMenuPage() {
               <div className="p-4 rounded-2xl bg-[#edf6f1] border border-[#d9ece3] space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-800 font-bold flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-[#176044]" /> Tiến độ hoàn thành:
+                    <CheckCircle2 className="w-4 h-4 text-emerald-700" /> Tiến độ hoàn thành:
                   </span>
                   <span className="text-sm font-black text-[#176044]">{progressPercent}%</span>
                 </div>

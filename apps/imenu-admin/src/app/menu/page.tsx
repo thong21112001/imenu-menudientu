@@ -18,7 +18,6 @@ import {
   EyeOff,
   Loader2,
   RefreshCw,
-  Sparkles,
   Store,
 } from 'lucide-react';
 
@@ -704,13 +703,13 @@ export default function MenuManagementPage() {
           {menuItems.length === 0 && (
             <Button
               variant="outline"
-              icon={isSeeding ? <Loader2 className="w-4 h-4 animate-spin text-[#176044]" /> : <Sparkles className="w-4 h-4 text-amber-600" />}
+              icon={isSeeding ? <Loader2 className="w-4 h-4 animate-spin text-[#176044]" /> : <UtensilsCrossed className="w-4 h-4 text-emerald-700" />}
               onClick={handleSeedDefaultMenu}
               disabled={isSeeding}
               className="cursor-pointer bg-amber-50/80 hover:bg-amber-100 border-amber-300 text-amber-900 shadow-2xs w-full sm:w-auto text-xs py-2 px-2.5 justify-center font-bold col-span-2 sm:col-span-1"
               title="Khởi tạo nhanh thực đơn mẫu gồm 4 danh mục và 8 món ăn"
             >
-              {isSeeding ? 'Đang nạp...' : '✨ Khởi tạo thực đơn mẫu'}
+              {isSeeding ? 'Đang nạp...' : 'Khởi tạo thực đơn mẫu'}
             </Button>
           )}
 
@@ -898,7 +897,7 @@ export default function MenuManagementPage() {
         /* ================= EMPTY RESTAURANT ONBOARDING HERO CARD ================= */
         <div className="bg-linear-to-b from-white to-slate-50/60 p-8 sm:p-12 text-center rounded-xl border border-dashed border-[#176044]/30 shadow-xs space-y-5">
           <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto rounded-xl bg-emerald-50 border border-emerald-100/80 text-[#176044] flex items-center justify-center shadow-xs">
-            <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-[#176044]" />
+            <UtensilsCrossed className="w-8 h-8 sm:w-10 sm:h-10 text-[#176044]" />
           </div>
           <div className="max-w-md mx-auto space-y-2">
             <h3 className="text-lg sm:text-xl font-black text-slate-800">
@@ -913,10 +912,10 @@ export default function MenuManagementPage() {
               variant="primary"
               onClick={handleSeedDefaultMenu}
               disabled={isSeeding}
-              icon={isSeeding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              icon={isSeeding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
               className="cursor-pointer bg-[#124a36] hover:bg-[#09271d] text-white font-bold px-4 py-2.5 shadow-sm text-xs sm:text-sm"
             >
-              {isSeeding ? 'Đang nạp thực đơn mẫu...' : '✨ Khởi tạo thực đơn mẫu'}
+              {isSeeding ? 'Đang nạp thực đơn mẫu...' : 'Khởi tạo thực đơn mẫu'}
             </Button>
             <Button
               variant="secondary"

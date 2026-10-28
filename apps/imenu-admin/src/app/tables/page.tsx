@@ -27,7 +27,6 @@ import {
   X,
   ExternalLink,
   RefreshCw,
-  Sparkles,
   CreditCard,
   QrCode,
   Banknote,
@@ -427,7 +426,7 @@ export default function TablesMapPage() {
               variant="outline"
               size="sm"
               onClick={handleSeedDefaultTables}
-              icon={<Sparkles className="w-4 h-4 text-emerald-600" />}
+              icon={<Plus className="w-4 h-4 text-emerald-400" />}
             >
               Tạo sơ đồ mẫu
             </Button>
@@ -484,7 +483,7 @@ export default function TablesMapPage() {
             <Button
               onClick={handleSeedDefaultTables}
               className="bg-[#124a36] hover:bg-[#176044] text-white shadow-md text-xs font-bold"
-              icon={<Sparkles className="w-4 h-4 text-emerald-300" />}
+              icon={<Plus className="w-4 h-4 text-emerald-400" />}
             >
               Khởi tạo sơ đồ mẫu (12 bàn)
             </Button>
@@ -547,7 +546,7 @@ export default function TablesMapPage() {
                     <strong className="text-sm font-extrabold text-slate-900 block">{tbl.name}</strong>
                     {hasReadyDish && (
                       <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md bg-emerald-600 text-white text-[9px] font-black animate-pulse shadow-sm">
-                        <span>🍽️</span> Món đã xong
+                        Món đã xong
                       </span>
                     )}
                   </div>

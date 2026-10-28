@@ -9,7 +9,6 @@ import {
   QrCode,
   ArrowRight,
   Store,
-  Sparkles,
   Clock,
   Utensils,
   Receipt,
@@ -94,7 +93,7 @@ export default function CustomerIndexPage() {
 
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#124a36]/10 border border-[#124a36]/20 text-[#124a36] text-xs sm:text-sm font-bold shadow-xs">
-              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 inline-block" />
               <span>Hệ Thống Thực Đơn Điện Tử & Gọi Món Tại Bàn</span>
             </div>
           </div>
@@ -118,7 +117,7 @@ export default function CustomerIndexPage() {
             <div className="md:col-span-7 space-y-3">
               <div className="flex items-center gap-2.5 flex-wrap">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-400 text-slate-950 text-[11px] sm:text-xs font-black tracking-wide uppercase shadow-sm">
-                  <Sparkles className="w-3.5 h-3.5 fill-current" />
+                  <CheckCircle2 className="w-3.5 h-3.5" />
                   Gợi Ý Thử Nghiệm Nhanh
                 </span>
                 <span className="text-[11px] sm:text-xs text-emerald-300 font-semibold flex items-center gap-1.5 bg-white/10 px-2.5 py-1 rounded-full backdrop-blur-sm border border-white/10">
