@@ -85,7 +85,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
                 {formatCurrencyVND(item.price)}
               </span>
               {item.originalPrice && item.originalPrice > item.price && (
-                <span className="text-[10px] text-[#8C8D82] line-through font-medium">
+                <span className="text-[10px] text-[#77776C] line-through font-medium">
                   {formatCurrencyVND(item.originalPrice)}
                 </span>
               )}
@@ -165,7 +165,7 @@ export const FoodCard: React.FC<FoodCardProps> = ({
               {formatCurrencyVND(item.price)}
             </span>
             {item.originalPrice && item.originalPrice > item.price && (
-              <span className="text-[10px] text-[#8C8D82] line-through font-medium">
+              <span className="text-[10px] text-[#77776C] line-through font-medium">
                 {formatCurrencyVND(item.originalPrice)}
               </span>
             )}
