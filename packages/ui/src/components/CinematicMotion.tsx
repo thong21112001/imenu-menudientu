@@ -117,6 +117,7 @@ export interface CinematicSectionProps extends React.HTMLAttributes<HTMLElement>
   sceneTitle?: string;
   sceneSubtitle?: string;
   className?: string;
+  alignHeader?: 'center' | 'start';
   threshold?: number;
   once?: boolean;
 }
@@ -127,6 +128,7 @@ export const CinematicSection: React.FC<CinematicSectionProps> = ({
   sceneTitle,
   sceneSubtitle,
   className = '',
+  alignHeader = 'center',
   threshold = 0.12,
   once = true,
   style = {},
@@ -160,6 +162,8 @@ export const CinematicSection: React.FC<CinematicSectionProps> = ({
     return () => observer.disconnect();
   }, [threshold, once]);
 
+  const isCentered = alignHeader === 'center';
+
   return (
     <section
       ref={sectionRef}
@@ -175,23 +179,31 @@ export const CinematicSection: React.FC<CinematicSectionProps> = ({
       {...props}
     >
       {(sceneBadge || sceneTitle || sceneSubtitle) && (
-        <div className="mb-6 flex flex-col items-start gap-1.5">
-          {sceneBadge && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold tracking-wider uppercase bg-[#dfa035]/15 text-[#dfa035] border border-[#dfa035]/30">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#dfa035] animate-pulse" />
-              {sceneBadge}
-            </span>
-          )}
-          {sceneTitle && (
-            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight text-current">
-              {sceneTitle}
-            </h2>
-          )}
-          {sceneSubtitle && (
-            <p className="text-xs sm:text-sm text-current opacity-70 max-w-2xl">
-              {sceneSubtitle}
-            </p>
-          )}
+        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-8 sm:mb-12">
+          <div
+            className={`flex flex-col gap-2.5 ${
+              isCentered
+                ? 'items-center text-center max-w-3xl mx-auto'
+                : 'items-start text-left'
+            }`}
+          >
+            {sceneBadge && (
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[11px] font-semibold tracking-wider uppercase bg-[#dfa035]/15 text-[#dfa035] border border-[#dfa035]/30 shadow-xs mx-auto">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#dfa035] animate-pulse" />
+                {sceneBadge}
+              </span>
+            )}
+            {sceneTitle && (
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-[#f5f1e8] text-center">
+                {sceneTitle}
+              </h2>
+            )}
+            {sceneSubtitle && (
+              <p className="text-xs sm:text-sm text-[#98a69e] leading-relaxed max-w-2xl mx-auto text-center">
+                {sceneSubtitle}
+              </p>
+            )}
+          </div>
         </div>
       )}
       {children}
