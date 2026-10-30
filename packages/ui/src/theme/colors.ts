@@ -68,5 +68,18 @@ export const colors = {
     payment: '#ef4444',
     reserved: '#3b82f6',
     cooking: '#8b5cf6',
+  },
+  // Premium Editorial F&B 2026 Palette
+  fnb: {
+    canvas: '#FAF7F0',
+    surface: '#FFFFFF',
+    primary: '#244B3C',
+    primaryDark: '#17382D',
+    secondary: '#647B62',
+    accent: '#C2542E',
+    highlight: '#E9B84C',
+    textMain: '#282923',
+    textMuted: '#5F6055',
+    border: '#E8E4DA',
   }
 };

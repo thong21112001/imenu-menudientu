@@ -3,8 +3,8 @@
 import React from 'react';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'amber';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'amber' | 'fnb-primary';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   isLoading?: boolean;
   icon?: React.ReactNode;
 }
@@ -22,16 +22,19 @@ export const Button: React.FC<ButtonProps> = ({
   const baseStyles =
     'inline-flex items-center justify-center font-medium rounded-md transition-colors duration-150 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
 
-  // Strict 4px Grid Sizing: sm (32px), md (36px), lg (40px)
+  // Strict 4px Grid Sizing: sm (32px), md (36px), lg (40px), xl (44px)
   const sizeStyles = {
     sm: 'h-8 px-3 text-xs gap-1.5',
     md: 'h-9 px-3.5 text-xs sm:text-sm gap-2',
     lg: 'h-10 px-4 text-sm gap-2',
+    xl: 'h-11 px-5 text-sm gap-2 min-h-[44px]',
   }[size];
 
   const variantStyles = {
     primary:
       'bg-emerald-700 hover:bg-emerald-800 text-white border border-emerald-800/80 shadow-2xs active:bg-emerald-900',
+    'fnb-primary':
+      'bg-[#244B3C] hover:bg-[#17382D] text-white border border-[#17382D] focus-visible:ring-[#244B3C]/20 shadow-2xs active:bg-[#122c23]',
     secondary:
       'bg-zinc-100 hover:bg-zinc-200/80 text-zinc-900 border border-zinc-200 active:bg-zinc-200',
     outline:
@@ -47,6 +50,7 @@ export const Button: React.FC<ButtonProps> = ({
   // Inline fallback style ensures button NEVER renders with invisible white background or white text on white
   const fallbackStyles: React.CSSProperties = {
     ...(variant === 'primary' && { backgroundColor: '#047857', color: '#ffffff' }),
+    ...(variant === 'fnb-primary' && { backgroundColor: '#244B3C', color: '#ffffff' }),
     ...(variant === 'secondary' && { backgroundColor: '#f4f4f5', color: '#18181b' }),
     ...(variant === 'outline' && { backgroundColor: '#ffffff', color: '#18181b' }),
     ...(variant === 'amber' && { backgroundColor: '#f59e0b', color: '#09090b' }),
