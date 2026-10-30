@@ -1,18 +1,14 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { Button, Badge } from '@imenu/ui';
+import { Button, Tilt3DCard } from '@imenu/ui';
 import {
   Smartphone,
   Laptop,
   ChefHat,
-  QrCode,
   CheckCircle2,
-  Clock,
   Printer,
   ArrowRight,
-  ExternalLink,
   Plus,
   Minus,
   RotateCcw,
@@ -25,7 +21,6 @@ import {
 } from 'lucide-react';
 
 const MENU_DEMO_URL = process.env.NEXT_PUBLIC_MENU_DEMO_URL || 'http://localhost:3005/menu/bep-nha/ban-08';
-const ADMIN_DEMO_URL = process.env.NEXT_PUBLIC_ADMIN_DEMO_URL || 'http://localhost:3003';
 
 /* =========================================================================
  * KHỐI A: HERO SYSTEM PREVIEW (Mô phỏng 3 màn hình sống động tại Hero)
@@ -69,24 +64,27 @@ export const HeroSystemPreview: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-lg mx-auto bg-white rounded-xl shadow-md border border-zinc-200/90 overflow-hidden flex flex-col transition-colors">
+    <Tilt3DCard
+      maxTilt={8}
+      className="w-full max-w-lg mx-auto bg-[#121b17] rounded-3xl shadow-2xl border border-[#23322b] overflow-hidden flex flex-col transition-all"
+    >
       {/* Tab Switcher Header */}
-      <div className="bg-zinc-900 p-2.5 flex items-center justify-between border-b border-zinc-800">
+      <div className="bg-[#0b110f] p-3 flex items-center justify-between border-b border-[#23322b]">
         <div className="flex items-center gap-1.5 px-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-zinc-700 inline-block" />
-          <span className="w-2.5 h-2.5 rounded-full bg-zinc-700 inline-block" />
-          <span className="w-2.5 h-2.5 rounded-full bg-zinc-700 inline-block" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#c85a32] inline-block" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#dfa035] inline-block" />
+          <span className="w-2.5 h-2.5 rounded-full bg-[#34a87a] inline-block" />
         </div>
 
         {/* 3 Tabs */}
-        <div className="flex items-center gap-1 bg-zinc-800/80 p-0.5 rounded-lg border border-zinc-700/50">
+        <div className="flex items-center gap-1 bg-[#16211c] p-1 rounded-xl border border-[#23322b]">
           <button
             type="button"
             onClick={() => setActiveTab('customer-qr')}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'customer-qr'
-                ? 'bg-emerald-700 text-white'
-                : 'text-zinc-300 hover:text-white'
+                ? 'bg-[#dfa035] text-[#080c0a] shadow-xs'
+                : 'text-[#98a69e] hover:text-[#ede7da]'
             }`}
           >
             <Smartphone className="w-3.5 h-3.5 stroke-[1.5]" />
@@ -96,10 +94,10 @@ export const HeroSystemPreview: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('pos-cashier')}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'pos-cashier'
-                ? 'bg-emerald-700 text-white'
-                : 'text-zinc-300 hover:text-white'
+                ? 'bg-[#dfa035] text-[#080c0a] shadow-xs'
+                : 'text-[#98a69e] hover:text-[#ede7da]'
             }`}
           >
             <Laptop className="w-3.5 h-3.5 stroke-[1.5]" />
@@ -109,10 +107,10 @@ export const HeroSystemPreview: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveTab('kitchen-kds')}
-            className={`px-2.5 py-1 rounded-md text-[11px] font-medium flex items-center gap-1.5 transition-colors cursor-pointer ${
+            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === 'kitchen-kds'
-                ? 'bg-emerald-700 text-white'
-                : 'text-zinc-300 hover:text-white'
+                ? 'bg-[#dfa035] text-[#080c0a] shadow-xs'
+                : 'text-[#98a69e] hover:text-[#ede7da]'
             }`}
           >
             <ChefHat className="w-3.5 h-3.5 stroke-[1.5]" />
@@ -122,67 +120,67 @@ export const HeroSystemPreview: React.FC = () => {
       </div>
 
       {/* Screen Container */}
-      <div className="p-4 sm:p-5 bg-zinc-50 min-h-[380px] flex flex-col justify-between">
+      <div className="p-4 sm:p-5 bg-[#16211c] min-h-[380px] flex flex-col justify-between text-[#ede7da]">
         {/* ================= TAB 1: KHÁCH QUÉT QR (BÀN 08) ================= */}
         {activeTab === 'customer-qr' && (
           <div className="space-y-3 animate-fadeIn">
-            <div className="flex items-center justify-between pb-2.5 border-b border-zinc-200/80">
+            <div className="flex items-center justify-between pb-2.5 border-b border-[#23322b]">
               <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-emerald-700 text-white grid place-items-center font-bold text-xs">
+                <div className="w-7 h-7 rounded-lg bg-[#245846] text-[#ede7da] grid place-items-center font-bold text-xs border border-[#34a87a]/40">
                   iM
                 </div>
                 <div>
-                  <h4 className="text-xs font-semibold text-zinc-900 leading-none">Bếp Nhà Restaurant</h4>
-                  <span className="text-[10px] text-emerald-800 font-medium flex items-center gap-1 mt-0.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-600" />
-                    Bàn 08 · Trực tuyến
+                  <h4 className="text-xs font-bold text-[#ede7da] leading-none">Bếp Nhà Restaurant</h4>
+                  <span className="text-[10px] text-[#34a87a] font-medium flex items-center gap-1 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#34a87a] animate-pulse" />
+                    Bàn 08 · Trực tuyến 3D
                   </span>
                 </div>
               </div>
-              <span className="text-[10px] bg-zinc-200 text-zinc-700 px-2 py-0.5 rounded font-mono font-medium">
+              <span className="text-[10px] bg-[#121b17] text-[#dfa035] border border-[#dfa035]/30 px-2 py-0.5 rounded font-mono font-medium">
                 ORD-2610-08
               </span>
             </div>
 
             {/* Simulated Ordered Items */}
             <div className="space-y-2">
-              <div className="p-2.5 rounded-md bg-white border border-zinc-200/80 flex items-center justify-between text-xs">
+              <div className="p-2.5 rounded-xl bg-[#121b17] border border-[#26352e] flex items-center justify-between text-xs">
                 <div>
-                  <span className="font-medium text-zinc-900 block">2x Phở Bò Tái Lăn</span>
-                  <small className="text-[10px] text-zinc-500">Ít hành lá, thêm bò tái</small>
+                  <span className="font-bold text-[#ede7da] block">2x Phở Bò Tái Lăn</span>
+                  <small className="text-[10px] text-[#98a69e]">Ít hành lá, thêm bò tái</small>
                 </div>
-                <span className="font-mono text-zinc-900 font-medium tabular-nums">150.000₫</span>
+                <span className="font-mono text-[#dfa035] font-bold tabular-nums">150.000₫</span>
               </div>
 
-              <div className="p-2.5 rounded-md bg-white border border-zinc-200/80 flex items-center justify-between text-xs">
+              <div className="p-2.5 rounded-xl bg-[#121b17] border border-[#26352e] flex items-center justify-between text-xs">
                 <div>
-                  <span className="font-medium text-zinc-900 block">1x Trà Đào Cam Sả</span>
-                  <small className="text-[10px] text-zinc-500">70% đường, 100% đá</small>
+                  <span className="font-bold text-[#ede7da] block">1x Trà Đào Cam Sả</span>
+                  <small className="text-[10px] text-[#98a69e]">70% đường, 100% đá</small>
                 </div>
-                <span className="font-mono text-zinc-900 font-medium tabular-nums">39.000₫</span>
+                <span className="font-mono text-[#dfa035] font-bold tabular-nums">39.000₫</span>
               </div>
 
-              <div className="p-2.5 rounded-md bg-white border border-zinc-200/80 flex items-center justify-between text-xs">
+              <div className="p-2.5 rounded-xl bg-[#121b17] border border-[#26352e] flex items-center justify-between text-xs">
                 <div>
-                  <span className="font-medium text-zinc-900 block">1x Cà Phê Muối Xứ Huế</span>
-                  <small className="text-[10px] text-zinc-500">Ít đá, béo vừa</small>
+                  <span className="font-bold text-[#ede7da] block">1x Cà Phê Muối Xứ Huế</span>
+                  <small className="text-[10px] text-[#98a69e]">Ít đá, béo vừa</small>
                 </div>
-                <span className="font-mono text-zinc-900 font-medium tabular-nums">35.000₫</span>
+                <span className="font-mono text-[#dfa035] font-bold tabular-nums">35.000₫</span>
               </div>
             </div>
 
             {/* Order Progress / Total */}
-            <div className="p-3 bg-zinc-900 text-white rounded-md space-y-2">
+            <div className="p-3 bg-[#0e1613] text-[#ede7da] rounded-xl border border-[#26352e] space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="text-zinc-400">Tổng tạm tính (3 món)</span>
-                <span className="font-mono text-white font-semibold text-sm tabular-nums">224.000₫</span>
+                <span className="text-[#98a69e]">Tổng tạm tính (3 món)</span>
+                <span className="font-mono text-[#dfa035] font-bold text-sm tabular-nums">224.000₫</span>
               </div>
-              <div className="flex items-center justify-between text-[11px] pt-1 border-t border-zinc-800">
-                <span className="text-emerald-400 font-medium flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 stroke-[1.5]" />
+              <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-[#23322b]">
+                <span className="text-[#34a87a] font-medium flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#34a87a] stroke-[1.5]" />
                   Đang chế biến tại bếp
                 </span>
-                <span className="font-mono text-zinc-400 tabular-nums">SLA: {formatTimer(cookingSeconds)}</span>
+                <span className="font-mono text-[#98a69e] tabular-nums">SLA: {formatTimer(cookingSeconds)}</span>
               </div>
             </div>
           </div>
@@ -193,188 +191,158 @@ export const HeroSystemPreview: React.FC = () => {
           <div className="space-y-3 animate-fadeIn">
             <div className="grid grid-cols-4 gap-2">
               {/* Bàn 08 */}
-              <div className="p-2 rounded-md bg-emerald-50 border border-emerald-300 text-center space-y-1">
-                <span className="text-[10px] font-semibold text-emerald-900 block">BÀN 08</span>
-                <span className="text-[11px] font-semibold text-emerald-800 block">
+              <div className="p-2 rounded-xl bg-[#245846]/20 border border-[#245846]/50 text-center space-y-1">
+                <span className="text-[10px] font-bold text-[#dfa035] block">BÀN 08</span>
+                <span className="text-[11px] font-bold text-[#34a87a] block">
                   {table08Status === 'waiting' ? 'Chờ duyệt' : 'Đang phục vụ'}
                 </span>
-                <span className="text-[10px] text-emerald-900 font-mono font-medium block tabular-nums">224.000₫</span>
               </div>
 
-              {/* Bàn 09 */}
-              <div className="p-2 rounded-md bg-white border border-zinc-200 text-center space-y-1">
-                <span className="text-[10px] font-semibold text-zinc-400 block">BÀN 09</span>
-                <span className="text-[11px] font-medium text-zinc-700 block">Trống</span>
-                <span className="text-[10px] text-zinc-500 font-medium block">Sẵn sàng</span>
+              {/* Bàn 02 */}
+              <div className="p-2 rounded-xl bg-[#121b17] border border-[#26352e] text-center space-y-1">
+                <span className="text-[10px] font-bold text-[#98a69e] block">BÀN 02</span>
+                <span className="text-[11px] font-medium text-[#738379] block">Bàn trống</span>
               </div>
 
-              {/* Bàn 12 */}
-              <div className="p-2 rounded-md bg-blue-50 border border-blue-200 text-center space-y-1">
-                <span className="text-[10px] font-semibold text-blue-900 block">BÀN 12</span>
-                <span className="text-[11px] font-medium text-blue-800 block">Gọi VietQR</span>
-                <span className="text-[10px] text-blue-900 font-mono font-medium block tabular-nums">540.000₫</span>
+              {/* Bàn 05 */}
+              <div className="p-2 rounded-xl bg-[#121b17] border border-[#26352e] text-center space-y-1">
+                <span className="text-[10px] font-bold text-[#98a69e] block">BÀN 05</span>
+                <span className="text-[11px] font-medium text-[#dfa035] block">Chờ bill</span>
               </div>
 
-              {/* Bàn 15 */}
-              <div className="p-2 rounded-md bg-zinc-100 border border-zinc-200 text-center space-y-1">
-                <span className="text-[10px] font-semibold text-zinc-400 block">BÀN 15</span>
-                <span className="text-[11px] font-medium text-zinc-600 block">Đang dọn</span>
-                <span className="text-[10px] text-zinc-400 block">3m trước</span>
+              {/* Bàn VIP */}
+              <div className="p-2 rounded-xl bg-[#121b17] border border-[#26352e] text-center space-y-1">
+                <span className="text-[10px] font-bold text-[#98a69e] block">BÀN VIP</span>
+                <span className="text-[11px] font-medium text-[#34a87a] block">Đang dùng</span>
               </div>
             </div>
 
-            {/* Action Bar for Table 08 */}
-            <div className="p-3 bg-white rounded-md border border-zinc-200/90 space-y-2">
-              <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-zinc-900 flex items-center gap-1.5">
-                  <QrCode className="w-3.5 h-3.5 text-emerald-700 stroke-[1.5]" />
-                  Đơn QR Bàn 08 (3 món · 224.000₫)
-                </span>
-                <span className="text-[10px] font-mono text-zinc-400">Đợt 1</span>
-              </div>
-
-              <div className="flex gap-2">
+            {/* Quick Actions */}
+            <div className="flex items-center gap-2 pt-1">
+              {table08Status === 'waiting' ? (
                 <button
                   type="button"
-                  onClick={() => setTable08Status(table08Status === 'waiting' ? 'approved' : 'waiting')}
-                  className={`flex-1 h-8 px-3 rounded-md text-xs font-medium transition-colors flex items-center justify-center gap-1.5 cursor-pointer ${
-                    table08Status === 'waiting'
-                      ? 'bg-emerald-700 hover:bg-emerald-800 text-white'
-                      : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-                  }`}
+                  onClick={() => setTable08Status('approved')}
+                  className="flex-1 py-2 px-3 rounded-lg bg-[#245846] hover:bg-[#1a4133] text-[#ede7da] text-xs font-bold transition-colors cursor-pointer shadow-xs border border-[#2e7a60]/40"
                 >
-                  <Check className="w-3.5 h-3.5 stroke-[2]" />
-                  {table08Status === 'waiting' ? 'Duyệt chuyển Bếp KDS' : 'Đã duyệt (Bấm hủy)'}
+                  Xác nhận Bàn 08 gọi món ✓
                 </button>
-
+              ) : (
                 <button
                   type="button"
-                  onClick={() => setShowBillPreview(!showBillPreview)}
-                  className="h-8 px-3 rounded-md border border-zinc-200 hover:bg-zinc-50 text-zinc-700 text-xs font-medium flex items-center gap-1 cursor-pointer"
+                  onClick={() => setTable08Status('waiting')}
+                  className="flex-1 py-2 px-3 rounded-lg bg-[#18231e] border border-[#26352e] text-xs text-[#98a69e] hover:text-[#ede7da] transition-colors cursor-pointer"
                 >
-                  <Printer className="w-3.5 h-3.5 text-zinc-500 stroke-[1.5]" />
-                  <span>{showBillPreview ? 'Ẩn bill' : 'In 80mm'}</span>
+                  Đã duyệt (Chạm để hoàn tác)
                 </button>
-              </div>
+              )}
+
+              <button
+                type="button"
+                onClick={() => setShowBillPreview(!showBillPreview)}
+                className="py-2 px-3 rounded-lg bg-[#18231e] hover:bg-[#202e27] text-[#dfa035] border border-[#26352e] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
+              >
+                <Printer className="w-3.5 h-3.5 text-[#dfa035]" />
+                <span>In 80mm</span>
+              </button>
             </div>
 
-            {/* Receipt Preview */}
+            {/* Warm-Parchment (#efeae0) 80mm Receipt Preview Prop */}
             {showBillPreview && (
-              <div className="p-3 bg-white rounded-md border border-dashed border-zinc-300 font-mono text-[10px] text-zinc-800 space-y-1 animate-fadeIn">
-                <div className="text-center font-bold">--- BẾP NHÀ RESTAURANT ---</div>
-                <div className="text-center text-[9px] text-zinc-500">PHIẾU TẠM TÍNH - BÀN 08</div>
-                <div className="border-b border-dashed border-zinc-200 my-1" />
-                <div className="flex justify-between">
-                  <span>Phở Tái Lăn (x2)</span>
-                  <span className="tabular-nums">150.000</span>
+              <div className="p-3.5 bg-[#efeae0] text-[#111815] border border-[#ded8cb] rounded-xl shadow-2xl space-y-1.5 font-mono text-[11px] animate-scaleUp">
+                <div className="text-center font-bold pb-1 border-b border-dashed border-[#c5cec7]">
+                  HÓA ĐƠN BÀN 08 (80mm TỰ ĐỘNG)
                 </div>
-                <div className="flex justify-between">
-                  <span>Trà Đào Cam Sả (x1)</span>
-                  <span className="tabular-nums">39.000</span>
+                <div className="flex justify-between text-[10px] text-[#718077]">
+                  <span>2x Phở Bò Tái Lăn</span>
+                  <span>150.000₫</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>Cà Phê Muối (x1)</span>
-                  <span className="tabular-nums">35.000</span>
+                <div className="flex justify-between text-[10px] text-[#718077]">
+                  <span>1x Trà Đào Cam Sả</span>
+                  <span>39.000₫</span>
                 </div>
-                <div className="border-b border-dashed border-zinc-200 my-1" />
-                <div className="flex justify-between font-bold text-xs">
+                <div className="flex justify-between text-[10px] text-[#718077]">
+                  <span>1x Cà Phê Muối</span>
+                  <span>35.000₫</span>
+                </div>
+                <div className="pt-1.5 border-t border-dashed border-[#c5cec7] flex justify-between font-bold text-xs">
                   <span>TỔNG CỘNG:</span>
-                  <span className="text-emerald-700 tabular-nums">224.000 VNĐ</span>
+                  <span className="text-[#245846]">224.000₫</span>
+                </div>
+                <div className="text-center text-[9px] text-[#718077] pt-1">
+                  Mã VietQR: IMENU-ORD-2610-08
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {/* ================= TAB 3: MÀN HÌNH BẾP KDS ================= */}
+        {/* ================= TAB 3: BẾP KDS ================= */}
         {activeTab === 'kitchen-kds' && (
-          <div className="space-y-3 animate-fadeIn bg-zinc-900 -m-4 sm:-m-5 p-4 sm:p-5 rounded-b-xl text-white">
-            <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-              <div className="flex items-center gap-2">
-                <ChefHat className="w-4 h-4 text-emerald-400 stroke-[1.5]" />
-                <span className="text-xs font-semibold text-white tracking-wide">MÀN HÌNH BẾP (KDS CHUẨN FIFO)</span>
-              </div>
-              <span className="text-[10px] font-mono text-emerald-400 bg-zinc-800 px-2 py-0.5 rounded border border-zinc-700">
-                Live 10:15:30
+          <div className="space-y-3 animate-fadeIn">
+            <div className="flex items-center justify-between pb-2 border-b border-[#23322b]">
+              <span className="text-xs font-bold text-[#ede7da] flex items-center gap-1.5">
+                <ChefHat className="w-4 h-4 text-[#dfa035]" />
+                Màn hình Bếp KDS · Chạm để báo xong
+              </span>
+              <span className="text-[10px] bg-[#245846]/20 text-[#34a87a] border border-[#245846]/40 px-2 py-0.5 rounded font-mono font-medium">
+                Chuẩn FIFO
               </span>
             </div>
 
-            {/* KDS Ticket Card */}
-            <div className="bg-zinc-800/80 rounded-md border border-zinc-700 p-3 space-y-2.5">
-              <div className="flex items-center justify-between border-b border-zinc-700 pb-2">
-                <div className="flex items-center gap-2">
-                  <span className="px-1.5 py-0.5 rounded bg-amber-500 text-zinc-950 text-xs font-bold">
-                    BÀN 08
-                  </span>
-                  <span className="text-[11px] text-zinc-300 font-medium">Đợt 1</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-xs font-mono font-medium text-zinc-300 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-700">
-                  <Clock className="w-3 h-3 text-zinc-400 stroke-[1.5]" />
-                  <span className="tabular-nums">SLA: {formatTimer(cookingSeconds)}</span>
-                </div>
-              </div>
-
-              {/* Items checklist */}
-              <div className="space-y-1.5">
-                {kdsItems.map((item) => (
-                  <div
-                    key={item.id}
-                    onClick={() => toggleKdsItem(item.id)}
-                    className={`p-2 rounded border flex items-center justify-between cursor-pointer transition-colors ${
-                      item.done
-                        ? 'bg-zinc-900/60 border-zinc-700 text-zinc-400'
-                        : 'bg-zinc-900 border-zinc-700 text-white'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2">
-                      <div
-                        className={`w-3.5 h-3.5 rounded mt-0.5 grid place-items-center shrink-0 text-[10px] ${
-                          item.done ? 'bg-emerald-600 text-white' : 'border border-zinc-600'
-                        }`}
-                      >
-                        {item.done && <Check className="w-2.5 h-2.5 stroke-[2.5]" />}
-                      </div>
-                      <div>
-                        <span className={`text-xs font-medium block ${item.done ? 'line-through opacity-70' : ''}`}>
-                          {item.name}
-                        </span>
-                        <span className="text-[10px] text-zinc-400 block">{item.note}</span>
-                      </div>
-                    </div>
-
+            <div className="space-y-2">
+              {kdsItems.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => toggleKdsItem(item.id)}
+                  className={`p-2.5 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
+                    item.done
+                      ? 'bg-[#121b17] border-[#245846]/50 opacity-80'
+                      : 'bg-[#18231e] border-[#dfa035]/40 hover:border-[#dfa035]'
+                  }`}
+                >
+                  <div className="min-w-0 pr-2">
                     <span
-                      className={`text-[10px] font-medium px-2 py-0.5 rounded border ${
-                        item.done
-                          ? 'bg-zinc-800 text-emerald-400 border-zinc-700'
-                          : 'bg-zinc-800 text-zinc-300 border-zinc-600'
+                      className={`text-xs font-bold block ${
+                        item.done ? 'line-through text-[#738379]' : 'text-[#ede7da]'
                       }`}
                     >
-                      {item.done ? 'Xong ✓' : 'Báo xong'}
+                      {item.name}
                     </span>
+                    <small className="text-[10px] text-[#98a69e] block">{item.note}</small>
                   </div>
-                ))}
-              </div>
+                  <span
+                    className={`text-[10px] font-bold px-2 py-1 rounded-lg shrink-0 ${
+                      item.done
+                        ? 'bg-[#245846]/30 text-[#34a87a] border border-[#245846]/50'
+                        : 'bg-[#dfa035] text-[#080c0a]'
+                    }`}
+                  >
+                    {item.done ? 'Xong ✓' : 'Báo xong'}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )}
 
         {/* Footer Quick Caption */}
-        <div className="pt-3 border-t border-zinc-200/80 flex items-center justify-between text-xs text-zinc-500">
-          <span className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-800">
-            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 stroke-[1.5]" />
+        <div className="pt-3 border-t border-[#23322b] flex items-center justify-between text-xs text-[#98a69e]">
+          <span className="flex items-center gap-1.5 text-[11px] font-medium text-[#34a87a]">
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#34a87a] stroke-[1.5]" />
             Đồng bộ thời gian thực qua WebSocket
           </span>
           <a
             href={MENU_DEMO_URL}
             target="_blank"
             rel="noreferrer"
-            className="text-[11px] font-medium text-zinc-700 hover:text-zinc-950 hover:underline flex items-center gap-1"
+            className="text-[11px] font-medium text-[#dfa035] hover:text-[#f2b54e] hover:underline flex items-center gap-1"
           >
             Mở thử nghiệm thật ↗
           </a>
         </div>
       </div>
-    </div>
+    </Tilt3DCard>
   );
 };
 
@@ -471,35 +439,35 @@ export const InteractiveTableMenuSimulator: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+    <div className="w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center text-[#ede7da]">
       {/* Left Column: Context & Explanations */}
       <div className="lg:col-span-5 space-y-5">
-        <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-zinc-100 border border-zinc-200 text-xs font-semibold text-zinc-800">
-          <Smartphone className="w-3.5 h-3.5 text-emerald-700 stroke-[1.5]" />
-          Mô phỏng trải nghiệm thực khách
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#151f1b] border border-[#26352e] text-xs font-bold text-[#dfa035]">
+          <Smartphone className="w-3.5 h-3.5 text-[#dfa035] stroke-[1.5]" />
+          Mô phỏng trải nghiệm thực khách 3D
         </div>
 
-        <h3 className="text-2xl font-bold text-zinc-900 tracking-tight leading-snug">
-          Thử chạm chọn món ngay trên màn hình bên cạnh
+        <h3 className="text-2xl sm:text-3xl font-black text-[#ede7da] tracking-tight leading-snug">
+          Thử chạm chọn món ngay trên mô phỏng di động
         </h3>
 
-        <p className="text-xs sm:text-sm text-zinc-600 leading-relaxed">
+        <p className="text-xs sm:text-sm text-[#98a69e] leading-relaxed">
           Khách hàng tại quán chỉ cần quét camera điện thoại vào mã QR dán trên bàn ăn để mở menu web app mượt mà, không yêu cầu cài đặt ứng dụng.
         </p>
 
-        <div className="space-y-2.5 pt-1 text-xs font-medium text-zinc-700">
+        <div className="space-y-3 pt-1 text-xs font-medium text-[#98a69e]">
           <div className="flex items-start gap-2.5">
-            <Check className="w-4 h-4 text-emerald-600 stroke-[2] shrink-0 mt-0.5" />
+            <Check className="w-4 h-4 text-[#34a87a] stroke-[2] shrink-0 mt-0.5" />
             <span>Không cần tải app — Mở ngay bằng Camera iPhone, Android hoặc ứng dụng Zalo.</span>
           </div>
 
           <div className="flex items-start gap-2.5">
-            <Check className="w-4 h-4 text-emerald-600 stroke-[2] shrink-0 mt-0.5" />
+            <Check className="w-4 h-4 text-[#34a87a] stroke-[2] shrink-0 mt-0.5" />
             <span>Tự do tùy biến — Chọn size, đá, đường, topping và ghi chú riêng cho đầu bếp.</span>
           </div>
 
           <div className="flex items-start gap-2.5">
-            <Check className="w-4 h-4 text-emerald-600 stroke-[2] shrink-0 mt-0.5" />
+            <Check className="w-4 h-4 text-[#34a87a] stroke-[2] shrink-0 mt-0.5" />
             <span>Gọi thêm nhiều đợt (Rounds) — Thoải mái gọi thêm món mới mà không sợ trùng đơn.</span>
           </div>
         </div>
@@ -512,51 +480,54 @@ export const InteractiveTableMenuSimulator: React.FC = () => {
             rel="noreferrer"
             className="w-full sm:w-auto"
           >
-            <Button variant="primary" size="md" className="w-full font-medium text-xs">
+            <Button variant="amber" size="md" className="w-full font-bold text-xs shadow-md">
               Mở Demo Menu Bàn 08 (Trang Thật) <ArrowRight className="w-3.5 h-3.5 ml-1.5 stroke-[1.5]" />
             </Button>
           </a>
           <button
             type="button"
             onClick={handleReset}
-            className="w-full sm:w-auto h-9 px-3.5 rounded-md border border-zinc-200 hover:bg-zinc-100 text-xs font-medium text-zinc-700 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+            className="w-full sm:w-auto h-9 px-3.5 rounded-lg border border-[#26352e] hover:bg-[#18231e] text-xs font-medium text-[#98a69e] hover:text-[#ede7da] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-zinc-500 stroke-[1.5]" />
+            <RotateCcw className="w-3.5 h-3.5 text-[#738379] stroke-[1.5]" />
             Đặt lại mô phỏng
           </button>
         </div>
       </div>
 
-      {/* Right Column: Phone Mockup Container */}
+      {/* Right Column: Phone Mockup Container inside Tilt3DCard */}
       <div className="lg:col-span-7 flex justify-center">
-        <div className="w-full max-w-[360px] bg-white rounded-xl p-3 shadow-md border border-zinc-200/90 relative">
+        <Tilt3DCard
+          maxTilt={10}
+          className="w-full max-w-[370px] bg-[#121b17] rounded-3xl p-3.5 shadow-2xl border border-[#26352e] relative"
+        >
           {/* Phone Screen Inner */}
-          <div className="bg-zinc-50 rounded-lg p-3.5 border border-zinc-200/80 min-h-[480px] flex flex-col justify-between overflow-hidden relative">
+          <div className="bg-[#16211c] rounded-2xl p-4 border border-[#23322b] min-h-[480px] flex flex-col justify-between overflow-hidden relative">
             <div>
-              <div className="flex items-center justify-between pb-2.5 border-b border-zinc-200">
+              <div className="flex items-center justify-between pb-2.5 border-b border-[#23322b]">
                 <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded bg-emerald-800 text-white grid place-items-center font-bold text-xs">
+                  <div className="w-7 h-7 rounded-lg bg-[#245846] text-[#ede7da] grid place-items-center font-bold text-xs border border-[#34a87a]/40">
                     BN
                   </div>
                   <div>
-                    <h4 className="text-xs font-semibold text-zinc-900">Bếp Nhà Restaurant</h4>
-                    <span className="text-[10px] text-emerald-800 font-medium block">Bàn 08 · Menu Điện Tử</span>
+                    <h4 className="text-xs font-bold text-[#ede7da]">Bếp Nhà Restaurant</h4>
+                    <span className="text-[10px] text-[#34a87a] font-medium block">Bàn 08 · Menu Điện Tử</span>
                   </div>
                 </div>
-                <span className="text-[10px] bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded font-medium border border-zinc-200">
+                <span className="text-[10px] bg-[#121b17] text-[#dfa035] px-2 py-0.5 rounded-full font-medium border border-[#26352e]">
                   WiFi: BepNha_5G
                 </span>
               </div>
 
               {/* Category Filter Pills */}
-              <div className="flex items-center gap-1.5 py-2 overflow-x-auto no-scrollbar">
+              <div className="flex items-center gap-1.5 py-2.5 overflow-x-auto no-scrollbar">
                 <button
                   type="button"
                   onClick={() => setActiveCategory('all')}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium shrink-0 transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 transition-colors cursor-pointer ${
                     activeCategory === 'all'
-                      ? 'bg-emerald-700 text-white'
-                      : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100'
+                      ? 'bg-[#dfa035] text-[#080c0a]'
+                      : 'bg-[#121b17] text-[#98a69e] border border-[#26352e] hover:bg-[#18231e]'
                   }`}
                 >
                   Tất cả ({demoItems.length})
@@ -564,10 +535,10 @@ export const InteractiveTableMenuSimulator: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveCategory('main')}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium shrink-0 transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 transition-colors cursor-pointer ${
                     activeCategory === 'main'
-                      ? 'bg-emerald-700 text-white'
-                      : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100'
+                      ? 'bg-[#dfa035] text-[#080c0a]'
+                      : 'bg-[#121b17] text-[#98a69e] border border-[#26352e] hover:bg-[#18231e]'
                   }`}
                 >
                   Món chính
@@ -575,10 +546,10 @@ export const InteractiveTableMenuSimulator: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveCategory('appetizer')}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium shrink-0 transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 transition-colors cursor-pointer ${
                     activeCategory === 'appetizer'
-                      ? 'bg-emerald-700 text-white'
-                      : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100'
+                      ? 'bg-[#dfa035] text-[#080c0a]'
+                      : 'bg-[#121b17] text-[#98a69e] border border-[#26352e] hover:bg-[#18231e]'
                   }`}
                 >
                   Ăn kèm
@@ -586,10 +557,10 @@ export const InteractiveTableMenuSimulator: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setActiveCategory('drinks')}
-                  className={`px-2.5 py-1 rounded-md text-[11px] font-medium shrink-0 transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 transition-colors cursor-pointer ${
                     activeCategory === 'drinks'
-                      ? 'bg-emerald-700 text-white'
-                      : 'bg-white text-zinc-600 border border-zinc-200 hover:bg-zinc-100'
+                      ? 'bg-[#dfa035] text-[#080c0a]'
+                      : 'bg-[#121b17] text-[#98a69e] border border-[#26352e] hover:bg-[#18231e]'
                   }`}
                 >
                   Đồ uống
@@ -604,20 +575,20 @@ export const InteractiveTableMenuSimulator: React.FC = () => {
                   return (
                     <div
                       key={item.id}
-                      className={`p-2 rounded-md bg-white border transition-colors ${
-                        qty > 0 ? 'border-emerald-500' : 'border-zinc-200'
+                      className={`p-2 rounded-xl bg-[#121b17] border transition-colors ${
+                        qty > 0 ? 'border-[#dfa035]/60 bg-[#14201a]' : 'border-[#26352e]'
                       }`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex items-start gap-2 min-w-0">
-                          <div className="w-8 h-8 rounded bg-zinc-100 text-zinc-700 grid place-items-center shrink-0 border border-zinc-200">
+                          <div className="w-8 h-8 rounded-lg bg-[#18231e] text-[#ede7da] grid place-items-center shrink-0 border border-[#26352e]">
                             <Icon className="w-4 h-4 stroke-[1.5]" />
                           </div>
                           <div className="min-w-0">
-                            <h5 className="text-xs font-semibold text-zinc-900 truncate">
+                            <h5 className="text-xs font-bold text-[#ede7da] truncate">
                               {item.name}
                             </h5>
-                            <span className="font-mono text-xs text-emerald-700 font-medium tabular-nums block">
+                            <span className="font-mono text-xs text-[#dfa035] font-bold tabular-nums block">
                               {formatVND(item.price)}
                             </span>
                           </div>
@@ -630,11 +601,11 @@ export const InteractiveTableMenuSimulator: React.FC = () => {
                               <button
                                 type="button"
                                 onClick={() => updateQuantity(item.id, -1)}
-                                className="w-6 h-6 rounded bg-zinc-100 hover:bg-zinc-200 text-zinc-700 grid place-items-center cursor-pointer text-xs"
+                                className="w-6 h-6 rounded bg-[#18231e] hover:bg-[#202e27] text-[#ede7da] grid place-items-center cursor-pointer text-xs border border-[#26352e]"
                               >
                                 <Minus className="w-3 h-3 stroke-[2]" />
                               </button>
-                              <span className="w-4 text-center font-mono text-xs font-semibold text-zinc-900 tabular-nums">
+                              <span className="w-4 text-center font-mono text-xs font-bold text-[#ede7da] tabular-nums">
                                 {qty}
                               </span>
                             </>
@@ -642,7 +613,7 @@ export const InteractiveTableMenuSimulator: React.FC = () => {
                           <button
                             type="button"
                             onClick={() => updateQuantity(item.id, 1)}
-                            className="w-6 h-6 rounded bg-emerald-700 hover:bg-emerald-800 text-white grid place-items-center cursor-pointer text-xs"
+                            className="w-6 h-6 rounded bg-[#245846] hover:bg-[#1a4133] text-[#ede7da] grid place-items-center cursor-pointer text-xs border border-[#2e7a60]/40"
                           >
                             <Plus className="w-3 h-3 stroke-[2]" />
                           </button>
@@ -655,29 +626,29 @@ export const InteractiveTableMenuSimulator: React.FC = () => {
             </div>
 
             {/* Bottom Checkout Action */}
-            <div className="pt-2 border-t border-zinc-200 mt-2">
+            <div className="pt-2 border-t border-[#23322b] mt-2">
               {isOrderSubmitted ? (
-                <div className="p-2.5 rounded-md bg-emerald-50 border border-emerald-200 text-center space-y-1 animate-fadeIn">
-                  <span className="text-xs font-semibold text-emerald-900 block flex items-center justify-center gap-1.5">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 stroke-[1.5]" />
+                <div className="p-3 rounded-xl bg-[#245846]/20 border border-[#245846]/50 text-center space-y-1 animate-fadeIn">
+                  <span className="text-xs font-bold text-[#34a87a] block flex items-center justify-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-[#34a87a] stroke-[1.5]" />
                     Đã gửi đơn vào Bếp thành công!
                   </span>
-                  <span className="text-[10px] text-emerald-700">Đơn hàng đang được đầu bếp tiếp nhận chế biến</span>
+                  <span className="text-[10px] text-[#98a69e]">Đơn hàng đang được đầu bếp tiếp nhận chế biến</span>
                 </div>
               ) : (
                 <div className="flex items-center justify-between gap-2">
                   <div>
-                    <span className="text-[10px] text-zinc-500 block">Tổng cộng ({totalQuantity} món)</span>
-                    <span className="font-mono text-xs font-bold text-zinc-900 tabular-nums">
+                    <span className="text-[10px] text-[#98a69e] block">Tổng cộng ({totalQuantity} món)</span>
+                    <span className="font-mono text-xs font-bold text-[#dfa035] tabular-nums">
                       {formatVND(totalPrice)}
                     </span>
                   </div>
                   <Button
-                    variant="primary"
+                    variant="amber"
                     size="sm"
                     disabled={totalQuantity === 0}
                     onClick={handleSendOrder}
-                    className="h-8 px-3 text-xs font-medium"
+                    className="h-8 px-3 text-xs font-bold cursor-pointer"
                   >
                     Gửi gọi món tới Bếp
                   </Button>
@@ -685,7 +656,7 @@ export const InteractiveTableMenuSimulator: React.FC = () => {
               )}
             </div>
           </div>
-        </div>
+        </Tilt3DCard>
       </div>
     </div>
   );

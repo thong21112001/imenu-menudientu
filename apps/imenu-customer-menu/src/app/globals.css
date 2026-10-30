@@ -2,28 +2,37 @@
 @source "../../../../packages/ui";
 @source "../../../../packages/ui/src/**/*.{ts,tsx}";
 
+@theme {
+  --color-white: #efeae0;
+  --color-slate-50: #e5dfd3;
+}
+
 @layer base {
   :root {
-    --green-950: #09271d;
-    --green-900: #0d3628;
-    --green-800: #124a36;
-    --green-700: #176044;
-    --green-600: #1f7a55;
-    --green-100: #ddf4e8;
-    --cream: #FAF7F0;
-    --amber: #eab867;
+    --green-950: #08110e;
+    --green-900: #0d1a15;
+    --green-800: #142a22;
+    --green-700: #245846;
+    --green-600: #2e7a60;
+    --green-100: #d5ede2;
+    --cream: #efeae0;
+    --amber: #dfa035;
 
-    /* Premium Editorial F&B 2026 Design Tokens */
-    --fnb-canvas: #FAF7F0;
-    --fnb-surface: #FFFFFF;
-    --fnb-primary: #244B3C;
-    --fnb-primary-dark: #17382D;
-    --fnb-secondary: #647B62;
-    --fnb-accent: #C2542E;
-    --fnb-highlight: #E9B84C;
-    --fnb-text-main: #282923;
-    --fnb-text-muted: #5F6055;
-    --fnb-border: #E8E4DA;
+    /* Low-Glare Warm-Dark & Muted Cinema Stone Tokens */
+    --fnb-canvas: #0d1310;
+    --fnb-surface: #151f1b;
+    --fnb-primary: #245846;
+    --fnb-primary-dark: #17382d;
+    --fnb-secondary: #547264;
+    --fnb-accent: #c85a32;
+    --fnb-highlight: #dfa035;
+    --fnb-text-main: #ede7da;
+    --fnb-text-muted: #98a69e;
+    --fnb-border: #26352e;
+    --fnb-parchment: #efeae0;
+
+    --color-white: #efeae0;
+    --color-slate-50: #e5dfd3;
   }
 
   html, body {
@@ -32,8 +41,8 @@
   }
 
   body {
-    background-color: var(--fnb-canvas, #FAF7F0);
-    color: var(--fnb-text-main, #282923);
+    background-color: var(--fnb-canvas, #0d1310);
+    color: var(--fnb-text-main, #ede7da);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-tap-highlight-color: transparent;
   }
@@ -54,6 +63,24 @@
   to { transform: scale(1); opacity: 1; }
 }
 
+@keyframes tagSwing {
+  0% { transform: rotate(0deg); }
+  25% { transform: rotate(3.5deg); }
+  50% { transform: rotate(-2.5deg); }
+  75% { transform: rotate(1.5deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+
+@keyframes receiptSlideOut {
+  0% { transform: translateY(32px) scale(0.97); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.2s ease-out forwards;
 }
@@ -66,6 +93,25 @@
   animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+.animate-tagSwing {
+  transform-origin: top left;
+  animation: tagSwing 4s ease-in-out infinite;
+}
+
+.animate-floatSlow {
+  animation: floatSlow 5s ease-in-out infinite;
+}
+
+.animate-receiptPrint {
+  animation: receiptSlideOut 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.cinematic-card-surface {
+  background: linear-gradient(145deg, #18231e 0%, #121a16 100%);
+  border: 1px solid #26352e;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(223, 160, 53, 0.08);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   ::before,
@@ -76,4 +122,3 @@
     scroll-behavior: auto !important;
   }
 }
-

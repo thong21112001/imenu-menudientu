@@ -21,7 +21,7 @@ import {
   SelectedOption,
   CustomerCreateOrderItemPayload,
 } from '@imenu/types';
-import { Button, Toast } from '@imenu/ui';
+import { Button, Toast, CinematicScrollProgress, AmbientCinematicStage, Tilt3DCard } from '@imenu/ui';
 import {
   Loader2,
   AlertCircle,
@@ -97,6 +97,13 @@ export default function CustomerTableMenuPage() {
   const [paidSummary, setPaidSummary] = useState<any>(null);
   const [effectiveBankAccount, setEffectiveBankAccount] = useState<any>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [scrollY, setScrollY] = useState<number>(0);
+
+  useEffect(() => {
+    const handleScroll = () => setScrollY(window.scrollY);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Active Order state
   const [activeOrder, setActiveOrder] = useState<Order | null>(null);
@@ -830,10 +837,10 @@ export default function CustomerTableMenuPage() {
   // Render Loading Screen
   if (isLoadingContext) {
     return (
-      <div className="max-w-lg mx-auto bg-[#FAF7F0] min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <Loader2 className="w-10 h-10 text-[#244B3C] animate-spin mb-4" />
-        <h2 className="text-base font-bold text-[#282923]">Đang nạp thực đơn bàn...</h2>
-        <p className="text-xs text-[#5F6055] mt-1">
+      <div className="max-w-lg mx-auto bg-[#0d1310] text-[#ede7da] min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <Loader2 className="w-10 h-10 text-[#dfa035] animate-spin mb-4" />
+        <h2 className="text-base font-bold text-[#ede7da]">Đang nạp thực đơn bàn...</h2>
+        <p className="text-xs text-[#98a69e] mt-1">
           Hệ thống đang xác thực mã QR bàn {tableCode || ''} và kết nối máy chủ
         </p>
       </div>
@@ -843,16 +850,16 @@ export default function CustomerTableMenuPage() {
   // Render Error Screen
   if (contextError || !restaurant || !table) {
     return (
-      <div className="max-w-lg mx-auto bg-[#FAF7F0] min-h-screen flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mb-4 shadow-xs">
+      <div className="max-w-lg mx-auto bg-[#0d1310] text-[#ede7da] min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-16 h-16 rounded-full bg-[#c85a32]/20 text-[#c85a32] flex items-center justify-center mb-4 shadow-xs border border-[#c85a32]/30">
           <AlertCircle className="w-8 h-8" />
         </div>
-        <h2 className="text-lg font-bold text-[#282923]">Không thể tải thực đơn</h2>
-        <p className="text-xs text-[#5F6055] max-w-xs mt-2 leading-relaxed">
+        <h2 className="text-lg font-bold text-[#ede7da]">Không thể tải thực đơn</h2>
+        <p className="text-xs text-[#98a69e] max-w-xs mt-2 leading-relaxed">
           {contextError || 'Không xác định được bàn hoặc thông tin nhà hàng.'}
         </p>
         <Button
-          variant="fnb-primary"
+          variant="amber"
           onClick={() => loadData()}
           className="mt-6 flex items-center gap-2 px-6 py-2.5 text-xs font-semibold shadow-md cursor-pointer"
         >
@@ -863,7 +870,10 @@ export default function CustomerTableMenuPage() {
   }
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden bg-[#FAF7F0] min-h-screen pb-28 lg:pb-16 selection:bg-[#E9F0EC] selection:text-[#17382D]">
+    <div className="w-full max-w-full overflow-x-hidden bg-[#0d1310] text-[#ede7da] min-h-screen pb-28 lg:pb-16 selection:bg-[#dfa035]/30 selection:text-[#ede7da] relative">
+      <CinematicScrollProgress />
+      <AmbientCinematicStage variant="dark" />
+
       {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
 
       {/* ================= 1. HEADER ================= */}
@@ -889,7 +899,40 @@ export default function CustomerTableMenuPage() {
       />
 
       {/* ================= 3. MAIN RESPONSIVE LAYOUT (12 COLS) ================= */}
-      <div className="max-w-lg sm:max-w-3xl lg:max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4">
+      <div className="max-w-lg sm:max-w-3xl lg:max-w-6xl mx-auto px-3 sm:px-4 lg:px-6 py-4 relative z-10">
+        
+        {/* Scroll-Linked 3D Culinary Story Banner */}
+        <div className="mb-4 overflow-hidden rounded-2xl border border-[#26352e] bg-gradient-to-r from-[#121c17] via-[#16231d] to-[#121c17] p-4 sm:p-5 shadow-xl relative">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#dfa035]/15 text-[#dfa035] text-[10px] font-bold uppercase tracking-wider border border-[#dfa035]/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#dfa035] animate-pulse" />
+                Cảnh Mâm Chiều · Thực Đơn Chiều Sâu 3D
+              </div>
+              <h2 className="text-sm sm:text-base font-bold text-[#ede7da] tracking-tight">
+                Hương Vị Bản Sắc · Công Nghệ Gọi Món Tức Thì
+              </h2>
+              <p className="text-[11px] text-[#98a69e] max-w-xl">
+                Chạm chọn món trực tiếp từ thực đơn điện tử, bếp nhận thông báo chế biến theo thời gian thực.
+              </p>
+            </div>
+
+            {/* Scroll-Linked Subtly Rotating 3D Badge */}
+            <div
+              className="hidden sm:flex shrink-0 items-center justify-center w-16 h-16 rounded-2xl bg-[#182620] border border-[#dfa035]/40 shadow-lg text-center transform-gpu will-change-transform"
+              style={{
+                transform: `perspective(600px) rotateY(${Math.min(24, Math.max(-24, (scrollY - 150) * 0.12)).toFixed(1)}deg) rotateX(${-Math.min(12, Math.max(-12, (scrollY - 150) * 0.06)).toFixed(1)}deg)`,
+                transformStyle: 'preserve-3d',
+              }}
+            >
+              <div style={{ transform: 'translateZ(10px)' }}>
+                <span className="block text-[10px] font-black uppercase text-[#dfa035]">3D</span>
+                <span className="block text-[9px] font-bold text-[#ede7da]">iMenu</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="lg:grid lg:grid-cols-12 lg:gap-6 lg:items-start">
           
           {/* CỘT TRÁI (8 COLS TRÊN DESKTOP): Danh mục & Lưới món ăn */}
@@ -908,7 +951,7 @@ export default function CustomerTableMenuPage() {
             {/* Dishes Grid */}
             <main className="space-y-3">
               {filteredItems.length === 0 ? (
-                <div className="text-center py-16 text-[#8C8D82] space-y-2 bg-white rounded-2xl border border-[#E8E4DA] p-8 shadow-xs">
+                <div className="text-center py-16 text-[#98a69e] space-y-2 bg-[#151f1b] rounded-2xl border border-[#26352e] p-8 shadow-xs">
                   <p className="text-sm font-medium">Không tìm thấy món ăn phù hợp</p>
                   <Button
                     variant="outline"
@@ -942,41 +985,41 @@ export default function CustomerTableMenuPage() {
           {/* CỘT PHẢI (4 COLS TRÊN DESKTOP, STICKY): LIVE TABLE SIDEBAR */}
           <aside className="hidden lg:block lg:col-span-4 lg:sticky lg:top-20 space-y-4">
             {/* 1. Table Info Card */}
-            <div className="bg-white rounded-2xl p-4 border border-[#E8E4DA] shadow-xs flex items-center justify-between">
+            <div className="cinematic-card-surface rounded-2xl p-4 shadow-xs flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#E9F0EC] border border-[#C5DACF] text-[#244B3C] grid place-items-center font-bold">
+                <div className="w-10 h-10 rounded-xl bg-[#245846]/20 border border-[#245846]/40 text-[#34a87a] grid place-items-center font-bold">
                   <Utensils className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-sm font-black text-[#282923]">{table.name}</div>
-                  <div className="text-xs text-[#5F6055]">{table.zoneName || 'Khu vực chung'}</div>
+                  <div className="text-sm font-bold text-[#ede7da]">{table.name}</div>
+                  <div className="text-xs text-[#98a69e]">{table.zoneName || 'Khu vực chung'}</div>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setIsCallStaffOpen(true)}
-                className="px-3 py-1.5 rounded-xl bg-[#FAF7F0] hover:bg-[#E9F0EC] border border-[#E8E4DA] text-[#244B3C] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                className="px-3 py-1.5 rounded-xl bg-[#dfa035]/15 hover:bg-[#dfa035]/25 border border-[#dfa035]/40 text-[#dfa035] text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer shadow-xs"
               >
-                <PhoneCall className="w-3.5 h-3.5 text-[#244B3C]" />
+                <PhoneCall className="w-3.5 h-3.5 text-[#dfa035]" />
                 <span>Gọi phục vụ</span>
               </button>
             </div>
 
             {/* 2. Live Cart Section */}
             {cart.length > 0 && (
-              <div className="bg-white rounded-2xl p-4 border-2 border-[#244B3C]/40 shadow-sm space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-[#F0ECE3]">
+              <div className="cinematic-card-surface rounded-2xl p-4 border-2 border-[#dfa035]/40 shadow-xl space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[#26352e]">
                   <div className="flex items-center gap-2">
-                    <ShoppingCart className="w-4 h-4 text-[#244B3C]" />
-                    <strong className="text-sm font-black text-[#282923]">Giỏ món ăn</strong>
-                    <span className="px-2 py-0.5 rounded-full bg-[#E9B84C] text-[#17382D] text-xs font-black">
+                    <ShoppingCart className="w-4 h-4 text-[#dfa035]" />
+                    <strong className="text-sm font-bold text-[#ede7da]">Giỏ món ăn</strong>
+                    <span className="px-2 py-0.5 rounded-full bg-[#dfa035] text-[#080c0a] text-xs font-black">
                       {totalCartCount}
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={() => setCart([])}
-                    className="text-xs text-rose-500 hover:text-rose-700 flex items-center gap-1 font-semibold cursor-pointer"
+                    className="text-xs text-[#c85a32] hover:text-[#e06b40] flex items-center gap-1 font-semibold cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Xóa hết</span>
@@ -988,23 +1031,23 @@ export default function CustomerTableMenuPage() {
                   {cart.map((c, idx) => (
                     <div
                       key={c.id}
-                      className="p-2.5 rounded-xl bg-[#FAF7F0] border border-[#E8E4DA] flex items-start justify-between gap-2"
+                      className="p-2.5 rounded-xl bg-[#121a16] border border-[#26352e] flex items-start justify-between gap-2"
                     >
                       <div className="min-w-0 flex-1">
-                        <strong className="text-xs font-bold text-[#282923] block truncate">
+                        <strong className="text-xs font-bold text-[#ede7da] block truncate">
                           {c.item.name}
                         </strong>
                         {c.selectedOptions.length > 0 && (
-                          <span className="text-[10px] text-[#5F6055] block truncate">
+                          <span className="text-[10px] text-[#98a69e] block truncate">
                             {c.selectedOptions.map((o) => o.valueName).join(', ')}
                           </span>
                         )}
                         {c.note && (
-                          <span className="text-[10px] text-[#C2542E] italic block">
+                          <span className="text-[10px] text-[#c85a32] italic block">
                             Ghi chú: {c.note}
                           </span>
                         )}
-                        <span className="text-xs font-black text-[#244B3C] block mt-1">
+                        <span className="text-xs font-black text-[#dfa035] block mt-1">
                           {formatCurrencyVND(c.itemTotal)}
                         </span>
                       </div>
@@ -1015,18 +1058,18 @@ export default function CustomerTableMenuPage() {
                           type="button"
                           disabled={isSubmitting}
                           onClick={() => handleCartQuantityChange(idx, -1)}
-                          className="w-6 h-6 rounded-md bg-white border border-[#E8E4DA] text-[#282923] grid place-items-center hover:bg-[#F4F1EA] active:scale-95 disabled:opacity-40 cursor-pointer shadow-2xs"
+                          className="w-6 h-6 rounded-md bg-[#18231e] border border-[#26352e] text-[#ede7da] grid place-items-center hover:bg-[#202e27] active:scale-95 disabled:opacity-40 cursor-pointer shadow-xs"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
-                        <span className="text-xs font-black text-[#282923] w-5 text-center tabular-nums">
+                        <span className="text-xs font-black text-[#ede7da] w-5 text-center tabular-nums">
                           {c.quantity}
                         </span>
                         <button
                           type="button"
                           disabled={isSubmitting || !c.item.isAvailable}
                           onClick={() => handleCartQuantityChange(idx, 1)}
-                          className="w-6 h-6 rounded-md bg-white border border-[#E8E4DA] text-[#282923] grid place-items-center hover:bg-[#F4F1EA] active:scale-95 disabled:opacity-40 cursor-pointer shadow-2xs"
+                          className="w-6 h-6 rounded-md bg-[#18231e] border border-[#26352e] text-[#ede7da] grid place-items-center hover:bg-[#202e27] active:scale-95 disabled:opacity-40 cursor-pointer shadow-xs"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -1036,16 +1079,16 @@ export default function CustomerTableMenuPage() {
                 </div>
 
                 {/* Total & Submit Button */}
-                <div className="pt-2 border-t border-[#E8E4DA] space-y-2.5">
-                  <div className="flex justify-between items-center text-xs font-bold text-[#5F6055]">
+                <div className="pt-2 border-t border-[#26352e] space-y-2.5">
+                  <div className="flex justify-between items-center text-xs font-bold text-[#98a69e]">
                     <span>Tạm tính ({totalCartCount} món):</span>
-                    <span className="text-base text-[#244B3C] font-black">
+                    <span className="text-base text-[#dfa035] font-black">
                       {formatCurrencyVND(totalCartAmount)}
                     </span>
                   </div>
 
                   <Button
-                    variant="fnb-primary"
+                    variant="amber"
                     onClick={handleSubmitOrder}
                     disabled={
                       isSubmitting ||
@@ -1071,17 +1114,17 @@ export default function CustomerTableMenuPage() {
 
             {/* 3. Live Active Order Section */}
             {activeOrder && (
-              <div className="bg-white rounded-2xl p-4 border border-[#E8E4DA] shadow-xs space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-[#F0ECE3]">
+              <div className="cinematic-card-surface rounded-2xl p-4 shadow-xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-[#26352e]">
                   <div>
-                    <div className="text-[11px] font-bold text-[#5F6055] uppercase tracking-wider">
+                    <div className="text-[11px] font-bold text-[#98a69e] uppercase tracking-wider">
                       Đơn Đang Phục Vụ
                     </div>
-                    <div className="text-xs font-mono font-black text-[#282923] mt-0.5">
+                    <div className="text-xs font-mono font-black text-[#ede7da] mt-0.5">
                       #{activeOrder.orderCode}
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#E9F0EC] text-[#244B3C] border border-[#C5DACF]">
+                  <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-[#245846]/20 text-[#34a87a] border border-[#245846]/40">
                     {activeOrder.status === 'Paid' ? 'Đã thanh toán' : 'Đang phục vụ'}
                   </span>
                 </div>
@@ -1089,17 +1132,17 @@ export default function CustomerTableMenuPage() {
                 {/* Cooking Progress Bar */}
                 <div>
                   <div className="flex justify-between items-center text-xs">
-                    <span className="text-[#5F6055] font-semibold flex items-center gap-1.5">
-                      <ChefHat className="w-3.5 h-3.5 text-[#244B3C]" />
+                    <span className="text-[#98a69e] font-semibold flex items-center gap-1.5">
+                      <ChefHat className="w-3.5 h-3.5 text-[#34a87a]" />
                       Tiến độ chế biến
                     </span>
-                    <span className="font-black text-[#244B3C] tabular-nums">
+                    <span className="font-black text-[#34a87a] tabular-nums">
                       {readyOrServedCount}/{validOrderItems.length} món xong
                     </span>
                   </div>
-                  <div className="w-full bg-[#FAF7F0] rounded-full h-2 overflow-hidden my-2 border border-[#E8E4DA]">
+                  <div className="w-full bg-[#121a16] rounded-full h-2 overflow-hidden my-2 border border-[#26352e]">
                     <div
-                      className="bg-[#10b981] h-2 rounded-full transition-all duration-500"
+                      className="bg-[#34a87a] h-2 rounded-full transition-all duration-500"
                       style={{ width: `${orderProgressPercent}%` }}
                     />
                   </div>
@@ -1115,21 +1158,21 @@ export default function CustomerTableMenuPage() {
                     return (
                       <div
                         key={idx}
-                        className="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg bg-[#FAF7F0] border border-[#E8E4DA]"
+                        className="flex items-center justify-between text-xs py-1.5 px-2 rounded-lg bg-[#121a16] border border-[#26352e]"
                       >
                         <div className="min-w-0 flex-1 pr-2 truncate">
-                          <span className="font-bold text-[#282923]">{it.name}</span>
-                          <span className="text-[#77776C] font-semibold ml-1">x{it.quantity}</span>
+                          <span className="font-bold text-[#ede7da]">{it.name}</span>
+                          <span className="text-[#98a69e] font-semibold ml-1">x{it.quantity}</span>
                         </div>
                         <span
                           className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${
                             isServed
-                              ? 'bg-slate-200 text-slate-700'
+                              ? 'bg-[#26352e] text-[#98a69e]'
                               : isReady
-                              ? 'bg-emerald-100 text-[#17382D] animate-pulse'
+                              ? 'bg-[#34a87a]/20 text-[#34a87a] border border-[#34a87a]/40 animate-pulse'
                               : isCooking
-                              ? 'bg-amber-100 text-amber-800'
-                              : 'bg-slate-100 text-slate-600'
+                              ? 'bg-[#dfa035]/20 text-[#dfa035] border border-[#dfa035]/40'
+                              : 'bg-[#18231e] text-[#98a69e]'
                           }`}
                         >
                           {isServed
@@ -1146,10 +1189,10 @@ export default function CustomerTableMenuPage() {
                 </div>
 
                 {/* Total & Action Buttons */}
-                <div className="pt-2 border-t border-[#E8E4DA] space-y-2">
-                  <div className="flex justify-between items-center text-xs font-bold text-[#5F6055]">
+                <div className="pt-2 border-t border-[#26352e] space-y-2">
+                  <div className="flex justify-between items-center text-xs font-bold text-[#98a69e]">
                     <span>Tạm tính đơn:</span>
-                    <span className="text-base text-[#C2542E] font-black">
+                    <span className="text-base text-[#dfa035] font-black">
                       {formatCurrencyVND(activeOrder.totalAmount)}
                     </span>
                   </div>
@@ -1180,13 +1223,13 @@ export default function CustomerTableMenuPage() {
 
             {/* 4. Empty State */}
             {cart.length === 0 && !activeOrder && (
-              <div className="bg-white rounded-2xl p-6 border border-[#E8E4DA] shadow-xs text-center space-y-3">
-                <div className="w-12 h-12 rounded-full bg-[#E9F0EC] text-[#244B3C] grid place-items-center mx-auto">
+              <div className="cinematic-card-surface rounded-2xl p-6 shadow-xs text-center space-y-3">
+                <div className="w-12 h-12 rounded-full bg-[#245846]/20 text-[#34a87a] grid place-items-center mx-auto border border-[#245846]/40">
                   <ShoppingBag className="w-6 h-6" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold text-[#282923]">Giỏ hàng đang trống</div>
-                  <p className="text-xs text-[#5F6055] mt-1 leading-relaxed">
+                  <div className="text-sm font-bold text-[#ede7da]">Giỏ hàng đang trống</div>
+                  <p className="text-xs text-[#98a69e] mt-1 leading-relaxed">
                     Chọn món ăn từ thực đơn bên trái để thêm vào giỏ và gửi bếp chế biến
                   </p>
                 </div>
@@ -1205,20 +1248,20 @@ export default function CustomerTableMenuPage() {
 
       {/* ================= 5. SMART FIXED BOTTOM ACTION BAR ON MOBILE / TABLET ================= */}
       {totalCartCount === 0 && activeOrder && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E8E4DA] shadow-2xl p-2 px-3 lg:hidden">
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-[#0f1714]/95 backdrop-blur-md border-t border-[#26352e] shadow-2xl p-2 px-3 lg:hidden">
           <div className="max-w-lg mx-auto grid grid-cols-3 gap-2">
             <button
               type="button"
               onClick={() => setIsTrackerOpen(true)}
-              className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#FAF7F0] hover:bg-[#E9F0EC] border border-[#E8E4DA] text-[#282923] transition-colors cursor-pointer"
+              className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#151f1b] hover:bg-[#1a2621] border border-[#26352e] text-[#ede7da] transition-colors cursor-pointer"
             >
-              <div className="flex items-center gap-1 text-[#244B3C]">
+              <div className="flex items-center gap-1 text-[#34a87a]">
                 <Clock className="w-3.5 h-3.5 animate-spin" />
                 <span className="text-xs font-black tabular-nums">
                   {readyOrServedCount}/{validOrderItems.length}
                 </span>
               </div>
-              <span className="text-[10px] text-[#5F6055] font-medium mt-0.5 truncate max-w-full">
+              <span className="text-[10px] text-[#98a69e] font-medium mt-0.5 truncate max-w-full">
                 Tiến độ món
               </span>
             </button>
@@ -1226,21 +1269,21 @@ export default function CustomerTableMenuPage() {
             <button
               type="button"
               onClick={() => setIsCallStaffOpen(true)}
-              className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#FAF7F0] hover:bg-[#E9F0EC] border border-[#E8E4DA] text-[#244B3C] transition-colors cursor-pointer"
+              className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#151f1b] hover:bg-[#1a2621] border border-[#26352e] text-[#dfa035] transition-colors cursor-pointer"
             >
-              <PhoneCall className="w-4 h-4 text-[#244B3C]" />
+              <PhoneCall className="w-4 h-4 text-[#dfa035]" />
               <span className="text-[10px] font-bold mt-0.5">Gọi nhân viên</span>
             </button>
 
             <button
               type="button"
               onClick={() => setIsPreBillOpen(true)}
-              className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#244B3C] hover:bg-[#17382D] text-white shadow-md active:scale-95 transition-all cursor-pointer"
+              className="flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-[#245846] hover:bg-[#1a4133] text-[#ede7da] shadow-md active:scale-95 transition-all cursor-pointer border border-[#2e7a60]/40"
             >
-              <div className="text-[11px] font-black text-[#E9B84C] truncate max-w-full">
+              <div className="text-[11px] font-black text-[#dfa035] truncate max-w-full">
                 {formatCurrencyVND(activeOrder.totalAmount)}
               </div>
-              <span className="text-[9px] text-[#FAF7F0]/80 font-semibold uppercase tracking-wider">
+              <span className="text-[9px] text-[#ede7da]/80 font-semibold uppercase tracking-wider">
                 Tạm tính / Bill
               </span>
             </button>
@@ -1381,19 +1424,19 @@ export default function CustomerTableMenuPage() {
 
       {/* ================= 14. QR REVOKED MODAL ================= */}
       {isQrRevoked && (
-        <div className="fixed inset-0 z-50 bg-[#17382D]/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl border border-rose-100 animate-in fade-in zoom-in-95">
-            <div className="w-16 h-16 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
+        <div className="fixed inset-0 z-50 bg-[#080c0a]/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#151f1b] rounded-3xl max-w-sm w-full p-6 text-center space-y-4 shadow-2xl border border-[#26352e] animate-in fade-in zoom-in-95 text-[#ede7da]">
+            <div className="w-16 h-16 rounded-2xl bg-[#c85a32]/20 text-[#c85a32] flex items-center justify-center mx-auto border border-[#c85a32]/40">
               <AlertCircle className="w-8 h-8" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-base font-bold text-[#282923]">Mã QR đã hết hiệu lực</h3>
-              <p className="text-xs text-[#5F6055] leading-relaxed">
+              <h3 className="text-base font-bold text-[#ede7da]">Mã QR đã hết hiệu lực</h3>
+              <p className="text-xs text-[#98a69e] leading-relaxed">
                 Mã QR tại bàn này vừa được cập nhật hoặc thu hồi. Quý khách vui lòng quét lại mã QR mới dán trên bàn để tiếp tục sử dụng thực đơn.
               </p>
             </div>
             <Button
-              variant="fnb-primary"
+              variant="amber"
               className="w-full py-2.5 font-bold cursor-pointer"
               onClick={() => window.location.reload()}
             >

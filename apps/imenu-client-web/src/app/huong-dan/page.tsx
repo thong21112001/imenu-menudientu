@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Header } from '../../components/Header';
 import { Footer } from '../../components/Footer';
-import { Button } from '@imenu/ui';
+import { Button, CinematicScrollProgress, AmbientCinematicStage } from '@imenu/ui';
 import {
   Layers,
   PlusCircle,
@@ -321,7 +321,9 @@ export default function GuidePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex flex-col selection:bg-emerald-100 selection:text-emerald-950">
+    <div className="relative min-h-screen bg-[#e4dfd4] text-[#18201c] flex flex-col selection:bg-[#dfa035]/25 selection:text-[#18201c]">
+      <CinematicScrollProgress />
+      <AmbientCinematicStage variant="muted" />
       <Header />
 
       {/* ================= HERO HEADER ================= */}

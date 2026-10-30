@@ -10,89 +10,89 @@ interface StatusChipProps {
 
 export const StatusChip: React.FC<StatusChipProps> = ({ status, size = 'md' }) => {
   let label = status;
-  let bg = 'bg-zinc-100 text-zinc-700 border-zinc-200/90';
-  let dot = 'bg-zinc-500';
+  let bg = 'bg-[#ded8cb] text-[#2c3b34] border-[#c8c0b0]';
+  let dot = 'bg-[#738379]';
 
   switch (status) {
     // Table Statuses
     case 'Available':
       label = 'Bàn trống';
-      bg = 'bg-emerald-50 text-emerald-800 border-emerald-200/80';
-      dot = 'bg-emerald-600';
+      bg = 'bg-[#34a87a]/15 text-[#1f7050] border-[#34a87a]/30';
+      dot = 'bg-[#34a87a]';
       break;
     case 'Occupied':
       label = 'Đang dùng';
-      bg = 'bg-amber-50 text-amber-900 border-amber-200/80';
-      dot = 'bg-amber-600';
+      bg = 'bg-[#dfa035]/15 text-[#b87c1c] border-[#dfa035]/35';
+      dot = 'bg-[#dfa035]';
       break;
     case 'PaymentRequested':
       label = 'Chờ thanh toán';
-      bg = 'bg-rose-50 text-rose-900 border-rose-200/80';
-      dot = 'bg-rose-600';
+      bg = 'bg-[#c85a32]/15 text-[#a64522] border-[#c85a32]/30';
+      dot = 'bg-[#c85a32]';
       break;
     case 'Reserved':
       label = 'Đã đặt trước';
-      bg = 'bg-blue-50 text-blue-800 border-blue-200/80';
-      dot = 'bg-blue-600';
+      bg = 'bg-[#4a7bb0]/15 text-[#2d5784] border-[#4a7bb0]/30';
+      dot = 'bg-[#4a7bb0]';
       break;
     case 'Cleaning':
       label = 'Đang dọn dẹp';
-      bg = 'bg-purple-50 text-purple-800 border-purple-200/80';
-      dot = 'bg-purple-600';
+      bg = 'bg-[#906fc4]/15 text-[#6c48a3] border-[#906fc4]/30';
+      dot = 'bg-[#906fc4]';
       break;
 
     // Order Statuses
     case 'WaitingConfirmation':
       label = 'Chờ xác nhận';
-      bg = 'bg-amber-50 text-amber-900 border-amber-200/80';
-      dot = 'bg-amber-600';
+      bg = 'bg-[#dfa035]/15 text-[#b87c1c] border-[#dfa035]/35';
+      dot = 'bg-[#dfa035]';
       break;
     case 'Confirmed':
       label = 'Đã nhận đơn';
-      bg = 'bg-blue-50 text-blue-800 border-blue-200/80';
-      dot = 'bg-blue-600';
+      bg = 'bg-[#4a7bb0]/15 text-[#2d5784] border-[#4a7bb0]/30';
+      dot = 'bg-[#4a7bb0]';
       break;
     case 'Preparing':
       label = 'Bếp đang nấu';
-      bg = 'bg-purple-50 text-purple-900 border-purple-200/80';
-      dot = 'bg-purple-600';
+      bg = 'bg-[#906fc4]/15 text-[#6c48a3] border-[#906fc4]/30';
+      dot = 'bg-[#906fc4]';
       break;
     case 'Ready':
       label = 'Món sẵn sàng';
-      bg = 'bg-teal-50 text-teal-800 border-teal-200/80';
-      dot = 'bg-teal-600';
+      bg = 'bg-[#2e9e73]/15 text-[#1a6e4e] border-[#2e9e73]/30';
+      dot = 'bg-[#2e9e73]';
       break;
     case 'Served':
       label = 'Đã phục vụ';
-      bg = 'bg-zinc-100 text-zinc-700 border-zinc-200/90';
-      dot = 'bg-zinc-500';
+      bg = 'bg-[#ded8cb] text-[#2c3b34] border-[#c8c0b0]';
+      dot = 'bg-[#738379]';
       break;
     case 'Paid':
       label = 'Đã thanh toán';
-      bg = 'bg-emerald-50 text-emerald-900 border-emerald-200/80';
-      dot = 'bg-emerald-600';
+      bg = 'bg-[#34a87a]/15 text-[#1f7050] border-[#34a87a]/30';
+      dot = 'bg-[#34a87a]';
       break;
     case 'Cancelled':
       label = 'Đã hủy';
-      bg = 'bg-rose-50 text-rose-800 border-rose-200/80';
-      dot = 'bg-rose-600';
+      bg = 'bg-[#c85a32]/15 text-[#a64522] border-[#c85a32]/30';
+      dot = 'bg-[#c85a32]';
       break;
 
     // Branch Statuses
     case 'ACTIVE':
       label = 'Đang hoạt động';
-      bg = 'bg-emerald-50 text-emerald-900 border-emerald-200/80';
-      dot = 'bg-emerald-600';
+      bg = 'bg-[#34a87a]/15 text-[#1f7050] border-[#34a87a]/30';
+      dot = 'bg-[#34a87a]';
       break;
     case 'TEMPORARILY_CLOSED':
       label = 'Tạm đóng cửa';
-      bg = 'bg-amber-50 text-amber-900 border-amber-200/80';
-      dot = 'bg-amber-600';
+      bg = 'bg-[#dfa035]/15 text-[#b87c1c] border-[#dfa035]/35';
+      dot = 'bg-[#dfa035]';
       break;
     case 'INACTIVE':
       label = 'Ngừng hoạt động';
-      bg = 'bg-zinc-100 text-zinc-600 border-zinc-200/90';
-      dot = 'bg-zinc-400';
+      bg = 'bg-[#ded8cb] text-[#4a5b52] border-[#c8c0b0]';
+      dot = 'bg-[#9aa89f]';
       break;
   }
 

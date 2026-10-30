@@ -21,13 +21,13 @@ export const FoodImageFallback: React.FC<FoodImageProps> = ({
   if (!src || hasError) {
     return (
       <div
-        className={`w-full h-full ${aspectRatioClass} bg-[#F4F1EA] text-[#8C8D82] flex flex-col items-center justify-center p-3 select-none ${className}`}
+        className={`w-full h-full ${aspectRatioClass} bg-[#151f1b] text-[#98a69e] flex flex-col items-center justify-center p-3 select-none ${className}`}
         aria-label={alt}
       >
-        <div className="w-10 h-10 rounded-full bg-[#EAE5DA] flex items-center justify-center mb-1 text-[#647B62]">
+        <div className="w-10 h-10 rounded-full bg-[#1e2c25] flex items-center justify-center mb-1 text-[#34a87a]">
           <UtensilsCrossed className="w-5 h-5" />
         </div>
-        <span className="text-[10px] font-medium tracking-tight text-[#7A7B70] text-center line-clamp-1">
+        <span className="text-[10px] font-medium tracking-tight text-[#98a69e] text-center line-clamp-1">
           {alt}
         </span>
       </div>
@@ -44,4 +44,3 @@ export const FoodImageFallback: React.FC<FoodImageProps> = ({
     />
   );
 };
-

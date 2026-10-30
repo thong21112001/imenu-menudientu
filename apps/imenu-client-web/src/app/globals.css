@@ -2,24 +2,34 @@
 @source "../../../../packages/ui";
 @source "../../../../packages/ui/src/**/*.{ts,tsx}";
 
+@theme {
+  --color-white: #efeae0;
+  --color-slate-50: #e4dfd4;
+  --color-zinc-50: #e6e1d6;
+}
+
 @layer base {
   :root {
-    --green-950: #022c22;
-    --green-900: #064e3b;
-    --green-800: #065f46;
-    --green-700: #047857;
-    --green-600: #059669;
-    --green-100: #d1fae5;
-    --cream: #f8fafc;
-    --amber: #d97706;
-    --ink: #09090b;
-    --muted: #71717a;
-    --line: #e4e4e7;
+    --green-950: #08110e;
+    --green-900: #0d1a15;
+    --green-800: #142a22;
+    --green-700: #245846;
+    --green-600: #2e7a60;
+    --green-100: #d5ede2;
+    --cream: #efeae0;
+    --amber: #dfa035;
+    --ink: #ede7da;
+    --muted: #98a69e;
+    --line: #26352e;
+
+    --color-white: #efeae0;
+    --color-slate-50: #e4dfd4;
+    --color-zinc-50: #e6e1d6;
   }
 
   body {
-    background-color: #ffffff;
-    color: #09090b;
+    background-color: #0d1310;
+    color: #ede7da;
     font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -29,6 +39,14 @@
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+}
+
+.cinematic-glass-panel {
+  background: rgba(18, 27, 23, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(223, 160, 53, 0.14);
+  box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6);
 }
 
 @keyframes fadeIn {

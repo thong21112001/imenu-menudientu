@@ -31,8 +31,8 @@ export const Logo: React.FC<LogoProps> = ({ light = false, size = 'md', classNam
       <div
         className={`grid place-items-center shrink-0 transition-colors ${markSize} ${
           light
-            ? 'bg-emerald-600 text-white'
-            : 'bg-emerald-700 text-white shadow-2xs'
+            ? 'bg-[#245846] text-[#efeae0] border border-[#2e7a60]/40'
+            : 'bg-[#245846] text-[#efeae0] border border-[#1b3a2e] shadow-2xs'
         }`}
       >
         <svg
@@ -50,7 +50,7 @@ export const Logo: React.FC<LogoProps> = ({ light = false, size = 'md', classNam
             strokeLinecap="round"
           />
           {/* Smart Dot */}
-          <circle cx="13" cy="3.5" r="1.5" fill="currentColor" />
+          <circle cx="13" cy="3.5" r="1.5" fill="#dfa035" />
           {/* Digital QR Scan Corner hint */}
           <path
             d="M7 11.5H9"
@@ -63,10 +63,10 @@ export const Logo: React.FC<LogoProps> = ({ light = false, size = 'md', classNam
 
       {/* Brand Text */}
       <div className={`tracking-tight flex items-baseline ${textSize}`}>
-        <span className={light ? 'text-white' : 'text-zinc-900'}>
-          <span className="text-emerald-600">i</span>Menu
+        <span className={light ? 'text-[#efeae0]' : 'text-[#111815]'}>
+          <span className="text-[#34a87a]">i</span>Menu
         </span>
-        <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500 ml-1 mb-0.5" />
+        <span className="inline-block w-1.5 h-1.5 rounded-full bg-[#dfa035] ml-1 mb-0.5" />
       </div>
     </div>
   );

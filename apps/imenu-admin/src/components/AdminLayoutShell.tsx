@@ -136,7 +136,7 @@ export const AdminLayoutShell: React.FC<{ children: React.ReactNode }> = ({ chil
             closeSidebar,
           }}
         >
-          <div className="min-h-screen bg-[#f8fafc] antialiased text-zinc-900 flex w-full max-w-full overflow-x-hidden">
+          <div className="min-h-screen bg-[#e4dfd4] antialiased text-[#18201c] flex w-full max-w-full overflow-x-hidden">
             {/* Mobile Backdrop Overlay */}
             {isMobile && isSidebarOpen && (
               <div

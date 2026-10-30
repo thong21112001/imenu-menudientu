@@ -316,12 +316,12 @@ export const AdminSidebar: React.FC = () => {
 
   return (
     <aside
-      className={`bg-zinc-950 text-zinc-400 flex flex-col min-h-screen fixed inset-y-0 left-0 z-50 border-r border-zinc-800/80 transition-all duration-200 ease-in-out ${sidebarWidthClass} ${transformClass}`}
+      className={`bg-gradient-to-b from-[#0b110f] to-[#101815] text-[#98a69e] flex flex-col min-h-screen fixed inset-y-0 left-0 z-50 border-r border-[#212d26] transition-all duration-200 ease-in-out ${sidebarWidthClass} ${transformClass}`}
     >
       {/* Brand Header */}
-      <div className={`px-4 border-b border-zinc-850 flex items-center justify-between h-14 ${isCollapsed && !isMobile ? 'justify-center px-2' : ''}`}>
+      <div className={`px-4 border-b border-[#212d26] flex items-center justify-between h-14 ${isCollapsed && !isMobile ? 'justify-center px-2' : ''}`}>
         {isCollapsed && !isMobile ? (
-          <div className="w-8 h-8 rounded-md bg-zinc-900 border border-zinc-800 text-white grid place-items-center font-bold text-xs">
+          <div className="w-8 h-8 rounded-md bg-[#16231c] border border-[#2b3a32] text-[#dfa035] grid place-items-center font-bold text-xs">
             i
           </div>
         ) : (
@@ -332,7 +332,7 @@ export const AdminSidebar: React.FC = () => {
         {isMobile && (
           <button
             onClick={closeSidebar}
-            className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-[#98a69e] hover:text-[#ede7da] hover:bg-[#16231c] transition-colors cursor-pointer"
             aria-label="Đóng menu"
           >
             <X className="w-4 h-4" />
@@ -343,13 +343,13 @@ export const AdminSidebar: React.FC = () => {
       {/* Restaurant Branch Indicator */}
       {(!isCollapsed || isMobile) && (
         <div className="px-3 py-2.5">
-          <div className="p-2 rounded-md bg-zinc-900/80 border border-zinc-800 flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-md bg-zinc-800 text-zinc-200 border border-zinc-700/60 grid place-items-center font-bold text-[11px] shrink-0 tabular-nums">
+          <div className="p-2 rounded-lg bg-[#131d18] border border-[#23332a] flex items-center gap-2.5 shadow-inner">
+            <div className="w-7 h-7 rounded-md bg-[#1a2821] text-[#dfa035] border border-[#2d4236] grid place-items-center font-bold text-[11px] shrink-0 tabular-nums">
               {restaurantInitials}
             </div>
             <div className="min-w-0 flex-1">
-              <strong className="text-xs text-zinc-200 block truncate font-medium">{restaurantName}</strong>
-              <small className="text-[10px] text-zinc-400 block truncate">{branchName}</small>
+              <strong className="text-xs text-[#ede7da] block truncate font-medium">{restaurantName}</strong>
+              <small className="text-[10px] text-[#8e9d94] block truncate">{branchName}</small>
             </div>
           </div>
         </div>
@@ -362,11 +362,11 @@ export const AdminSidebar: React.FC = () => {
             <div key={group.id} className="space-y-0.5">
               {/* Tiêu đề nhóm khi mở rộng hoặc đường kẻ phân cách khi thu gọn */}
               {(!isCollapsed || isMobile) ? (
-                <div className={`px-2.5 ${groupIdx > 0 ? 'pt-2' : 'pt-0.5'} pb-1 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase select-none`}>
+                <div className={`px-2.5 ${groupIdx > 0 ? 'pt-2' : 'pt-0.5'} pb-1 text-[10px] font-semibold tracking-wider text-[#6f7e75] uppercase select-none`}>
                   {group.label}
                 </div>
               ) : (
-                groupIdx > 0 && <div className="my-1.5 border-t border-zinc-850 mx-1.5" />
+                groupIdx > 0 && <div className="my-1.5 border-t border-[#212d26] mx-1.5" />
               )}
 
               {/* Danh sách các mục trong nhóm */}
@@ -385,13 +385,13 @@ export const AdminSidebar: React.FC = () => {
                       isCollapsed && !isMobile ? 'justify-center px-0' : ''
                     } ${
                       isActive
-                        ? 'bg-zinc-800/90 text-white font-medium border-l-2 border-emerald-500 pl-2'
-                        : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 border-l-2 border-transparent'
+                        ? 'bg-[#16241d] text-[#f5f1e8] font-medium border-l-2 border-[#dfa035] pl-2 shadow-sm'
+                        : 'text-[#98a69e] hover:bg-[#131d18] hover:text-[#ede7da] border-l-2 border-transparent'
                     }`}
                   >
                     <Icon
                       className={`w-4 h-4 shrink-0 stroke-[1.5] ${
-                        isActive ? 'text-emerald-400' : 'text-zinc-400 group-hover:text-zinc-300'
+                        isActive ? 'text-[#dfa035]' : 'text-[#7d8c83] group-hover:text-[#c5cfc9]'
                       }`}
                     />
                     {(!isCollapsed || isMobile) && <span className="truncate">{item.name}</span>}
@@ -404,19 +404,19 @@ export const AdminSidebar: React.FC = () => {
       </nav>
 
       {/* Footer & Collapse Toggle Button */}
-      <div className="p-2.5 border-t border-zinc-850 space-y-1.5">
+      <div className="p-2.5 border-t border-[#212d26] space-y-1.5">
         {!isSuperAdmin && (
           (!isCollapsed || isMobile) ? (
             <a
               href="http://localhost:3005"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-zinc-900/60 hover:bg-zinc-850 border border-zinc-800 text-[11px] text-zinc-300 transition-colors"
+              className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-[#131d18] hover:bg-[#18251f] border border-[#23332a] text-[11px] text-[#c5cfc9] transition-colors"
             >
               <span className="flex items-center gap-1.5 font-medium">
-                <Store className="w-3.5 h-3.5 text-zinc-400" /> Menu QR Khách
+                <Store className="w-3.5 h-3.5 text-[#dfa035]" /> Menu QR Khách
               </span>
-              <ExternalLink className="w-3 h-3 text-zinc-400" />
+              <ExternalLink className="w-3 h-3 text-[#7d8c83]" />
             </a>
           ) : (
             <a
@@ -424,9 +424,9 @@ export const AdminSidebar: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               title="Menu QR Khách"
-              className="flex items-center justify-center p-1.5 rounded-md bg-zinc-900/60 hover:bg-zinc-850 text-zinc-300 transition-colors"
+              className="flex items-center justify-center p-1.5 rounded-md bg-[#131d18] hover:bg-[#18251f] text-[#c5cfc9] transition-colors"
             >
-              <Store className="w-3.5 h-3.5" />
+              <Store className="w-3.5 h-3.5 text-[#dfa035]" />
             </a>
           )
         )}
@@ -435,7 +435,7 @@ export const AdminSidebar: React.FC = () => {
         {!isMobile && (
           <button
             onClick={toggleCollapsed}
-            className={`w-full py-1.5 px-2.5 rounded-md bg-zinc-900/60 hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 text-xs flex items-center transition-colors cursor-pointer border border-zinc-850 ${
+            className={`w-full py-1.5 px-2.5 rounded-md bg-[#131d18] hover:bg-[#18251f] text-[#98a69e] hover:text-[#ede7da] text-xs flex items-center transition-colors cursor-pointer border border-[#23332a] ${
               isCollapsed ? 'justify-center' : 'justify-between'
             }`}
             title={isCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
