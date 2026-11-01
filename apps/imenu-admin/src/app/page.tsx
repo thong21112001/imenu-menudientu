@@ -27,7 +27,6 @@ import {
   Receipt,
   Store,
   Layers,
-  Sparkles,
 } from 'lucide-react';
 
 function getTodayVnDate(): string {
@@ -185,7 +184,7 @@ export default function DashboardOverviewPage() {
       {/* =========================================================================
           KHU VỰC 1: HEADER + CHI NHÁNH + CHỌN NGÀY + ĐIỀU HƯỚNG NHANH
           ========================================================================= */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-5 rounded-3xl bg-white border border-slate-200/80 shadow-xs">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4 p-5 rounded-xl bg-white border border-slate-200/80 shadow-xs">
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-2xl font-black text-[#09271d] tracking-tight">
@@ -315,7 +314,7 @@ export default function DashboardOverviewPage() {
               <div className="space-y-1 pt-0.5">
                 <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
                   <div
-                    className="bg-linear-to-r from-amber-400 to-emerald-500 h-2 rounded-full transition-all duration-500"
+                    className="bg-emerald-600 h-2 rounded-full transition-all duration-500"
                     style={{ width: `${Math.min(overview?.occupancyRate || 0, 100)}%` }}
                   />
                 </div>
@@ -449,7 +448,7 @@ export default function DashboardOverviewPage() {
                     <div key={item.hour} className="flex-1 flex flex-col items-center gap-2 h-full justify-end group">
                       <div
                         style={{ height: `${heightPercent}%` }}
-                        className="w-full bg-linear-to-t from-[#124a36] to-[#1f7a55] rounded-t-lg group-hover:from-amber-500 group-hover:to-amber-400 transition-all relative cursor-pointer"
+                        className="w-full bg-zinc-800 hover:bg-emerald-600 rounded-t-lg group-hover:from-amber-500 group-hover:to-amber-400 transition-all relative cursor-pointer"
                       >
                         {/* Tooltip bay khi hover */}
                         <div className="opacity-0 group-hover:opacity-100 pointer-events-none absolute -top-12 left-1/2 -translate-x-1/2 bg-slate-950 text-white text-[10px] px-2.5 py-1 rounded-lg font-bold transition-opacity whitespace-nowrap shadow-xl z-20">

@@ -114,8 +114,8 @@ export default function XoaDuLieuPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Bước 1 */}
-            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-rose-300 transition-all space-y-4">
-              <div className="w-10 h-10 rounded-2xl bg-rose-100 text-rose-700 grid place-items-center font-black text-sm">
+            <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 hover:border-rose-300 transition-all space-y-4">
+              <div className="w-10 h-10 rounded-lg bg-rose-100 text-rose-700 grid place-items-center font-black text-sm">
                 01
               </div>
               <h3 className="text-base font-bold text-slate-900 leading-snug">
@@ -127,8 +127,8 @@ export default function XoaDuLieuPage() {
             </div>
 
             {/* Bước 2 */}
-            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-rose-300 transition-all space-y-4">
-              <div className="w-10 h-10 rounded-2xl bg-amber-100 text-amber-700 grid place-items-center font-black text-sm">
+            <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 hover:border-rose-300 transition-all space-y-4">
+              <div className="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 grid place-items-center font-black text-sm">
                 02
               </div>
               <h3 className="text-base font-bold text-slate-900 leading-snug">
@@ -140,8 +140,8 @@ export default function XoaDuLieuPage() {
             </div>
 
             {/* Bước 3 */}
-            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-rose-300 transition-all space-y-4">
-              <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-700 grid place-items-center font-black text-sm">
+            <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 hover:border-rose-300 transition-all space-y-4">
+              <div className="w-10 h-10 rounded-lg bg-blue-100 text-blue-700 grid place-items-center font-black text-sm">
                 03
               </div>
               <h3 className="text-base font-bold text-slate-900 leading-snug">
@@ -153,8 +153,8 @@ export default function XoaDuLieuPage() {
             </div>
 
             {/* Bước 4 */}
-            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-rose-300 transition-all space-y-4">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 grid place-items-center font-black text-sm">
+            <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 hover:border-rose-300 transition-all space-y-4">
+              <div className="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 grid place-items-center font-black text-sm">
                 04
               </div>
               <h3 className="text-base font-bold text-slate-900 leading-snug">
@@ -186,7 +186,7 @@ export default function XoaDuLieuPage() {
           </div>
 
           {/* Hộp Cảnh Báo An Toàn Tuyệt Đối */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-300/80 text-amber-950 text-xs sm:text-sm space-y-1.5 flex items-start gap-3.5 shadow-xs">
+          <div className="p-4 sm:p-5 rounded-lg bg-amber-50 border border-amber-300/80 text-amber-950 text-xs sm:text-sm space-y-1.5 flex items-start gap-3.5 shadow-xs">
             <AlertTriangle className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
             <div className="space-y-1 leading-relaxed">
               <span className="font-black text-amber-900 block">
@@ -198,7 +198,7 @@ export default function XoaDuLieuPage() {
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl border border-slate-200/90 p-6 sm:p-10 shadow-xl">
+          <div className="bg-white rounded-xl border border-slate-200/90 p-6 sm:p-10 shadow-xl">
             {submittedTicket ? (
               <div className="text-center py-8 space-y-4 animate-scaleUp">
                 <div className="w-16 h-16 rounded-full bg-rose-100 text-rose-700 grid place-items-center mx-auto border-2 border-rose-300">
@@ -396,7 +396,7 @@ export default function XoaDuLieuPage() {
           </div>
 
           <div className="space-y-3.5 text-xs sm:text-sm">
-            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <div className="p-5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
               <h4 className="font-bold text-slate-900">
                 Sau khi xóa dữ liệu, khách quét mã QR cũ tại bàn sẽ nhìn thấy gì?
               </h4>
@@ -405,7 +405,7 @@ export default function XoaDuLieuPage() {
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <div className="p-5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
               <h4 className="font-bold text-slate-900">
                 Tôi có thể yêu cầu xóa dữ liệu của từng chi nhánh riêng lẻ được không?
               </h4>
@@ -414,7 +414,7 @@ export default function XoaDuLieuPage() {
               </p>
             </div>
 
-            <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200 space-y-1.5">
+            <div className="p-5 rounded-lg bg-slate-50 border border-slate-200 space-y-1.5">
               <h4 className="font-bold text-slate-900">
                 Các chứng từ giao dịch thanh toán cũ được xử lý như thế nào theo quy định thuế?
               </h4>

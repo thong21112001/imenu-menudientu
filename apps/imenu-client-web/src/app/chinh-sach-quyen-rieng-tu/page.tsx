@@ -18,7 +18,6 @@ import {
   Trash2,
   PhoneCall,
   Clock,
-  Sparkles,
   ArrowRight,
   ExternalLink,
   CheckCircle2,
@@ -125,7 +124,7 @@ export default function ChinhSachQuyenRiengTuPage() {
             
             {/* Sticky Sidebar TOC (4 cols on lg) */}
             <aside className="lg:col-span-4 sticky top-28 space-y-4">
-              <div className="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-xs space-y-3">
+              <div className="bg-white rounded-lg border border-slate-200/90 p-5 shadow-xs space-y-3">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400 block pb-1 border-b border-slate-100">
                   Mục lục chính sách
                 </span>
@@ -153,7 +152,7 @@ export default function ChinhSachQuyenRiengTuPage() {
               </div>
 
               {/* Quick Box: Request Deletion */}
-              <div className="p-4 rounded-2xl bg-slate-900 text-white space-y-2.5 text-xs">
+              <div className="p-4 rounded-lg bg-slate-900 text-white space-y-2.5 text-xs">
                 <span className="font-bold flex items-center gap-1.5 text-rose-300">
                   <Trash2 className="w-4 h-4 text-rose-400" />
                   Yêu cầu xóa dữ liệu?
@@ -168,7 +167,7 @@ export default function ChinhSachQuyenRiengTuPage() {
             </aside>
 
             {/* Document Body (8 cols on lg) */}
-            <div className="lg:col-span-8 space-y-12 bg-white rounded-3xl border border-slate-200/90 p-7 sm:p-12 shadow-sm">
+            <div className="lg:col-span-8 space-y-12 bg-white rounded-xl border border-slate-200/90 p-7 sm:p-12 shadow-sm">
               
               {/* Mục 1 */}
               <article id="muc-1" className="space-y-3.5 scroll-mt-28">
@@ -183,7 +182,7 @@ export default function ChinhSachQuyenRiengTuPage() {
                   <p>
                     Chính sách quyền riêng tư này mô tả chi tiết cách thức iMenu thu thập, xử lý, lưu trữ và bảo vệ dữ liệu khi bạn truy cập trang web, sử dụng phần mềm quản lý POS, màn hình Bếp KDS hoặc khi khách hàng của bạn quét mã QR gọi món tại bàn.
                   </p>
-                  <div className="p-4 rounded-2xl bg-teal-50 border border-teal-200 text-teal-950 text-xs font-medium space-y-1">
+                  <div className="p-4 rounded-lg bg-teal-50 border border-teal-200 text-teal-950 text-xs font-medium space-y-1">
                     <strong>Cam kết cốt lõi:</strong>
                     <ul className="list-disc list-inside space-y-1 text-teal-900">
                       <li>Tuyệt đối KHÔNG bán, cho thuê hay trao đổi dữ liệu kinh doanh của quán cho bất kỳ bên thứ ba nào nhằm mục đích quảng cáo.</li>
@@ -258,7 +257,7 @@ export default function ChinhSachQuyenRiengTuPage() {
                   <p>
                     Hệ thống iMenu được thiết kế theo kiến trúc cô lập dữ liệu nhiều tầng (Multi-Tenant Architecture). Mỗi nhà hàng được gán một mã định danh duy nhất (`restaurantId` và `branchId`).
                   </p>
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                  <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 space-y-2">
                     <div className="flex items-center gap-2 font-bold text-slate-900 text-xs">
                       <Database className="w-4 h-4 text-teal-700" />
                       Cơ chế lọc truy vấn ở tầng lõi (Core Query Filtering):
@@ -369,7 +368,7 @@ export default function ChinhSachQuyenRiengTuPage() {
                   <p>
                     iMenu có thể cập nhật chính sách này theo thời gian để phản ánh các cải tiến về tính năng hoặc thay đổi trong quy định pháp luật. Mọi thay đổi quan trọng sẽ được thông báo trực tiếp trên trang chủ hoặc gửi thư thông báo tới email quản trị của nhà hàng.
                   </p>
-                  <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 text-xs space-y-2">
+                  <div className="p-4 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-2">
                     <span className="font-bold text-slate-900 block">Ban An Toàn Dữ Liệu & Hỗ Trợ Kỹ Thuật iMenu:</span>
                     <div>• Email tiếp nhận yêu cầu bảo mật: <strong>privacy@imenu.vn</strong></div>
                     <div>• Cổng gửi yêu cầu xóa dữ liệu: <Link href="/xoa-du-lieu" className="text-teal-700 font-bold underline">https://imenu.vn/xoa-du-lieu</Link></div>

@@ -8,7 +8,6 @@ import {
   Copy,
   Check,
   ExternalLink,
-  Sparkles,
   Award,
   Search,
   CheckCircle2,
@@ -130,7 +129,7 @@ export default function SalesTeamPage() {
           <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="space-y-1 max-w-2xl">
               <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-semibold text-white">
-                <Sparkles className="w-3.5 h-3.5 text-yellow-300" />
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
                 Chính sách Tuyển dụng & Thưởng Lãnh đạo
               </div>
               <h2 className="text-xl font-bold">Mời Đối tác tham gia Đội ngũ</h2>

@@ -13,21 +13,20 @@ export const QrCodeRenderer: React.FC<QrCodeRendererProps> = ({
   value,
   size = 180,
   className = '',
-  title = 'Quét mã QR'
+  title = 'Quét mã QR',
 }) => {
-  // Use quick SVG QR generator API from google/qr server
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(value)}&margin=1`;
 
   return (
-    <div className={`flex flex-col items-center justify-center p-3 bg-white rounded-2xl border border-slate-200 shadow-sm ${className}`}>
+    <div className={`flex flex-col items-center justify-center p-3 bg-white rounded-lg border border-zinc-200/80 shadow-2xs ${className}`}>
       <img
         src={qrUrl}
         alt={title}
         width={size}
         height={size}
-        className="rounded-lg object-contain select-none"
+        className="rounded-md object-contain select-none"
       />
-      {title && <span className="text-xs font-semibold text-[#176044] mt-2">{title}</span>}
+      {title && <span className="text-xs font-medium text-emerald-800 mt-2">{title}</span>}
     </div>
   );
 };

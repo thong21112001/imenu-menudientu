@@ -198,8 +198,8 @@ const SUPERADMIN_NAV_GROUPS: NavGroupConfig[] = [
       },
       {
         name: 'Tài khoản & Phân quyền',
-        href: '/staff',
-        icon: Building2,
+        href: '/platform/admins',
+        icon: Settings,
       },
     ],
   },
@@ -208,94 +208,56 @@ const SUPERADMIN_NAV_GROUPS: NavGroupConfig[] = [
 export const AdminSidebar: React.FC = () => {
   const pathname = usePathname();
   const { isMobile, isSidebarOpen, isCollapsed, toggleCollapsed, closeSidebar } = useSidebar();
-  const [restaurant, setRestaurant] = useState<any>(storageService.getRestaurant());
   const [user, setUser] = useState<any>(storageService.getCurrentUser());
-  const [permissions, setPermissions] = useState<string[]>([]);
-  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | null>(storageService.getSelectedRestaurantId());
+  const [restaurant, setRestaurant] = useState<any>(storageService.getRestaurant());
 
   useEffect(() => {
-    setRestaurant(storageService.getRestaurant());
-    setUser(storageService.getCurrentUser());
-    setSelectedRestaurantId(storageService.getSelectedRestaurantId());
-    setPermissions(storageService.getPermissions() || []);
-
-    const handleRestaurantChanged = (e: any) => {
-      setSelectedRestaurantId(e.detail?.restaurantId ?? null);
+    const handleAuthChange = () => {
+      setUser(storageService.getCurrentUser());
       setRestaurant(storageService.getRestaurant());
     };
-
-    window.addEventListener('imenu:restaurant_changed', handleRestaurantChanged);
-    return () => {
-      window.removeEventListener('imenu:restaurant_changed', handleRestaurantChanged);
-    };
+    window.addEventListener('storage', handleAuthChange);
+    return () => window.removeEventListener('storage', handleAuthChange);
   }, []);
 
-  const roleSlug = String(user?.role || '').toLowerCase();
-  const isSuperAdmin = roleSlug === 'system_admin' || roleSlug === 'super_admin';
-  const isOwner = roleSlug === 'restaurant_admin';
-  const isSalesRep = roleSlug === 'sales_rep';
+  const isSuperAdmin = Boolean(
+    user?.isSuperAdmin ||
+      user?.role === 'SYSTEM_ADMIN' ||
+      user?.role === 'system_admin' ||
+      user?.role === 'super_admin'
+  );
+
+  const isSalesRep = Boolean(
+    user?.role === 'SALES_REP' ||
+      user?.role === 'SALES_LEADER' ||
+      user?.role === 'sales_rep' ||
+      user?.role === 'sales_leader'
+  );
+
   const isMainBranchUser = isSuperAdmin || Boolean(user?.isMainBranch);
+  const permissions: string[] = user?.permissions || [];
 
   let visibleGroups: NavGroupConfig[] = [];
 
   if (isSuperAdmin) {
-    // Phase 14 & 15: Superadmin Platform Center & Chế độ Hỗ trợ Nhà hàng
     visibleGroups = SUPERADMIN_NAV_GROUPS;
-    if (selectedRestaurantId) {
-      visibleGroups = [
-        ...SUPERADMIN_NAV_GROUPS,
-        {
-          id: 'restaurant_support',
-          label: `Hỗ trợ: ${restaurant?.name || 'Nhà hàng'}`,
-        items: [
-          {
-            name: 'Sơ đồ Bàn',
-            href: '/tables',
-            icon: Grid3X3,
-          },
-          {
-            name: 'Quản lý Thực đơn',
-            href: '/menu',
-            icon: UtensilsCrossed,
-          },
-          {
-            name: 'Quản lý Chi nhánh',
-            href: '/branches',
-            icon: Building2,
-          },
-          {
-            name: 'Cài đặt Nhà hàng',
-            href: '/settings',
-            icon: Settings,
-          },
-          {
-            name: 'Báo cáo Doanh thu',
-            href: '/reports',
-            icon: BarChart3,
-          },
-        ],
-      },
-    ];
-  }
   } else if (isSalesRep) {
     visibleGroups = [SALES_NAV_GROUP_CONFIG];
   } else {
-    // Chế độ Quản trị nội bộ một Nhà hàng
     visibleGroups = NAV_GROUPS_CONFIG.map((group) => {
       const filteredItems = group.items
         .filter((item) => {
-          // 1. Chủ Nhà Hàng (HQ) có toàn quyền
-          if (isOwner) {
-            if (item.requireMainBranch && !isMainBranchUser) return false;
+          if (item.requireMainBranch && !isMainBranchUser) return false;
+
+          if (
+            user?.role === 'RESTAURANT_ADMIN' ||
+            user?.role === 'restaurant_admin' ||
+            user?.role === 'OWNER' ||
+            user?.role === 'owner'
+          ) {
             return true;
           }
 
-          // 2. Kiểm tra điều kiện Chi nhánh chính
-          if (item.requireMainBranch && !isMainBranchUser) {
-            return false;
-          }
-
-          // 3. Kiểm tra permission của người dùng
           if (item.permissions && item.permissions.length > 0) {
             const hasPerm = item.permissions.some((p) => permissions.includes(p));
             if (!hasPerm) return false;
@@ -335,7 +297,7 @@ export const AdminSidebar: React.FC = () => {
         .join('') || 'IM';
 
   const branchName = isSuperAdmin
-    ? '👑 Quản Trị Hệ Thống'
+    ? 'Quản Trị Hệ Thống'
     : isSalesRep
     ? user?.fullName || 'Chuyên viên Kinh doanh'
     : user?.branchName || restaurant?.branches?.[0]?.name || 'Chi nhánh chính';
@@ -343,51 +305,51 @@ export const AdminSidebar: React.FC = () => {
   const sidebarWidthClass = isMobile
     ? 'w-72'
     : isCollapsed
-    ? 'w-20'
-    : 'w-64';
+    ? 'w-16'
+    : 'w-60';
 
   const transformClass = isMobile
     ? isSidebarOpen
-      ? 'translate-x-0 shadow-2xl'
+      ? 'translate-x-0 shadow-xl'
       : '-translate-x-full pointer-events-none'
     : 'translate-x-0';
 
   return (
     <aside
-      className={`bg-[#09271d] text-[#9eb2aa] flex flex-col min-h-screen fixed inset-y-0 left-0 z-50 border-r border-[#153e30] transition-all duration-300 ease-in-out ${sidebarWidthClass} ${transformClass}`}
+      className={`bg-zinc-950 text-zinc-400 flex flex-col min-h-screen fixed inset-y-0 left-0 z-50 border-r border-zinc-800/80 transition-all duration-200 ease-in-out ${sidebarWidthClass} ${transformClass}`}
     >
       {/* Brand Header */}
-      <div className={`p-4 border-b border-[#183a2e] flex items-center justify-between min-h-[64px] ${isCollapsed && !isMobile ? 'justify-center px-2' : ''}`}>
+      <div className={`px-4 border-b border-zinc-850 flex items-center justify-between h-14 ${isCollapsed && !isMobile ? 'justify-center px-2' : ''}`}>
         {isCollapsed && !isMobile ? (
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 text-slate-950 grid place-items-center font-black text-lg shadow-md">
+          <div className="w-8 h-8 rounded-md bg-zinc-900 border border-zinc-800 text-white grid place-items-center font-bold text-xs">
             i
           </div>
         ) : (
-          <Logo light size="md" />
+          <Logo light size="sm" />
         )}
 
         {/* Close button on mobile */}
         {isMobile && (
           <button
             onClick={closeSidebar}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            className="p-1 rounded-md text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors cursor-pointer"
             aria-label="Đóng menu"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         )}
       </div>
 
       {/* Restaurant Branch Indicator */}
       {(!isCollapsed || isMobile) && (
-        <div className="px-3.5 py-3">
-          <div className="p-2.5 rounded-xl bg-white/5 border border-white/10 flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-[#eab867] text-[#09271d] grid place-items-center font-bold text-xs shrink-0">
+        <div className="px-3 py-2.5">
+          <div className="p-2 rounded-md bg-zinc-900/80 border border-zinc-800 flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-md bg-zinc-800 text-zinc-200 border border-zinc-700/60 grid place-items-center font-bold text-[11px] shrink-0 tabular-nums">
               {restaurantInitials}
             </div>
             <div className="min-w-0 flex-1">
-              <strong className="text-xs text-white block truncate">{restaurantName}</strong>
-              <small className="text-[10px] text-emerald-400 block truncate">{branchName}</small>
+              <strong className="text-xs text-zinc-200 block truncate font-medium">{restaurantName}</strong>
+              <small className="text-[10px] text-zinc-400 block truncate">{branchName}</small>
             </div>
           </div>
         </div>
@@ -397,14 +359,14 @@ export const AdminSidebar: React.FC = () => {
       <nav className="flex-1 px-2.5 py-2 space-y-3 overflow-y-auto overflow-x-hidden">
         {visibleGroups.map((group, groupIdx) => {
           return (
-            <div key={group.id} className="space-y-1">
+            <div key={group.id} className="space-y-0.5">
               {/* Tiêu đề nhóm khi mở rộng hoặc đường kẻ phân cách khi thu gọn */}
               {(!isCollapsed || isMobile) ? (
-                <div className={`px-3 ${groupIdx > 0 ? 'pt-2' : 'pt-1'} pb-1 text-[10px] font-bold tracking-wider text-[#637d72] uppercase select-none`}>
+                <div className={`px-2.5 ${groupIdx > 0 ? 'pt-2' : 'pt-0.5'} pb-1 text-[10px] font-semibold tracking-wider text-zinc-400 uppercase select-none`}>
                   {group.label}
                 </div>
               ) : (
-                groupIdx > 0 && <div className="my-2 border-t border-white/10 mx-2" />
+                groupIdx > 0 && <div className="my-1.5 border-t border-zinc-850 mx-1.5" />
               )}
 
               {/* Danh sách các mục trong nhóm */}
@@ -419,17 +381,17 @@ export const AdminSidebar: React.FC = () => {
                       if (isMobile) closeSidebar();
                     }}
                     title={isCollapsed && !isMobile ? `${group.label}: ${item.name}` : undefined}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
+                    className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs transition-colors group ${
                       isCollapsed && !isMobile ? 'justify-center px-0' : ''
                     } ${
                       isActive
-                        ? 'bg-white/10 text-white shadow-xs font-bold border-l-[3px] border-[#eab867] pl-2.5'
-                        : 'text-[#9eb2aa] hover:bg-white/5 hover:text-white border-l-[3px] border-transparent'
+                        ? 'bg-zinc-800/90 text-white font-medium border-l-2 border-emerald-500 pl-2'
+                        : 'text-zinc-400 hover:bg-zinc-900 hover:text-zinc-200 border-l-2 border-transparent'
                     }`}
                   >
                     <Icon
-                      className={`w-4.5 h-4.5 shrink-0 transition-transform group-hover:scale-110 ${
-                        isActive ? 'text-[#eab867]' : 'text-slate-400 group-hover:text-slate-200'
+                      className={`w-4 h-4 shrink-0 stroke-[1.5] ${
+                        isActive ? 'text-emerald-400' : 'text-zinc-400 group-hover:text-zinc-300'
                       }`}
                     />
                     {(!isCollapsed || isMobile) && <span className="truncate">{item.name}</span>}
@@ -442,19 +404,19 @@ export const AdminSidebar: React.FC = () => {
       </nav>
 
       {/* Footer & Collapse Toggle Button */}
-      <div className="p-3 border-t border-[#183a2e] space-y-2">
+      <div className="p-2.5 border-t border-zinc-850 space-y-1.5">
         {!isSuperAdmin && (
           (!isCollapsed || isMobile) ? (
             <a
               href="http://localhost:3005"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 border border-emerald-800/40 text-[11px] text-emerald-300 transition-colors"
+              className="flex items-center justify-between px-2.5 py-1.5 rounded-md bg-zinc-900/60 hover:bg-zinc-850 border border-zinc-800 text-[11px] text-zinc-300 transition-colors"
             >
               <span className="flex items-center gap-1.5 font-medium">
-                <Store className="w-3.5 h-3.5" /> Menu QR Khách
+                <Store className="w-3.5 h-3.5 text-zinc-400" /> Menu QR Khách
               </span>
-              <ExternalLink className="w-3 h-3" />
+              <ExternalLink className="w-3 h-3 text-zinc-400" />
             </a>
           ) : (
             <a
@@ -462,9 +424,9 @@ export const AdminSidebar: React.FC = () => {
               target="_blank"
               rel="noopener noreferrer"
               title="Menu QR Khách"
-              className="flex items-center justify-center p-2 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/60 text-emerald-300 transition-colors"
+              className="flex items-center justify-center p-1.5 rounded-md bg-zinc-900/60 hover:bg-zinc-850 text-zinc-300 transition-colors"
             >
-              <Store className="w-4 h-4" />
+              <Store className="w-3.5 h-3.5" />
             </a>
           )
         )}
@@ -473,13 +435,13 @@ export const AdminSidebar: React.FC = () => {
         {!isMobile && (
           <button
             onClick={toggleCollapsed}
-            className={`w-full py-2 px-3 rounded-lg bg-white/5 hover:bg-white/10 text-[#9eb2aa] hover:text-white text-xs flex items-center transition-colors cursor-pointer ${
+            className={`w-full py-1.5 px-2.5 rounded-md bg-zinc-900/60 hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 text-xs flex items-center transition-colors cursor-pointer border border-zinc-850 ${
               isCollapsed ? 'justify-center' : 'justify-between'
             }`}
             title={isCollapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
           >
             {!isCollapsed && <span className="text-[11px] font-medium">Thu gọn</span>}
-            {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+            {isCollapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
           </button>
         )}
       </div>

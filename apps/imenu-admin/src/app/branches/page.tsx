@@ -584,7 +584,7 @@ export default function BranchesPage() {
       {/* Modal Thêm Chi Nhánh Mới */}
       {isAddModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-[#176044] grid place-items-center shrink-0">
                 <Building2 className="w-5 h-5" />
@@ -663,7 +663,7 @@ export default function BranchesPage() {
       {/* Modal Chỉnh Sửa Chi Nhánh */}
       {isEditModalOpen && selectedBranch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-700 grid place-items-center shrink-0">
                 <Edit2 className="w-5 h-5" />
@@ -733,7 +733,7 @@ export default function BranchesPage() {
       {/* Modal Tạm Đóng Cửa Chi Nhánh */}
       {isCloseModalOpen && selectedBranch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3 text-amber-600">
               <div className="w-10 h-10 rounded-2xl bg-amber-100 grid place-items-center shrink-0">
                 <AlertTriangle className="w-5 h-5" />
@@ -788,7 +788,7 @@ export default function BranchesPage() {
       {/* Modal Ngừng Hoạt Động Chi Nhánh */}
       {isDeactivateModalOpen && selectedBranch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl space-y-4">
             <div className="flex items-center gap-3 text-rose-600">
               <div className="w-10 h-10 rounded-2xl bg-rose-100 grid place-items-center shrink-0">
                 <Power className="w-5 h-5" />

@@ -10,7 +10,6 @@ import { apiClient } from '@imenu/utils';
 import {
   Briefcase,
   ChevronRight,
-  Sparkles,
   DollarSign,
   TrendingUp,
   Users,
@@ -200,7 +199,7 @@ function TuyenDungKinhDoanhContent() {
             </div>
 
             {/* Quick Hero Stat Badge Card */}
-            <div className="lg:col-span-4 p-6 rounded-3xl bg-emerald-900/40 border border-emerald-700/50 backdrop-blur-md space-y-4 text-center">
+            <div className="lg:col-span-4 p-6 rounded-xl bg-emerald-900/40 border border-emerald-700/50 backdrop-blur-md space-y-4 text-center">
               <span className="text-xs uppercase font-extrabold tracking-wider text-amber-300 block">
                 Thu nhập tiềm năng trung bình
               </span>
@@ -246,9 +245,9 @@ function TuyenDungKinhDoanhContent() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Thẻ 1 */}
-            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-amber-400 hover:shadow-xl transition-all space-y-4 flex flex-col justify-between">
+            <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 hover:border-amber-400 hover:shadow-xl transition-all space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-amber-100 text-amber-800 grid place-items-center font-black text-lg border border-amber-200">
+                <div className="w-12 h-12 rounded-lg bg-amber-100 text-amber-800 grid place-items-center font-black text-lg border border-amber-200">
                   50%
                 </div>
                 <h3 className="text-base font-bold text-slate-900 leading-snug">
@@ -266,9 +265,9 @@ function TuyenDungKinhDoanhContent() {
             </div>
 
             {/* Thẻ 2 */}
-            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-emerald-400 hover:shadow-xl transition-all space-y-4 flex flex-col justify-between">
+            <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 hover:border-emerald-400 hover:shadow-xl transition-all space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-800 grid place-items-center font-black text-lg border border-emerald-200">
+                <div className="w-12 h-12 rounded-lg bg-emerald-100 text-emerald-800 grid place-items-center font-black text-lg border border-emerald-200">
                   20%
                 </div>
                 <h3 className="text-base font-bold text-slate-900 leading-snug">
@@ -286,9 +285,9 @@ function TuyenDungKinhDoanhContent() {
             </div>
 
             {/* Thẻ 3 */}
-            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-blue-400 hover:shadow-xl transition-all space-y-4 flex flex-col justify-between">
+            <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 hover:border-blue-400 hover:shadow-xl transition-all space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-blue-100 text-blue-800 grid place-items-center font-black text-lg border border-blue-200">
+                <div className="w-12 h-12 rounded-lg bg-blue-100 text-blue-800 grid place-items-center font-black text-lg border border-blue-200">
                   250K
                 </div>
                 <h3 className="text-base font-bold text-slate-900 leading-snug">
@@ -306,9 +305,9 @@ function TuyenDungKinhDoanhContent() {
             </div>
 
             {/* Thẻ 4 */}
-            <div className="p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-purple-400 hover:shadow-xl transition-all space-y-4 flex flex-col justify-between">
+            <div className="p-6 rounded-xl bg-slate-50 border border-slate-200 hover:border-purple-400 hover:shadow-xl transition-all space-y-4 flex flex-col justify-between">
               <div className="space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-purple-100 text-purple-800 grid place-items-center font-black text-lg border border-purple-200">
+                <div className="w-12 h-12 rounded-lg bg-purple-100 text-purple-800 grid place-items-center font-black text-lg border border-purple-200">
                   250K
                 </div>
                 <h3 className="text-base font-bold text-slate-900 leading-snug">
@@ -346,7 +345,7 @@ function TuyenDungKinhDoanhContent() {
             </p>
           </div>
 
-          <div className="bg-white rounded-3xl border border-slate-200 shadow-xl p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+          <div className="bg-white rounded-xl border border-slate-200 shadow-xl p-6 sm:p-10 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
             {/* Sliders Area (7 cols) */}
             <div className="lg:col-span-7 space-y-7">
@@ -406,41 +405,41 @@ function TuyenDungKinhDoanhContent() {
               <div className="pt-4 border-t border-slate-100 text-xs text-slate-500 space-y-1.5">
                 <div className="flex justify-between">
                   <span>• 50% Phí Setup ({directStores} quán × 500K):</span>
-                  <span className="font-bold text-slate-800">{directSetupIncome.toLocaleString('vi-VN')}₫</span>
+                  <span className="font-semibold text-slate-800 tabular-nums">{directSetupIncome.toLocaleString('vi-VN')}₫</span>
                 </div>
                 <div className="flex justify-between">
                   <span>• Thưởng mở mới thực tế ({directStores} quán × 250K):</span>
-                  <span className="font-bold text-slate-800">{directOpenBonus.toLocaleString('vi-VN')}₫</span>
+                  <span className="font-semibold text-slate-800 tabular-nums">{directOpenBonus.toLocaleString('vi-VN')}₫</span>
                 </div>
                 <div className="flex justify-between">
                   <span>• Thưởng phát triển CTV ({subStores} quán × 250K):</span>
-                  <span className="font-bold text-slate-800">{subTeamBonus.toLocaleString('vi-VN')}₫</span>
+                  <span className="font-semibold text-slate-800 tabular-nums">{subTeamBonus.toLocaleString('vi-VN')}₫</span>
                 </div>
               </div>
             </div>
 
             {/* Result Box (5 cols) */}
-            <div className="lg:col-span-5 p-6 sm:p-7 rounded-2xl bg-gradient-to-br from-slate-900 to-emerald-950 text-white space-y-6 text-center border border-emerald-800 shadow-lg">
+            <div className="lg:col-span-5 p-6 sm:p-7 rounded-lg bg-zinc-950 text-white space-y-6 text-center border border-zinc-800 shadow-xs">
               <div className="space-y-1">
-                <span className="text-[11px] font-extrabold uppercase tracking-wider text-amber-400">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-400">
                   Thu nhập nhận ngay trong tháng
                 </span>
-                <div className="text-3xl sm:text-4xl font-black text-white">
+                <div className="text-3xl sm:text-4xl font-bold tracking-tight text-white tabular-nums">
                   {totalMonthlyIncome.toLocaleString('vi-VN')}₫
                 </div>
-                <p className="text-[11px] text-emerald-200/70">
+                <p className="text-[11px] text-zinc-400">
                   Được đối soát và chuyển khoản nhanh vào ngày 05 & 20
                 </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-white/10 border border-white/15 space-y-1">
-                <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-300">
+              <div className="p-4 rounded-md bg-zinc-900 border border-zinc-800 space-y-1">
+                <span className="text-[10px] uppercase font-semibold tracking-wider text-emerald-400">
                   Thu nhập thụ động duy trì năm tiếp theo
                 </span>
-                <div className="text-xl sm:text-2xl font-black text-amber-300">
+                <div className="text-xl sm:text-2xl font-bold text-zinc-100 tabular-nums">
                   +{passiveAnnualIncome.toLocaleString('vi-VN')}₫ / năm
                 </div>
-                <span className="text-[10px] text-slate-300 block">
+                <span className="text-[10px] text-zinc-400 block tabular-nums">
                   Dựa trên 20% phí gia hạn từ {directStores + subStores} khách hàng
                 </span>
               </div>
@@ -526,7 +525,7 @@ function TuyenDungKinhDoanhContent() {
               return (
                 <div
                   key={idx}
-                  className="p-6 rounded-3xl bg-slate-50 border border-slate-200 hover:border-emerald-300 hover:shadow-lg transition-all space-y-3.5"
+                  className="p-6 rounded-xl bg-slate-50 border border-slate-200 hover:border-emerald-300 hover:shadow-lg transition-all space-y-3.5"
                 >
                   <div className="flex items-center justify-between">
                     <div className={`w-10 h-10 rounded-xl grid place-items-center border ${item.color}`}>
@@ -550,7 +549,7 @@ function TuyenDungKinhDoanhContent() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             
             {/* 5 Bí quyết tư vấn */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-7 sm:p-8 space-y-6 shadow-xs">
+            <div className="bg-white rounded-xl border border-slate-200 p-7 sm:p-8 space-y-6 shadow-xs">
               <div className="space-y-1.5">
                 <span className="text-xs font-bold text-amber-700 tracking-wider uppercase">
                   Bí Quyết Thực Chiến
@@ -564,23 +563,23 @@ function TuyenDungKinhDoanhContent() {
               </div>
 
               <div className="space-y-3 text-xs text-slate-600">
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-100 flex items-start gap-3">
                   <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-800 font-black grid place-items-center shrink-0">1</span>
                   <p><strong>Nói về giảm thất thoát & nhầm món:</strong> Chủ quán quan tâm nhất là không bị nhân viên đá bill và giờ cao điểm bếp không quên món.</p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-100 flex items-start gap-3">
                   <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-800 font-black grid place-items-center shrink-0">2</span>
                   <p><strong>Rút điện thoại demo trong 3 giây:</strong> Mở ngay menu QR trên máy của bạn và mời chủ quán quét thử để thấy sự tiện lợi tận mắt.</p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-100 flex items-start gap-3">
                   <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-800 font-black grid place-items-center shrink-0">3</span>
                   <p><strong>Nhấn mạnh 0đ thiết bị:</strong> Tận dụng điện thoại, tablet, laptop cũ sẵn có — Không bắt buộc mua máy POS cảm ứng mười mấy triệu.</p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-100 flex items-start gap-3">
                   <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-800 font-black grid place-items-center shrink-0">4</span>
                   <p><strong>VietQR tiền về ngay:</strong> Tiền khách thanh toán vào thẳng tài khoản ngân hàng chính chủ của chủ quán, không giữ tiền qua cổng trung gian.</p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-start gap-3">
+                <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-100 flex items-start gap-3">
                   <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-800 font-black grid place-items-center shrink-0">5</span>
                   <p><strong>Đồng hành buổi đầu:</strong> Đứng cạnh nhân viên thu ngân 1 buổi tối để họ tự tin bấm bill, quán sẽ gắn bó trung thành dài lâu.</p>
                 </div>
@@ -588,7 +587,7 @@ function TuyenDungKinhDoanhContent() {
             </div>
 
             {/* Checklist Bạn có phù hợp? */}
-            <div className="bg-white rounded-3xl border border-slate-200 p-7 sm:p-8 space-y-6 shadow-xs flex flex-col justify-between">
+            <div className="bg-white rounded-xl border border-slate-200 p-7 sm:p-8 space-y-6 shadow-xs flex flex-col justify-between">
               <div className="space-y-4">
                 <div className="space-y-1.5">
                   <span className="text-xs font-bold text-emerald-700 tracking-wider uppercase">
@@ -646,7 +645,7 @@ function TuyenDungKinhDoanhContent() {
             </p>
           </div>
 
-          <div className="bg-slate-50 rounded-3xl border border-slate-200 p-6 sm:p-10 shadow-lg">
+          <div className="bg-slate-50 rounded-xl border border-slate-200 p-6 sm:p-10 shadow-lg">
             {isSubmitted ? (
               <div className="text-center py-8 space-y-4 animate-scaleUp">
                 <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center mx-auto border-2 border-emerald-300">
@@ -807,7 +806,7 @@ function TuyenDungKinhDoanhContent() {
               return (
                 <div
                   key={idx}
-                  className="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs"
+                  className="rounded-lg border border-slate-200 bg-white overflow-hidden shadow-2xs"
                 >
                   <button
                     type="button"

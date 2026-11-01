@@ -4,20 +4,30 @@
 
 @layer base {
   :root {
-    --green-950: #09271d;
-    --green-900: #0d3628;
-    --green-800: #124a36;
-    --green-700: #176044;
-    --green-600: #1f7a55;
-    --green-100: #ddf4e8;
-    --cream: #f7f5ef;
-    --amber: #eab867;
+    --green-950: #022c22;
+    --green-900: #064e3b;
+    --green-800: #065f46;
+    --green-700: #047857;
+    --green-600: #059669;
+    --green-100: #d1fae5;
+    --cream: #f8fafc;
+    --amber: #d97706;
+    --ink: #09090b;
+    --muted: #71717a;
+    --line: #e4e4e7;
   }
 
   body {
-    background-color: #f4f6f4;
-    color: #1e2924;
+    background-color: #f8fafc;
+    color: #09090b;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Universal tabular numerals for high-precision data display */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -32,7 +42,7 @@
 }
 
 @keyframes scaleUp {
-  from { transform: scale(0.95); opacity: 0; }
+  from { transform: scale(0.98); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
 
@@ -42,19 +52,19 @@
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.2s ease-out forwards;
+  animation: fadeIn 0.15s ease-out forwards;
 }
 
 .animate-slideUp {
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-scaleUp {
-  animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: scaleUp 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-slideLeft {
-  animation: slideLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 @media print {
@@ -102,8 +112,8 @@
   .print-qr-card {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
-    border: 2px solid #09271d !important;
-    border-radius: 16px !important;
+    border: 1px solid #18181b !important;
+    border-radius: 8px !important;
     padding: 16px !important;
     background: #fff !important;
     box-shadow: none !important;

@@ -466,7 +466,7 @@ export default function KitchenDisplaySystemPage() {
 
       {/* KPI Stats Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Vé chờ nấu</span>
             <div className="text-2xl font-black text-amber-600 mt-0.5">{kpis.waitingTickets}</div>
@@ -476,7 +476,7 @@ export default function KitchenDisplaySystemPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Món đang nấu</span>
             <div className="text-2xl font-black text-orange-600 mt-0.5">{kpis.cookingItems}</div>
@@ -486,7 +486,7 @@ export default function KitchenDisplaySystemPage() {
           </div>
         </div>
 
-        <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-between">
+        <div className="p-4 rounded-lg bg-white border border-slate-200 shadow-sm flex items-center justify-between">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Món chờ bưng</span>
             <div className="text-2xl font-black text-teal-600 mt-0.5">{kpis.readyItems}</div>
@@ -496,7 +496,7 @@ export default function KitchenDisplaySystemPage() {
           </div>
         </div>
 
-        <div className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between transition-colors ${
+        <div className={`p-4 rounded-lg border shadow-sm flex items-center justify-between transition-colors ${
           kpis.slaBreachedCount > 0
             ? 'bg-rose-50 border-rose-300 animate-pulse'
             : 'bg-white border-slate-200'
@@ -518,7 +518,7 @@ export default function KitchenDisplaySystemPage() {
       {/* =========================================================================
           CONTROL BAR: VIEW SWITCHER, STATUS TABS & SEARCH
           ========================================================================= */}
-      <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      <div className="p-3 bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
         {/* View Switcher: Tickets vs All-Day Summary */}
         <div className="flex items-center gap-1.5 p-1 bg-slate-100 rounded-xl w-fit">
           <button
@@ -596,7 +596,7 @@ export default function KitchenDisplaySystemPage() {
       {viewMode === 'tickets' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredOrders.length === 0 ? (
-            <div className="col-span-full text-center py-24 bg-white rounded-3xl border border-slate-200 shadow-sm text-slate-400">
+            <div className="col-span-full text-center py-24 bg-white rounded-xl border border-slate-200 shadow-sm text-slate-400">
               <ChefHat className="w-14 h-14 mx-auto mb-3 text-slate-300 stroke-[1.5]" />
               <h3 className="text-base font-bold text-slate-700">Không có vé nào cần chế biến</h3>
               <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
@@ -618,7 +618,7 @@ export default function KitchenDisplaySystemPage() {
               return (
                 <Card
                   key={ord.id}
-                  className={`p-5 flex flex-col justify-between border-2 shadow-md bg-white transition-all rounded-3xl ${
+                  className={`p-5 flex flex-col justify-between border-2 shadow-md bg-white transition-all rounded-xl ${
                     isLocked
                       ? 'border-amber-300 bg-amber-50/20 opacity-80'
                       : elapsedMinutes >= 20
@@ -657,7 +657,7 @@ export default function KitchenDisplaySystemPage() {
                         <span
                           className={`px-2.5 py-1 rounded-xl text-[11px] font-black border flex items-center gap-1 ${
                             elapsedMinutes >= 20
-                              ? 'bg-rose-100 text-rose-800 border-rose-300 animate-pulse'
+                              ? 'bg-rose-100 text-rose-800 border-rose-300 tabular-nums'
                               : elapsedMinutes >= 10
                               ? 'bg-amber-100 text-amber-900 border-amber-300 font-bold'
                               : 'bg-emerald-50 text-emerald-800 border-emerald-200'
@@ -854,7 +854,7 @@ export default function KitchenDisplaySystemPage() {
           VIEW 2: ALL-DAY DISH AGGREGATION VIEW (GOM NHÓM MÓN TOÀN CHI NHÁNH)
           ========================================================================= */}
       {viewMode === 'summary' && (
-        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-4">
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 space-y-4">
           <div className="flex items-center justify-between pb-4 border-b border-slate-200">
             <div>
               <h2 className="text-lg font-black text-[#09271d] flex items-center gap-2">
@@ -885,7 +885,7 @@ export default function KitchenDisplaySystemPage() {
               {filteredSummary.map((item, idx) => (
                 <div
                   key={item.menuItemId || idx}
-                  className="p-4 rounded-2xl border-2 border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#124a36] transition-all space-y-3"
+                  className="p-4 rounded-lg border-2 border-slate-200 bg-slate-50/50 hover:bg-white hover:border-[#124a36] transition-all space-y-3"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <strong className="text-base font-extrabold text-[#09271d]">

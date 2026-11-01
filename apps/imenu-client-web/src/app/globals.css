@@ -11,16 +11,23 @@
     --green-600: #059669;
     --green-100: #d1fae5;
     --cream: #f8fafc;
-    --amber: #f59e0b;
-    --ink: #0f172a;
-    --muted: #64748b;
-    --line: #e2e8f0;
+    --amber: #d97706;
+    --ink: #09090b;
+    --muted: #71717a;
+    --line: #e4e4e7;
   }
 
   body {
     background-color: #ffffff;
-    color: #0f172a;
+    color: #09090b;
     font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Universal tabular numerals for high-precision data display */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
 
@@ -35,18 +42,18 @@
 }
 
 @keyframes scaleUp {
-  from { transform: scale(0.95); opacity: 0; }
+  from { transform: scale(0.98); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.2s ease-out forwards;
+  animation: fadeIn 0.15s ease-out forwards;
 }
 
 .animate-slideUp {
-  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-scaleUp {
-  animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: scaleUp 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

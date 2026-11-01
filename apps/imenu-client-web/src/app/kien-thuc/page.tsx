@@ -23,7 +23,6 @@ import {
   Store,
   ChefHat,
   Building2,
-  Sparkles,
   Share2,
   CheckSquare,
   Square,
@@ -492,7 +491,7 @@ export default function KienThucPage() {
 
             <div className="p-4 rounded-2xl bg-white border border-slate-200/90 shadow-xs flex items-center gap-3.5">
               <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-700 grid place-items-center border border-amber-100 shrink-0">
-                <Sparkles className="w-5 h-5" />
+                <BookOpen className="w-5 h-5" />
               </div>
               <div>
                 <span className="text-xs font-bold text-slate-900 block">Cập nhật xu hướng 2026</span>
@@ -671,7 +670,7 @@ export default function KienThucPage() {
           </div>
 
           {filteredArticles.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 p-8 space-y-3">
+            <div className="text-center py-16 bg-white rounded-xl border border-zinc-200 p-8 space-y-3">
               <BookOpen className="w-10 h-10 text-slate-300 mx-auto" />
               <h3 className="text-base font-bold text-slate-800">Không tìm thấy bài viết phù hợp</h3>
               <p className="text-xs text-slate-500">
@@ -697,7 +696,7 @@ export default function KienThucPage() {
                   <article
                     key={article.id}
                     onClick={() => setActiveArticle(article)}
-                    className="group bg-white rounded-3xl border border-slate-200/90 hover:border-emerald-300 hover:shadow-xl hover:shadow-emerald-950/5 transition-all p-6 sm:p-7 flex flex-col justify-between cursor-pointer space-y-5"
+                    className="group bg-white rounded-lg border border-zinc-200/90 hover:border-zinc-300 transition-colors shadow-xs p-6 sm:p-7 flex flex-col justify-between cursor-pointer space-y-5"
                   >
                     <div className="space-y-4">
                       {/* Top Meta */}
@@ -749,7 +748,7 @@ export default function KienThucPage() {
       {activeArticle && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/70 backdrop-blur-sm animate-fadeIn">
           <div
-            className="bg-white w-full max-w-3xl max-h-[90vh] rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-scaleUp"
+            className="bg-white w-full max-w-3xl max-h-[90vh] rounded-xl shadow-xl border border-zinc-200 flex flex-col overflow-hidden"
             role="dialog"
             aria-modal="true"
           >
@@ -844,10 +843,10 @@ export default function KienThucPage() {
 
               {/* System Tip Banner */}
               <div className="pt-4">
-                <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-900 to-teal-900 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="p-4 rounded-lg bg-zinc-950 border border-zinc-800 text-white flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="space-y-1 text-center sm:text-left">
-                    <span className="text-[10px] uppercase font-bold tracking-wider text-amber-300 flex items-center justify-center sm:justify-start gap-1">
-                      <Sparkles className="w-3 h-3 text-amber-300" />
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-emerald-400 flex items-center justify-center sm:justify-start gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
                       Giải pháp đồng bộ trên iMenu
                     </span>
                     <p className="text-xs text-emerald-100/90 leading-snug">

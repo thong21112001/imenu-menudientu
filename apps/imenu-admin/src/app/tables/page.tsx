@@ -27,7 +27,6 @@ import {
   X,
   ExternalLink,
   RefreshCw,
-  Sparkles,
   CreditCard,
   QrCode,
   Banknote,
@@ -427,7 +426,7 @@ export default function TablesMapPage() {
               variant="outline"
               size="sm"
               onClick={handleSeedDefaultTables}
-              icon={<Sparkles className="w-4 h-4 text-emerald-600" />}
+              icon={<Plus className="w-4 h-4 text-emerald-400" />}
             >
               Tạo sơ đồ mẫu
             </Button>
@@ -470,8 +469,8 @@ export default function TablesMapPage() {
 
       {/* Empty State when no tables */}
       {!isLoading && tables.length === 0 && (
-        <div className="flex flex-col items-center justify-center p-12 bg-white rounded-3xl border border-dashed border-slate-300 text-center space-y-4 my-6">
-          <div className="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
+        <div className="flex flex-col items-center justify-center p-12 bg-white rounded-xl border border-dashed border-slate-300 text-center space-y-4 my-6">
+          <div className="w-16 h-16 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center shadow-inner">
             <Grid3X3 className="w-8 h-8" />
           </div>
           <div className="max-w-md">
@@ -484,7 +483,7 @@ export default function TablesMapPage() {
             <Button
               onClick={handleSeedDefaultTables}
               className="bg-[#124a36] hover:bg-[#176044] text-white shadow-md text-xs font-bold"
-              icon={<Sparkles className="w-4 h-4 text-emerald-300" />}
+              icon={<Plus className="w-4 h-4 text-emerald-400" />}
             >
               Khởi tạo sơ đồ mẫu (12 bàn)
             </Button>
@@ -530,11 +529,11 @@ export default function TablesMapPage() {
                   setVatPercent(0);
                   setCashGiven(0);
                 }}
-                className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between min-h-[120px] shadow-sm hover:shadow-md hover:-translate-y-0.5 ${
+                className={`p-4 rounded-lg border transition-colors cursor-pointer flex flex-col justify-between min-h-[120px] shadow-xs ${
                   hasReadyDish
                     ? 'bg-emerald-50/90 border-emerald-400 ring-2 ring-emerald-400 shadow-emerald-100'
                     : isPayment
-                    ? 'bg-rose-50/80 border-rose-300 ring-2 ring-rose-400 animate-pulse'
+                    ? 'bg-rose-50/80 border-rose-400 ring-1 ring-rose-400'
                     : isOccupied
                     ? 'bg-amber-50/70 border-amber-300'
                     : isReserved
@@ -547,7 +546,7 @@ export default function TablesMapPage() {
                     <strong className="text-sm font-extrabold text-slate-900 block">{tbl.name}</strong>
                     {hasReadyDish && (
                       <span className="inline-flex items-center gap-1 mt-1 px-1.5 py-0.5 rounded-md bg-emerald-600 text-white text-[9px] font-black animate-pulse shadow-sm">
-                        <span>🍽️</span> Món đã xong
+                        Món đã xong
                       </span>
                     )}
                   </div>
@@ -664,7 +663,7 @@ export default function TablesMapPage() {
                 </div>
 
                 {/* Bill Adjustments & Preview */}
-                <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
+                <div className="p-3.5 bg-slate-50 rounded-lg border border-slate-200 space-y-2 text-xs">
                   <span className="font-bold text-slate-800 block mb-1">Tính toán hóa đơn</span>
 
                   <div className="grid grid-cols-2 gap-2">
@@ -1102,7 +1101,7 @@ export default function TablesMapPage() {
             subtitle={`${selectedTable?.name} · Số tiền: ${formatCurrencyVND(billCalculation.finalAmount)}`}
           >
             <div className="text-center space-y-4">
-              <div className="p-4 bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col items-center">
+              <div className="p-4 bg-white rounded-lg border border-slate-200 shadow-sm flex flex-col items-center">
                 <img
                   src={generateVietQRUrl({
                     bankId: bankAcc?.bankId || 'MB',

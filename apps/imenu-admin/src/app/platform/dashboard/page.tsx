@@ -271,19 +271,19 @@ export default function PlatformDashboardPage() {
                   <tr key={r.restaurantId} className="hover:bg-slate-50/60 transition">
                     <td className="py-3.5 px-4 text-center font-black">
                       {idx === 0 ? (
-                        <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-800 inline-flex items-center justify-center text-xs shadow-2xs">
-                          🥇
+                        <span className="w-6 h-6 rounded-md bg-amber-50 text-amber-800 border border-amber-200 inline-flex items-center justify-center text-xs font-bold tabular-nums">
+                          1
                         </span>
                       ) : idx === 1 ? (
-                        <span className="w-6 h-6 rounded-full bg-slate-200 text-slate-700 inline-flex items-center justify-center text-xs">
-                          🥈
+                        <span className="w-6 h-6 rounded-md bg-slate-100 text-slate-700 border border-slate-200 inline-flex items-center justify-center text-xs font-bold tabular-nums">
+                          2
                         </span>
                       ) : idx === 2 ? (
-                        <span className="w-6 h-6 rounded-full bg-amber-50 text-amber-900 inline-flex items-center justify-center text-xs">
-                          🥉
+                        <span className="w-6 h-6 rounded-md bg-amber-50/50 text-amber-900 border border-amber-100 inline-flex items-center justify-center text-xs font-bold tabular-nums">
+                          3
                         </span>
                       ) : (
-                        <span className="text-slate-400">#{idx + 1}</span>
+                        <span className="text-slate-400 font-medium tabular-nums">#{idx + 1}</span>
                       )}
                     </td>
                     <td className="py-3.5 px-4">

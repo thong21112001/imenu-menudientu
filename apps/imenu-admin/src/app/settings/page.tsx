@@ -16,7 +16,6 @@ import {
   Clock,
   Phone,
   MapPin,
-  Sparkles,
 } from 'lucide-react';
 
 export default function SettingsPage() {

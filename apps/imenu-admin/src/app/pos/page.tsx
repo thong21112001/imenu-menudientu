@@ -28,7 +28,6 @@ import {
   Minus,
   Trash2,
   Send,
-  Sparkles,
   AlertCircle,
   Tag,
   Check,
@@ -648,9 +647,9 @@ export default function PosTerminalPage() {
   return (
     <div className="space-y-4">
       {/* Top Banner: Branch Status & Info */}
-      <div className="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-sm flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white rounded-lg p-4 border border-slate-200/80 shadow-sm flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#176044] to-[#1f7e59] flex items-center justify-center text-white shadow-sm">
+          <div className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-white shadow-sm">
             <Store className="w-5 h-5" />
           </div>
           <div>
@@ -703,7 +702,7 @@ export default function PosTerminalPage() {
       </div>
 
       {/* View Switcher: POS Terminal vs QR Order Approvals Queue */}
-      <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-2xl w-fit">
+      <div className="flex items-center gap-2 bg-slate-100 p-1.5 rounded-lg w-fit">
         <button
           onClick={() => setActiveTab('pos')}
           className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer ${
@@ -727,7 +726,7 @@ export default function PosTerminalPage() {
           <Bell className={`w-4 h-4 ${activeTab === 'qr_approvals' ? 'text-amber-300' : 'text-amber-500'}`} />
           <span>Duyệt đơn gọi món QR</span>
           {pendingOrders.length > 0 && (
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white animate-pulse">
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-600 text-white tabular-nums">
               {pendingOrders.length}
             </span>
           )}
@@ -736,7 +735,7 @@ export default function PosTerminalPage() {
 
       {activeTab === 'qr_approvals' ? (
         <div className="space-y-4">
-          <div className="flex items-center justify-between bg-white rounded-2xl p-4 border border-slate-200 shadow-sm">
+          <div className="flex items-center justify-between bg-white rounded-lg p-4 border border-slate-200 shadow-sm">
             <div>
               <h2 className="text-sm font-extrabold text-slate-900 flex items-center gap-2">
                 <Hourglass className="w-4 h-4 text-amber-500" />
@@ -759,12 +758,12 @@ export default function PosTerminalPage() {
           </div>
 
           {isLoadingPending ? (
-            <div className="p-16 bg-white rounded-2xl border border-slate-200 text-center space-y-3">
+            <div className="p-16 bg-white rounded-lg border border-slate-200 text-center space-y-3">
               <Loader2 className="w-8 h-8 text-[#176044] animate-spin mx-auto" />
               <p className="text-xs text-slate-500 font-medium">Đang kiểm tra đơn gọi món QR mới...</p>
             </div>
           ) : pendingOrders.length === 0 ? (
-            <div className="p-16 bg-white rounded-2xl border border-slate-200 text-center space-y-3">
+            <div className="p-16 bg-white rounded-lg border border-slate-200 text-center space-y-3">
               <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
                 <CheckCircle2 className="w-6 h-6" />
               </div>
@@ -915,7 +914,7 @@ export default function PosTerminalPage() {
                   : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200/80 hover:border-slate-300'
               }`}
             >
-              <span>🍽️ Tất cả</span>
+              <span>Tất cả</span>
               <span
                 className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${
                   selectedCategoryId === 'all' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'
@@ -954,12 +953,12 @@ export default function PosTerminalPage() {
 
           {/* Dish Grid */}
           {isLoading ? (
-            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
+            <div className="bg-white rounded-lg p-12 text-center border border-slate-200">
               <RefreshCw className="w-8 h-8 text-[#176044] animate-spin mx-auto mb-3" />
               <p className="text-xs text-slate-500 font-medium">Đang đồng bộ thực đơn chi nhánh...</p>
             </div>
           ) : filteredItems.length === 0 ? (
-            <div className="bg-white rounded-2xl p-12 text-center border border-slate-200">
+            <div className="bg-white rounded-lg p-12 text-center border border-slate-200">
               <AlertCircle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
               <p className="text-sm font-bold text-slate-800">Không tìm thấy món ăn nào!</p>
               <p className="text-xs text-slate-500 mt-1">
@@ -982,7 +981,7 @@ export default function PosTerminalPage() {
                   <div
                     key={item.id}
                     onClick={() => handleItemCardClick(item)}
-                    className={`group relative rounded-2xl border p-3 flex flex-col justify-between transition-all duration-150 select-none ${
+                    className={`group relative rounded-lg border p-3 flex flex-col justify-between transition-all duration-150 select-none ${
                       isAvailable
                         ? 'bg-white border-slate-200/90 hover:border-[#176044] hover:shadow-md cursor-pointer hover:-translate-y-0.5'
                         : 'bg-slate-50 border-slate-200 opacity-60 cursor-not-allowed'
@@ -1025,7 +1024,7 @@ export default function PosTerminalPage() {
                       {/* Popular Badge */}
                       {isAvailable && item.isPopular && !hasDeal && (
                         <div className="absolute top-1.5 left-1.5 bg-amber-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-sm flex items-center gap-0.5">
-                          <Sparkles className="w-2.5 h-2.5" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
                           <span>Bán chạy</span>
                         </div>
                       )}
@@ -1082,7 +1081,7 @@ export default function PosTerminalPage() {
 
         {/* Right Column: POS Order Cart & Checkout Panel */}
         <div className="lg:col-span-5 xl:col-span-4">
-          <Card className="p-4 space-y-4 sticky top-4 bg-white shadow-sm border border-slate-200/90 rounded-2xl">
+          <Card className="p-4 space-y-4 sticky top-4 bg-white shadow-sm border border-slate-200/90 rounded-lg">
             {/* Header: Table selector & clear cart */}
             <div className="pb-3 border-b border-slate-200 space-y-2.5">
               <div className="flex items-center justify-between">

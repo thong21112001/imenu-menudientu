@@ -202,7 +202,7 @@ export const RouteAccessGuard: React.FC<RouteAccessGuardProps> = ({ children }) 
 
     return (
       <div className="min-h-[70vh] flex items-center justify-center p-4">
-        <div className="max-w-lg w-full bg-white rounded-3xl shadow-xl border border-slate-200/80 p-6 sm:p-8 text-center animate-in fade-in zoom-in-95 duration-200">
+        <div className="max-w-lg w-full bg-white rounded-xl shadow-xl border border-slate-200/80 p-6 sm:p-8 text-center animate-in fade-in zoom-in-95 duration-200">
           {/* Decorative Icon */}
           <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 text-amber-600 mx-auto flex items-center justify-center mb-5 shadow-xs">
             <ShieldAlert className="w-8 h-8" />

@@ -16,7 +16,6 @@ import {
   CheckCircle2,
   ArrowRight,
   ExternalLink,
-  Sparkles,
   Lightbulb,
   Maximize2,
   X,
@@ -322,50 +321,50 @@ export default function GuidePage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfdfd] flex flex-col selection:bg-emerald-100 selection:text-emerald-950">
+    <div className="min-h-screen bg-[#f8fafc] flex flex-col selection:bg-emerald-100 selection:text-emerald-950">
       <Header />
 
       {/* ================= HERO HEADER ================= */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-50 via-emerald-50/20 to-white pt-12 pb-14 border-b border-slate-200/80">
+      <section className="relative overflow-hidden bg-white pt-12 pb-14 border-b border-zinc-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
-          <nav className="flex items-center gap-2 text-xs font-semibold text-slate-500 mb-5">
-            <Link href="/" className="hover:text-emerald-700 transition-colors">
+          <nav className="flex items-center gap-2 text-xs font-medium text-zinc-500 mb-5">
+            <Link href="/" className="hover:text-zinc-900 transition-colors">
               Trang chủ
             </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-emerald-800 font-bold">Hướng dẫn vận hành iMenu</span>
+            <ChevronRight className="w-3.5 h-3.5 text-zinc-400" />
+            <span className="text-zinc-900 font-semibold">Hướng dẫn vận hành iMenu</span>
           </nav>
 
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-8">
-            <div className="max-w-3xl space-y-4">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100/70 border border-emerald-300/80 text-xs font-extrabold text-emerald-900 uppercase tracking-wider">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+            <div className="max-w-3xl space-y-3.5">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-zinc-100 border border-zinc-200 text-xs font-semibold text-zinc-800 uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 inline-block" />
                 Cẩm Nang Vận Hành Toàn Diện 2026
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#09271d] tracking-tight leading-tight">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-zinc-900 tracking-tight leading-tight">
                 Hướng dẫn thiết lập & vận hành nhà hàng số với iMenu
               </h1>
 
-              <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-2xl">
+              <p className="text-sm sm:text-base text-zinc-600 leading-relaxed max-w-2xl">
                 Tài liệu chuẩn hóa từng bước dành riêng cho Chủ nhà hàng, Quản lý và Nhân viên: từ khâu khởi tạo thực đơn, in mã QR bàn đến quy trình phối hợp thời gian thực Khách - Bếp - Thu ngân.
               </p>
             </div>
 
             {/* Quick Metadata Stats */}
-            <div className="flex flex-wrap sm:flex-nowrap gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex-shrink-0">
-              <div className="px-4 py-2 border-r border-slate-100">
-                <span className="text-[11px] font-bold uppercase text-slate-400 block">Quy trình</span>
-                <strong className="text-lg font-extrabold text-slate-900">2 Phần · 7 Bước</strong>
+            <div className="flex flex-wrap sm:flex-nowrap gap-4 bg-zinc-50 p-3.5 rounded-lg border border-zinc-200/80 shadow-xs flex-shrink-0">
+              <div className="px-4 py-1.5 border-r border-zinc-200">
+                <span className="text-[11px] font-medium uppercase text-zinc-400 block">Quy trình</span>
+                <strong className="text-base font-bold text-zinc-900">2 Phần · 7 Bước</strong>
               </div>
-              <div className="px-4 py-2 border-r border-slate-100">
-                <span className="text-[11px] font-bold uppercase text-slate-400 block">Thời gian học</span>
-                <strong className="text-lg font-extrabold text-emerald-700">~5 Phút</strong>
+              <div className="px-4 py-1.5 border-r border-zinc-200">
+                <span className="text-[11px] font-medium uppercase text-zinc-400 block">Thời gian học</span>
+                <strong className="text-base font-bold text-emerald-700">~5 Phút</strong>
               </div>
-              <div className="px-4 py-2">
-                <span className="text-[11px] font-bold uppercase text-slate-400 block">Hệ thống</span>
-                <strong className="text-lg font-extrabold text-slate-900">100% Realtime</strong>
+              <div className="px-4 py-1.5">
+                <span className="text-[11px] font-medium uppercase text-zinc-400 block">Hệ thống</span>
+                <strong className="text-base font-bold text-zinc-900">100% Realtime</strong>
               </div>
             </div>
           </div>
@@ -376,10 +375,10 @@ export default function GuidePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 sm:py-14 w-full flex-grow">
         
         {/* Mobile Horizontal Quick TOC Bar */}
-        <div className="lg:hidden sticky top-20 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 -mx-4 px-4 py-3 mb-8 overflow-x-auto shadow-sm">
+        <div className="lg:hidden sticky top-16 z-40 bg-white/95 backdrop-blur-xs border-b border-zinc-200 -mx-4 px-4 py-3 mb-8 overflow-x-auto shadow-xs">
           <div className="flex items-center gap-2 text-xs">
-            <span className="font-extrabold text-[#09271d] whitespace-nowrap mr-1 flex items-center gap-1">
-              <BookOpen className="w-3.5 h-3.5 text-emerald-700" /> Mục lục:
+            <span className="font-semibold text-zinc-900 whitespace-nowrap mr-1 flex items-center gap-1">
+              <BookOpen className="w-3.5 h-3.5 text-zinc-700" /> Mục lục:
             </span>
             {GUIDE_STEPS.map((step) => {
               const isActive = activeStepId === step.id;
@@ -387,10 +386,10 @@ export default function GuidePage() {
                 <button
                   key={step.id}
                   onClick={() => scrollToStep(step.id)}
-                  className={`px-3 py-1.5 rounded-full whitespace-nowrap text-xs font-bold transition-all ${
+                  className={`px-2.5 py-1 rounded-md whitespace-nowrap text-xs font-medium transition-colors ${
                     isActive
-                      ? 'bg-emerald-700 text-white shadow-sm'
-                      : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                      ? 'bg-zinc-900 text-white'
+                      : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
                   }`}
                 >
                   {step.stepNumber}. {step.title}
@@ -400,46 +399,41 @@ export default function GuidePage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* ================= LEFT COLUMN: STICKY TOC SIDEBAR ================= */}
-          <aside className="hidden lg:block lg:col-span-4 sticky top-28 space-y-6">
+          <aside className="hidden lg:block lg:col-span-4 sticky top-24 space-y-6">
             
-            {/* Widget Mục Lục Thiết Kế Đúng Chuẩn Theo Hình Người Dùng Gửi */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200/90 overflow-hidden">
-              
-              {/* Dải xanh lá cây thương hiệu trên đỉnh (như hình mẫu) */}
-              <div className="h-1.5 bg-[#0e4834] w-full" />
+            <div className="bg-white rounded-lg shadow-xs border border-zinc-200/90 overflow-hidden">
+              <div className="h-1 bg-emerald-600 w-full" />
 
-              <div className="p-7 space-y-6">
-                
-                {/* Tiêu đề "Mục lục" */}
+              <div className="p-6 space-y-5">
                 <div>
-                  <h2 className="text-xl font-extrabold text-[#09271d] tracking-tight">
+                  <h2 className="text-lg font-bold text-zinc-900 tracking-tight">
                     Mục lục
                   </h2>
                 </div>
 
                 {/* Phần 01: Tạo menu nhà hàng */}
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-base font-extrabold text-[#b45309]">01</span>
-                    <h3 className="text-base font-extrabold text-[#09271d]">
+                <div className="space-y-2.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-amber-700 font-mono">01</span>
+                    <h3 className="text-sm font-semibold text-zinc-900">
                       Tạo menu nhà hàng
                     </h3>
                   </div>
 
-                  <ul className="space-y-1.5 pl-6 border-l-2 border-slate-100 ml-2">
+                  <ul className="space-y-1 pl-4 border-l border-zinc-200 ml-1.5">
                     {GUIDE_STEPS.filter((s) => s.sectionNumber === '01').map((step) => {
                       const isActive = activeStepId === step.id;
                       return (
                         <li key={step.id}>
                           <button
                             onClick={() => scrollToStep(step.id)}
-                            className={`text-left text-sm py-1 px-2 rounded-lg transition-all w-full flex items-center justify-between group cursor-pointer ${
+                            className={`text-left text-xs py-1.5 px-2 rounded-md transition-colors w-full flex items-center justify-between group cursor-pointer ${
                               isActive
-                                ? 'text-[#0e4834] font-bold bg-emerald-50/80 -translate-x-1 pl-3 border-l-2 border-[#0e4834]'
-                                : 'text-slate-600 hover:text-[#0e4834] hover:bg-slate-50 font-medium'
+                                ? 'text-zinc-900 font-semibold bg-zinc-100'
+                                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
                             }`}
                           >
                             <span>{step.title}</span>
@@ -454,25 +448,25 @@ export default function GuidePage() {
                 </div>
 
                 {/* Phần 02: Hướng dẫn vận hành */}
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center gap-2.5">
-                    <span className="text-base font-extrabold text-[#b45309]">02</span>
-                    <h3 className="text-base font-extrabold text-[#09271d]">
+                <div className="space-y-2.5 pt-2 border-t border-zinc-100">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold text-amber-700 font-mono">02</span>
+                    <h3 className="text-sm font-semibold text-zinc-900">
                       Hướng dẫn vận hành
                     </h3>
                   </div>
 
-                  <ul className="space-y-1.5 pl-6 border-l-2 border-slate-100 ml-2">
+                  <ul className="space-y-1 pl-4 border-l border-zinc-200 ml-1.5">
                     {GUIDE_STEPS.filter((s) => s.sectionNumber === '02').map((step) => {
                       const isActive = activeStepId === step.id;
                       return (
                         <li key={step.id}>
                           <button
                             onClick={() => scrollToStep(step.id)}
-                            className={`text-left text-sm py-1 px-2 rounded-lg transition-all w-full flex items-center justify-between group cursor-pointer ${
+                            className={`text-left text-xs py-1.5 px-2 rounded-md transition-colors w-full flex items-center justify-between group cursor-pointer ${
                               isActive
-                                ? 'text-[#0e4834] font-bold bg-emerald-50/80 -translate-x-1 pl-3 border-l-2 border-[#0e4834]'
-                                : 'text-slate-600 hover:text-[#0e4834] hover:bg-slate-50 font-medium'
+                                ? 'text-zinc-900 font-semibold bg-zinc-100'
+                                : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-50'
                             }`}
                           >
                             <span>{step.title}</span>
@@ -485,32 +479,29 @@ export default function GuidePage() {
                     })}
                   </ul>
                 </div>
-
-                {/* Đường gạch phân cách dưới cùng (như hình mẫu) */}
-                <div className="pt-2 border-b border-slate-200" />
               </div>
             </div>
 
             {/* Quick Support Card */}
-            <div className="bg-gradient-to-br from-[#0a2f23] to-[#041a13] rounded-2xl p-6 text-white space-y-4 shadow-lg">
+            <div className="bg-zinc-950 rounded-lg p-5 text-white space-y-4 border border-zinc-800 shadow-xs">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/30 grid place-items-center text-emerald-300">
-                  <PhoneCall className="w-5 h-5" />
+                <div className="w-9 h-9 rounded-md bg-zinc-900 border border-zinc-800 grid place-items-center text-zinc-300">
+                  <PhoneCall className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold">Hỗ trợ kỹ thuật F&B</h4>
-                  <p className="text-xs text-slate-300">Hỗ trợ onboarding 1-1 miễn phí</p>
+                  <h4 className="text-xs font-semibold text-zinc-200">Hỗ trợ kỹ thuật F&B</h4>
+                  <p className="text-[11px] text-zinc-400">Hỗ trợ onboarding 1-1 miễn phí</p>
                 </div>
               </div>
 
-              <div className="pt-2 border-t border-emerald-900/60 space-y-2 text-xs text-slate-300">
+              <div className="pt-2 border-t border-zinc-800 space-y-1.5 text-xs text-zinc-400">
                 <div className="flex items-center justify-between">
                   <span>Hotline 24/7:</span>
-                  <span className="font-bold text-amber-300">1900 xxxx (Nhánh 1)</span>
+                  <span className="font-semibold text-zinc-200 tabular-nums">1900 xxxx (Nhánh 1)</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Zalo Hỗ Trợ:</span>
-                  <span className="font-bold text-white">0908 xxx xxx</span>
+                  <span className="font-semibold text-zinc-200 tabular-nums">0908 xxx xxx</span>
                 </div>
               </div>
 
@@ -518,14 +509,14 @@ export default function GuidePage() {
                 <a
                   href="http://localhost:3005/menu/bep-nha/ban-08"
                   target="_blank"
-                  className="w-full text-center py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-colors inline-flex items-center justify-center gap-1.5"
+                  className="w-full h-8 text-center px-3 rounded-md bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-medium transition-colors inline-flex items-center justify-center gap-1.5 border border-zinc-700"
                 >
                   <Smartphone className="w-3.5 h-3.5" /> Mở Menu Khách Bàn 08 ↗
                 </a>
                 <a
                   href="http://localhost:3003"
                   target="_blank"
-                  className="w-full text-center py-2 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-bold transition-colors inline-flex items-center justify-center gap-1.5"
+                  className="w-full h-8 text-center px-3 rounded-md bg-zinc-900 hover:bg-zinc-850 text-zinc-400 hover:text-zinc-200 text-xs font-medium transition-colors inline-flex items-center justify-center gap-1.5 border border-zinc-800"
                 >
                   <Laptop className="w-3.5 h-3.5" /> Mở Admin & POS Quản Trị ↗
                 </a>
@@ -535,18 +526,18 @@ export default function GuidePage() {
           </aside>
 
           {/* ================= RIGHT COLUMN: BALANCED STEP CONTENT CARDS ================= */}
-          <main className="lg:col-span-8 space-y-12">
+          <main className="lg:col-span-8 space-y-8">
             
             {/* Banner Khởi đầu */}
-            <div className="p-6 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white grid place-items-center flex-shrink-0 mt-0.5">
-                <BookOpen className="w-5 h-5" />
+            <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-200/90 flex items-start gap-3.5">
+              <div className="w-9 h-9 rounded-md bg-zinc-900 text-white grid place-items-center flex-shrink-0 mt-0.5">
+                <BookOpen className="w-4 h-4" />
               </div>
-              <div className="space-y-1 text-sm">
-                <strong className="text-[#09271d] font-bold block text-base">
+              <div className="space-y-1 text-xs">
+                <strong className="text-zinc-900 font-semibold block text-sm">
                   Quy trình chuẩn hóa 2 giai đoạn: Thiết lập thực đơn & Vận hành order
                 </strong>
-                <p className="text-slate-600 leading-relaxed text-xs sm:text-sm">
+                <p className="text-zinc-600 leading-relaxed">
                   Dưới đây là 7 bước hướng dẫn kèm hình ảnh chụp thực tế từ hệ thống iMenu đang hoạt động. Bạn có thể nhấp vào bất kỳ hình ảnh nào để phóng to hoặc nhấn nút trải nghiệm trực tiếp trên bản Demo.
                 </p>
               </div>
@@ -560,62 +551,62 @@ export default function GuidePage() {
                 <React.Fragment key={step.id}>
                   {/* Section 02 Separator Heading */}
                   {isFirstOfSection02 && (
-                    <div className="pt-8 pb-4 border-t-2 border-dashed border-slate-200">
-                      <div className="flex items-center gap-3">
-                        <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-black tracking-wider uppercase">
+                    <div className="pt-6 pb-2 border-t border-zinc-200">
+                      <div className="flex items-center gap-2.5">
+                        <span className="px-2 py-0.5 rounded-md bg-amber-50 border border-amber-200 text-amber-900 text-[11px] font-semibold tracking-wider uppercase">
                           PHẦN 02
                         </span>
-                        <h2 className="text-2xl sm:text-3xl font-extrabold text-[#09271d]">
+                        <h2 className="text-xl font-bold text-zinc-900 tracking-tight">
                           Hướng Dẫn Vận Hành Thời Gian Thực
                         </h2>
                       </div>
-                      <p className="text-sm text-slate-500 mt-1">
+                      <p className="text-xs text-zinc-500 mt-1">
                         Quy trình phối hợp khép kín từ khi khách ngồi vào bàn, quét mã gọi món cho đến khi Bếp chế biến và Thu ngân in hóa đơn.
                       </p>
                     </div>
                   )}
 
-                  {/* STEP CARD: Chia khung đều đặn, chuẩn xu hướng hiện đại */}
+                  {/* STEP CARD */}
                   <article
                     id={step.id}
-                    className="scroll-mt-28 bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow overflow-hidden"
+                    className="scroll-mt-24 bg-white rounded-lg border border-zinc-200/90 shadow-xs overflow-hidden"
                   >
                     {/* Card Top Header */}
-                    <div className="p-6 sm:p-8 pb-0 space-y-4">
+                    <div className="p-5 sm:p-6 pb-0 space-y-3.5">
                       
                       {/* Badge & Metadata Row */}
                       <div className="flex flex-wrap items-center justify-between gap-3">
-                        <div className="flex items-center gap-2.5">
-                          <span className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-[#0e4834] text-white text-xs font-bold tracking-wide">
+                        <div className="flex items-center gap-2">
+                          <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-md bg-zinc-900 text-white text-[11px] font-medium tracking-wide">
                             {step.badge}
                           </span>
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                          <span className="text-[11px] font-medium text-zinc-500 uppercase tracking-wider">
                             Phần {step.sectionNumber} · {step.sectionTitle}
                           </span>
                         </div>
 
-                        <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                          <Clock className="w-3.5 h-3.5 text-slate-400" />
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-600 bg-zinc-100 px-2.5 py-0.5 rounded-md tabular-nums">
+                          <Clock className="w-3.5 h-3.5 text-zinc-400" />
                           Thời gian: {step.timeEstimate}
                         </div>
                       </div>
 
                       {/* Step Title & Subtitle */}
                       <div>
-                        <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+                        <h3 className="text-lg sm:text-xl font-bold text-zinc-900 tracking-tight">
                           {step.stepNumber}. {step.title}
                         </h3>
-                        <p className="text-sm sm:text-base text-slate-600 mt-1.5 leading-relaxed">
+                        <p className="text-xs sm:text-sm text-zinc-600 mt-1 leading-relaxed">
                           {step.shortDesc}
                         </p>
                       </div>
 
                       {/* Tags */}
-                      <div className="flex flex-wrap gap-2 pt-1">
+                      <div className="flex flex-wrap gap-1.5 pt-0.5">
                         {step.tags.map((tag) => (
                           <span
                             key={tag}
-                            className="text-[11px] font-semibold px-2.5 py-0.5 rounded-lg bg-slate-100 text-slate-600"
+                            className="text-[11px] px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-600 font-medium"
                           >
                             #{tag}
                           </span>
@@ -623,19 +614,19 @@ export default function GuidePage() {
                       </div>
 
                       {/* Action Steps Walkthrough (1 - 2 - 3) */}
-                      <div className="pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="pt-3 border-t border-zinc-100 grid grid-cols-1 sm:grid-cols-3 gap-3">
                         {step.actions.map((act, actIdx) => (
                           <div
                             key={actIdx}
-                            className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5"
+                            className="p-3 rounded-md bg-zinc-50 border border-zinc-200/80 space-y-1"
                           >
-                            <div className="w-6 h-6 rounded-full bg-emerald-700 text-white font-extrabold text-xs grid place-items-center">
+                            <div className="w-5 h-5 rounded-md bg-zinc-900 text-white font-bold text-[11px] grid place-items-center">
                               {actIdx + 1}
                             </div>
-                            <h4 className="text-xs font-bold text-slate-900 leading-snug">
+                            <h4 className="text-xs font-semibold text-zinc-900 leading-snug">
                               {act.title}
                             </h4>
-                            <p className="text-xs text-slate-600 leading-relaxed">
+                            <p className="text-[11px] text-zinc-600 leading-relaxed">
                               {act.desc}
                             </p>
                           </div>
@@ -643,40 +634,40 @@ export default function GuidePage() {
                       </div>
 
                       {/* Pro Tip Callout Box */}
-                      <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex items-start gap-3">
-                        <Lightbulb className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                      <div className="p-3 rounded-md bg-amber-50/60 border border-amber-200/70 flex items-start gap-2.5">
+                        <Lightbulb className="w-4 h-4 text-amber-700 flex-shrink-0 mt-0.5" />
                         <div className="text-xs text-amber-900 leading-relaxed">
-                          <strong className="font-bold block mb-0.5">Mẹo hay F&B:</strong>
+                          <strong className="font-semibold block mb-0.5">Mẹo hay F&B:</strong>
                           {step.proTip}
                         </div>
                       </div>
 
                     </div>
 
-                    {/* Screenshot Container Frame (Mô phỏng trình duyệt / thiết bị cao cấp) */}
-                    <div className="p-6 sm:p-8 pt-6">
+                    {/* Screenshot Container Frame */}
+                    <div className="p-5 sm:p-6 pt-4">
                       
-                      <div className="relative group rounded-2xl border-2 border-slate-200 overflow-hidden bg-slate-900/5 shadow-inner">
+                      <div className="relative group rounded-md border border-zinc-200 overflow-hidden bg-zinc-50">
                         
                         {/* Browser Bar Mockup */}
-                        <div className="bg-slate-100 border-b border-slate-200 px-4 py-2.5 flex items-center justify-between">
+                        <div className="bg-zinc-100/80 border-b border-zinc-200 px-3 py-1.5 flex items-center justify-between">
                           <div className="flex items-center gap-1.5">
-                            <span className="w-3 h-3 rounded-full bg-red-400 inline-block" />
-                            <span className="w-3 h-3 rounded-full bg-amber-400 inline-block" />
-                            <span className="w-3 h-3 rounded-full bg-emerald-400 inline-block" />
+                            <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 inline-block" />
+                            <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 inline-block" />
+                            <span className="w-2.5 h-2.5 rounded-full bg-zinc-300 inline-block" />
                           </div>
 
-                          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 text-[11px] font-mono text-slate-600 max-w-xs truncate shadow-2xs">
-                            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
+                          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white border border-zinc-200 text-[11px] font-mono text-zinc-600 max-w-xs truncate">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 inline-block" />
                             https://{step.urlPath}
                           </div>
 
                           <button
                             onClick={() => setLightboxImage({ src: step.imageSrc, title: `${step.stepNumber}. ${step.title}` })}
-                            className="text-xs text-slate-600 hover:text-emerald-700 flex items-center gap-1 font-semibold transition-colors cursor-pointer"
+                            className="text-[11px] text-zinc-600 hover:text-zinc-900 flex items-center gap-1 font-medium transition-colors cursor-pointer"
                             title="Phóng to ảnh"
                           >
-                            <Maximize2 className="w-3.5 h-3.5" />
+                            <Maximize2 className="w-3 h-3" />
                             <span className="hidden sm:inline">Phóng to</span>
                           </button>
                         </div>
@@ -684,21 +675,21 @@ export default function GuidePage() {
                         {/* Image Preview with Hover Click-to-Zoom */}
                         <div
                           onClick={() => setLightboxImage({ src: step.imageSrc, title: `${step.stepNumber}. ${step.title}` })}
-                          className="relative cursor-zoom-in overflow-hidden bg-slate-100 flex items-center justify-center min-h-[260px] sm:min-h-[380px]"
+                          className="relative cursor-zoom-in overflow-hidden bg-zinc-50 flex items-center justify-center min-h-[240px] sm:min-h-[340px]"
                         >
                           <img
                             src={step.imageSrc}
                             alt={step.imageAlt}
-                            className={`w-full h-auto object-contain transition-transform duration-300 group-hover:scale-[1.01] ${
-                              step.deviceType === 'mobile' ? 'max-w-sm mx-auto p-4 rounded-3xl' : ''
+                            className={`w-full h-auto object-contain transition-opacity duration-150 group-hover:opacity-95 ${
+                              step.deviceType === 'mobile' ? 'max-w-sm mx-auto p-4 rounded-lg' : ''
                             }`}
                             loading="lazy"
                           />
 
                           {/* Hover Overlay Hint */}
-                          <div className="absolute inset-0 bg-slate-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                            <span className="px-4 py-2 rounded-xl bg-white/95 text-slate-900 text-xs font-bold shadow-lg flex items-center gap-2">
-                              <Maximize2 className="w-4 h-4 text-emerald-700" /> Bấm để xem ảnh phóng to chi tiết
+                          <div className="absolute inset-0 bg-zinc-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                            <span className="px-3 py-1.5 rounded-md bg-white text-zinc-900 text-xs font-medium shadow-sm flex items-center gap-1.5 border border-zinc-200">
+                              <Maximize2 className="w-3.5 h-3.5 text-zinc-700" /> Bấm để xem ảnh phóng to
                             </span>
                           </div>
                         </div>
@@ -706,17 +697,17 @@ export default function GuidePage() {
                       </div>
 
                       {/* Card Bottom CTA Button */}
-                      <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-100">
-                        <span className="text-xs text-slate-500 italic">
+                      <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-zinc-100">
+                        <span className="text-xs text-zinc-500">
                           Ảnh chụp thực tế từ hệ thống iMenu đang chạy live.
                         </span>
                         <a
                           href={step.ctaUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-all shadow-sm hover:shadow"
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-1.5 rounded-md bg-zinc-900 hover:bg-zinc-800 text-white text-xs font-medium transition-colors shadow-xs"
                         >
-                          {step.ctaText} <ArrowUpRight className="w-4 h-4" />
+                          {step.ctaText} <ArrowUpRight className="w-3.5 h-3.5" />
                         </a>
                       </div>
 
@@ -728,24 +719,24 @@ export default function GuidePage() {
             })}
 
             {/* Bottom Support CTA Box */}
-            <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-br from-[#0c392b] via-[#06261c] to-[#041a13] text-white space-y-6 shadow-xl text-center sm:text-left">
+            <div className="p-6 sm:p-8 rounded-lg bg-zinc-950 text-white space-y-5 border border-zinc-800 shadow-xs text-center sm:text-left">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
-                <div className="space-y-2 max-w-xl">
-                  <span className="inline-block text-xs font-extrabold uppercase tracking-wider text-amber-400">
+                <div className="space-y-1.5 max-w-xl">
+                  <span className="inline-block text-xs font-semibold uppercase tracking-wider text-emerald-400">
                     Sẵn sàng chuyển đổi số nhà hàng?
                   </span>
-                  <h3 className="text-2xl sm:text-3xl font-extrabold text-white">
+                  <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
                     Bắt đầu số hóa F&B miễn phí ngay hôm nay
                   </h3>
-                  <p className="text-sm text-slate-300 leading-relaxed">
+                  <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">
                     Khởi tạo thực đơn và in mã QR trong 5 phút. Đội ngũ chuyên gia iMenu luôn đồng hành hỗ trợ cài đặt tận nơi.
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-3 flex-shrink-0">
+                <div className="flex flex-col sm:flex-row items-center gap-2.5 flex-shrink-0">
                   <Link href="/dang-ky">
-                    <Button variant="amber" size="lg" className="shadow-lg">
-                      Đăng ký quán mới 0đ <ArrowRight className="w-4 h-4 ml-1" />
+                    <Button variant="primary" size="md" className="h-9">
+                      Đăng ký quán mới 0đ <ArrowRight className="w-3.5 h-3.5 ml-1" />
                     </Button>
                   </Link>
                   <a
@@ -753,7 +744,7 @@ export default function GuidePage() {
                     target="_blank"
                     className="w-full sm:w-auto"
                   >
-                    <Button variant="outline" size="lg" className="bg-white/10 text-white border-white/20 hover:bg-white/20 w-full">
+                    <Button variant="outline" size="md" className="bg-zinc-900 text-zinc-200 border-zinc-700 hover:bg-zinc-800 h-9 w-full">
                       Thử Menu Bàn 08 ↗
                     </Button>
                   </a>
@@ -769,33 +760,33 @@ export default function GuidePage() {
       {/* ================= LIGHTBOX MODAL ================= */}
       {lightboxImage && (
         <div
-          className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
           onClick={() => setLightboxImage(null)}
         >
           <div
-            className="relative max-w-5xl w-full max-h-[90vh] bg-white rounded-3xl overflow-hidden shadow-2xl flex flex-col animate-scaleUp"
+            className="relative max-w-5xl w-full max-h-[90vh] bg-white rounded-lg overflow-hidden shadow-xl border border-zinc-200 flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="p-4 px-6 bg-slate-900 text-white flex items-center justify-between">
+            <div className="p-3 px-5 bg-zinc-900 text-white flex items-center justify-between">
               <div>
-                <h4 className="text-sm font-bold text-white">{lightboxImage.title}</h4>
-                <p className="text-[11px] text-slate-400">Ảnh chụp màn hình thực tế độ phân giải cao</p>
+                <h4 className="text-xs font-semibold text-white">{lightboxImage.title}</h4>
+                <p className="text-[11px] text-zinc-400">Ảnh chụp màn hình thực tế độ phân giải cao</p>
               </div>
               <button
                 onClick={() => setLightboxImage(null)}
-                className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+                className="p-1.5 text-zinc-400 hover:text-white rounded-md hover:bg-zinc-800 transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-4 bg-slate-950 overflow-auto flex items-center justify-center max-h-[80vh]">
+            <div className="p-4 bg-zinc-950 overflow-auto flex items-center justify-center max-h-[80vh]">
               <img
                 src={lightboxImage.src}
                 alt={lightboxImage.title}
-                className="max-h-[75vh] w-auto object-contain rounded-xl shadow-lg"
+                className="max-h-[75vh] w-auto object-contain rounded-md"
               />
             </div>
           </div>
