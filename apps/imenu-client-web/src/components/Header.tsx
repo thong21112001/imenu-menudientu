@@ -425,12 +425,12 @@ export const Header: React.FC = () => {
             )}
           </div>
 
-          <Link
-            href="/dang-nhap"
+          <a
+            href={`${ADMIN_DEMO_URL}/login`}
             className="text-xs font-medium text-[#98a69e] hover:text-[#ede7da] px-2.5 py-1.5 transition-colors whitespace-nowrap shrink-0"
           >
             Đăng nhập
-          </Link>
+          </a>
 
           <Link href="/dang-ky" className="whitespace-nowrap shrink-0">
             <Button
@@ -588,11 +588,11 @@ export const Header: React.FC = () => {
 
           {/* CTA Buttons */}
           <div className="pt-2 border-t border-[#23322b] flex flex-col gap-2">
-            <Link href="/dang-nhap" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
+            <a href={`${ADMIN_DEMO_URL}/login`} onClick={() => setIsMobileMenuOpen(false)} className="w-full">
               <Button variant="outline" className="w-full text-xs font-medium h-9">
                 Đăng nhập hệ thống
               </Button>
-            </Link>
+            </a>
             <Link href="/dang-ky" onClick={() => setIsMobileMenuOpen(false)} className="w-full">
               <Button variant="amber" className="w-full text-xs font-bold h-9">
                 Bắt đầu miễn phí 0đ →

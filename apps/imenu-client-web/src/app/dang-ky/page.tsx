@@ -369,9 +369,9 @@ function RegisterForm() {
 
               <p className="text-center text-xs text-[#8e9d94] mt-6 pt-5 border-t border-[#202e26]">
                 Đã có tài khoản?{' '}
-                <Link href="/dang-nhap" className="font-semibold text-[#dfa035] hover:underline transition-colors">
+                <a href="http://localhost:3003/login" className="font-semibold text-[#dfa035] hover:underline transition-colors">
                   Đăng nhập ngay
-                </Link>
+                </a>
               </p>
             </div>
 
