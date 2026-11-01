@@ -53,37 +53,37 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
       title="Thanh toán thành công"
       subtitle="Hóa đơn đã được hoàn tất"
     >
-      <div className="text-center space-y-4 py-2">
+      <div className="text-center space-y-4 py-2 text-[#111815]">
         {/* Success Icon */}
-        <div className="w-16 h-16 bg-[#E9F0EC] text-[#244B3C] rounded-full flex items-center justify-center mx-auto shadow-xs border border-[#C5DACF]">
-          <CheckCircle2 className="w-9 h-9 text-[#10b981]" />
+        <div className="w-16 h-16 bg-[#34a87a]/15 text-[#34a87a] rounded-full flex items-center justify-center mx-auto shadow-xs border border-[#34a87a]/30">
+          <CheckCircle2 className="w-9 h-9 text-[#34a87a]" />
         </div>
 
         <div>
-          <h3 className="text-lg font-bold text-[#282923]">
+          <h3 className="text-lg font-bold text-[#111815]">
             Cảm ơn quý khách!
           </h3>
-          <p className="text-xs text-[#5F6055] mt-1">
+          <p className="text-xs text-[#718077] mt-1">
             Đơn hàng tại bàn {table?.name || ''} đã được thu ngân xác nhận thanh toán thành công.
           </p>
         </div>
 
         {/* Paid Summary Box */}
         {paidSummary && (
-          <div className="p-4 bg-[#FAF7F0] border border-[#E8E4DA] rounded-2xl text-left font-mono text-xs space-y-2 shadow-2xs">
-            <div className="flex justify-between text-[#5F6055]">
+          <div className="p-4 bg-[#e5dfd3]/90 border border-[#ded8cb] rounded-2xl text-left font-mono text-xs space-y-2 shadow-xs">
+            <div className="flex justify-between text-[#718077]">
               <span>Mã đơn:</span>
-              <span className="font-bold text-[#282923]">#{paidSummary.orderCode}</span>
+              <span className="font-bold text-[#111815]">#{paidSummary.orderCode}</span>
             </div>
             {paidSummary.billCode && (
-              <div className="flex justify-between text-[#5F6055]">
+              <div className="flex justify-between text-[#718077]">
                 <span>Mã hóa đơn:</span>
-                <span className="font-bold text-[#282923]">{paidSummary.billCode}</span>
+                <span className="font-bold text-[#111815]">{paidSummary.billCode}</span>
               </div>
             )}
-            <div className="flex justify-between text-[#5F6055]">
+            <div className="flex justify-between text-[#718077]">
               <span>Phương thức:</span>
-              <span className="font-semibold text-[#282923]">
+              <span className="font-semibold text-[#111815]">
                 {paidSummary.paymentMethod === 'VietQR'
                   ? 'Chuyển khoản VietQR'
                   : paidSummary.paymentMethod === 'Card'
@@ -91,9 +91,9 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
                   : 'Tiền mặt'}
               </span>
             </div>
-            <div className="pt-2 border-t border-[#E8E4DA] flex justify-between items-center text-sm font-bold font-sans">
-              <span className="text-[#282923]">Đã thanh toán:</span>
-              <span className="text-[#244B3C] text-base font-black">
+            <div className="pt-2 border-t border-[#ded8cb] flex justify-between items-center text-sm font-bold font-sans">
+              <span className="text-[#111815]">Đã thanh toán:</span>
+              <span className="text-[#245846] text-base font-black">
                 {formatCurrencyVND(paidSummary.finalAmount)}
               </span>
             </div>
@@ -111,7 +111,7 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
             {isRenderingPng ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Download className="w-3.5 h-3.5 text-[#244B3C]" />
+              <Download className="w-3.5 h-3.5 text-[#245846]" />
             )}
             <span>Lưu Ảnh Bill (PNG)</span>
           </Button>
@@ -120,14 +120,14 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
             onClick={onPrintBill}
             className="py-2.5 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <Printer className="w-3.5 h-3.5 text-[#282923]" />
+            <Printer className="w-3.5 h-3.5 text-[#111815]" />
             <span>In / Lưu PDF</span>
           </Button>
         </div>
 
         {/* Khu vực Đánh giá chất lượng dịch vụ */}
         <ReviewForm
-          className="shadow-2xs"
+          className="shadow-xs"
           title="Đánh giá chất lượng phục vụ"
           hasReviewed={hasReviewed}
           reviewRating={reviewRating}
@@ -141,7 +141,7 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
         />
 
         <Button
-          variant="fnb-primary"
+          variant="amber"
           size="xl"
           onClick={onContinueOrdering}
           className="w-full py-3 font-bold cursor-pointer"
@@ -152,4 +152,3 @@ export const PaymentSuccessModal: React.FC<PaymentSuccessModalProps> = ({
     </Modal>
   );
 };
-

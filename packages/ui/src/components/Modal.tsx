@@ -43,7 +43,7 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs"
       style={{
         position: 'fixed',
         inset: 0,
@@ -51,7 +51,7 @@ export const Modal: React.FC<ModalProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.45)',
+        backgroundColor: 'rgba(8, 12, 10, 0.65)',
       }}
     >
       <div
@@ -61,19 +61,19 @@ export const Modal: React.FC<ModalProps> = ({
         aria-hidden="true"
       />
       <div
-        className={`relative w-full ${widthClass} bg-white rounded-xl shadow-lg overflow-hidden border border-zinc-200/90 z-10`}
+        className={`relative w-full ${widthClass} bg-[#f0ece3] text-[#111815] rounded-2xl shadow-2xl overflow-hidden border border-[#ded8cb] z-10`}
         style={{ position: 'relative', zIndex: 10 }}
         onClick={(e) => e.stopPropagation()}
       >
         {(title || subtitle) && (
-          <div className="flex items-start justify-between px-5 py-4 border-b border-zinc-200/80 bg-zinc-50/60">
+          <div className="flex items-start justify-between px-5 py-4 border-b border-[#ded8cb] bg-[#e5dfd3]/80">
             <div>
-              {title && <h3 className="text-sm font-semibold text-zinc-900">{title}</h3>}
-              {subtitle && <p className="text-xs text-zinc-500 mt-0.5">{subtitle}</p>}
+              {title && <h3 className="text-sm font-bold text-[#111815]">{title}</h3>}
+              {subtitle && <p className="text-xs text-[#718077] mt-0.5">{subtitle}</p>}
             </div>
             <button
               onClick={onClose}
-              className="p-1 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-200/60 rounded-md transition-colors cursor-pointer"
+              className="p-1 text-[#718077] hover:text-[#111815] hover:bg-[#ded8cb] rounded-md transition-colors cursor-pointer"
               aria-label="Đóng"
             >
               <X className="w-4 h-4 stroke-[1.5]" />

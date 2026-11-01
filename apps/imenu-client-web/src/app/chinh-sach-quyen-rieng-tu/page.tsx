@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Header } from '../../components/Header';
 import { Footer } from '../../components/Footer';
-import { Button } from '@imenu/ui';
+import { Button, CinematicScrollProgress, AmbientCinematicStage } from '@imenu/ui';
 import {
   ShieldCheck,
   ChevronRight,
@@ -70,7 +70,9 @@ export default function ChinhSachQuyenRiengTuPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-teal-100 selection:text-teal-900">
+    <div className="relative min-h-screen bg-[#e4dfd4] text-[#18201c] selection:bg-[#dfa035]/25 selection:text-[#18201c]">
+      <CinematicScrollProgress />
+      <AmbientCinematicStage variant="muted" />
       <Header />
 
       {/* ================= HERO SECTION ================= */}

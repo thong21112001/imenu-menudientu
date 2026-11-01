@@ -73,12 +73,12 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`w-full flex items-center justify-between rounded-md border transition-colors duration-150 text-left cursor-pointer outline-hidden ${heightClass} ${
+        className={`w-full flex items-center justify-between rounded-lg border transition-colors duration-150 text-left cursor-pointer outline-hidden ${heightClass} ${
           disabled
-            ? 'bg-zinc-100 border-zinc-200 text-zinc-400 cursor-not-allowed'
+            ? 'bg-[#ded8cb] border-[#c5cec7] text-[#9aa89f] cursor-not-allowed'
             : isOpen
-            ? 'bg-white border-emerald-700 ring-2 ring-emerald-700/10 text-zinc-900 shadow-2xs'
-            : 'bg-white border-zinc-200/90 hover:border-zinc-300 text-zinc-900'
+            ? 'bg-[#f0ece3] border-[#245846] ring-2 ring-[#245846]/15 text-[#111815] shadow-2xs'
+            : 'bg-[#f0ece3] border-[#ded8cb] hover:border-[#c5cec7] text-[#111815]'
         }`}
       >
         <div className="min-w-0 flex-1 pr-2 flex items-center gap-2 truncate">
@@ -86,28 +86,28 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
             <>
               <span className="truncate font-medium">{selectedOption.label}</span>
               {selectedOption.badge && (
-                <span className="shrink-0 px-1.5 py-0.5 bg-amber-50 text-amber-900 border border-amber-200 font-semibold rounded text-[10px]">
+                <span className="shrink-0 px-1.5 py-0.5 bg-[#dfa035]/15 text-[#b87c1c] border border-[#dfa035]/30 font-semibold rounded text-[10px]">
                   {selectedOption.badge}
                 </span>
               )}
             </>
           ) : (
-            <span className="text-zinc-400 truncate">{placeholder}</span>
+            <span className="text-[#738379] truncate">{placeholder}</span>
           )}
         </div>
 
         <ChevronDown
-          className={`w-4 h-4 text-zinc-400 shrink-0 transition-transform duration-150 ${
-            isOpen ? 'rotate-180 text-emerald-700' : ''
+          className={`w-4 h-4 text-[#738379] shrink-0 transition-transform duration-150 ${
+            isOpen ? 'rotate-180 text-[#245846]' : ''
           }`}
         />
       </button>
 
       {/* Dropdown Options Popover */}
       {isOpen && (
-        <div className="absolute left-0 right-0 mt-1 bg-white rounded-lg shadow-md border border-zinc-200 py-1 z-50 max-h-60 overflow-y-auto">
+        <div className="absolute left-0 right-0 mt-1 bg-[#f0ece3] text-[#111815] rounded-xl shadow-xl border border-[#ded8cb] py-1 z-50 max-h-60 overflow-y-auto">
           {options.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-zinc-400 text-center">Không có lựa chọn</div>
+            <div className="px-3 py-2 text-xs text-[#738379] text-center">Không có lựa chọn</div>
           ) : (
             options.map((opt) => {
               const isSelected = opt.value === value;
@@ -118,27 +118,23 @@ export const CustomSelect: React.FC<CustomSelectProps> = ({
                   onClick={() => handleSelect(opt.value)}
                   className={`w-full flex items-center justify-between px-3 py-2 text-left transition-colors duration-150 cursor-pointer text-xs ${
                     isSelected
-                      ? 'bg-emerald-50 text-emerald-900 font-semibold'
-                      : 'hover:bg-zinc-100/70 text-zinc-700 font-normal'
+                      ? 'bg-[#ded8cb] text-[#111815] font-semibold'
+                      : 'hover:bg-[#e5dfd3] text-[#2c3b34]'
                   }`}
                 >
                   <div className="min-w-0 flex-1 pr-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="truncate">{opt.label}</span>
-                      {opt.badge && (
-                        <span className="shrink-0 px-1.5 py-0.2 bg-amber-50 text-amber-900 border border-amber-200 font-semibold rounded text-[10px]">
-                          {opt.badge}
-                        </span>
-                      )}
-                    </div>
-                    {opt.sublabel && (
-                      <small className="text-[11px] text-zinc-400 block truncate mt-0.5">
-                        {opt.sublabel}
-                      </small>
-                    )}
+                    <div className="truncate">{opt.label}</div>
+                    {opt.sublabel && <div className="text-[10px] text-[#738379] truncate mt-0.5">{opt.sublabel}</div>}
                   </div>
 
-                  {isSelected && <Check className="w-4 h-4 text-emerald-700 shrink-0 ml-2" />}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {opt.badge && (
+                      <span className="px-1.5 py-0.2 bg-[#dfa035]/15 text-[#b87c1c] border border-[#dfa035]/30 rounded text-[9px] font-semibold">
+                        {opt.badge}
+                      </span>
+                    )}
+                    {isSelected && <Check className="w-3.5 h-3.5 text-[#245846] shrink-0" />}
+                  </div>
                 </button>
               );
             })

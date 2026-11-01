@@ -20,7 +20,7 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-md transition-colors duration-150 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700/20 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
+    'inline-flex items-center justify-center font-medium rounded-lg transition-colors duration-150 select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#245846]/30 focus-visible:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer';
 
   // Strict 4px Grid Sizing: sm (32px), md (36px), lg (40px), xl (44px)
   const sizeStyles = {
@@ -32,29 +32,29 @@ export const Button: React.FC<ButtonProps> = ({
 
   const variantStyles = {
     primary:
-      'bg-emerald-700 hover:bg-emerald-800 text-white border border-emerald-800/80 shadow-2xs active:bg-emerald-900',
+      'bg-[#245846] hover:bg-[#1c4537] text-[#efeae0] border border-[#1b3a2e] shadow-2xs active:bg-[#153428]',
     'fnb-primary':
-      'bg-[#244B3C] hover:bg-[#17382D] text-white border border-[#17382D] focus-visible:ring-[#244B3C]/20 shadow-2xs active:bg-[#122c23]',
+      'bg-[#245846] hover:bg-[#1a4133] text-[#ede7da] border border-[#1b3a2e] focus-visible:ring-[#245846]/20 shadow-2xs active:bg-[#133026]',
     secondary:
-      'bg-zinc-100 hover:bg-zinc-200/80 text-zinc-900 border border-zinc-200 active:bg-zinc-200',
+      'bg-[#ded8cb] hover:bg-[#d0c9ba] text-[#121815] border border-[#c8c0b0] active:bg-[#c2b9a7]',
     outline:
-      'bg-white hover:bg-zinc-50 text-zinc-800 border border-zinc-200/90 active:bg-zinc-100 shadow-2xs',
+      'bg-[#f0ece3] hover:bg-[#e4dfd4] text-[#121815] border border-[#ded8cb] active:bg-[#d9d2c4] shadow-2xs',
     ghost:
-      'bg-transparent text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 active:bg-zinc-200/70 border border-transparent',
+      'bg-transparent text-[#2c3b34] hover:bg-[#ded8cb]/50 hover:text-[#111815] active:bg-[#ded8cb]/80 border border-transparent',
     danger:
-      'bg-rose-600 hover:bg-rose-700 text-white border border-rose-700 active:bg-rose-800 shadow-2xs',
+      'bg-[#c85a32] hover:bg-[#b04d29] text-[#efeae0] border border-[#a64522] active:bg-[#963d1e] shadow-2xs',
     amber:
-      'bg-amber-500 hover:bg-amber-600 text-zinc-950 font-semibold border border-amber-600 active:bg-amber-700 shadow-2xs',
+      'bg-[#dfa035] hover:bg-[#c98a22] text-[#080c0a] font-semibold border border-[#b87c1c] active:bg-[#a97017] shadow-2xs',
   }[variant];
 
-  // Inline fallback style ensures button NEVER renders with invisible white background or white text on white
+  // Inline fallback style ensures button NEVER renders with harsh white background or white text on white
   const fallbackStyles: React.CSSProperties = {
-    ...(variant === 'primary' && { backgroundColor: '#047857', color: '#ffffff' }),
-    ...(variant === 'fnb-primary' && { backgroundColor: '#244B3C', color: '#ffffff' }),
-    ...(variant === 'secondary' && { backgroundColor: '#f4f4f5', color: '#18181b' }),
-    ...(variant === 'outline' && { backgroundColor: '#ffffff', color: '#18181b' }),
-    ...(variant === 'amber' && { backgroundColor: '#f59e0b', color: '#09090b' }),
-    ...(variant === 'danger' && { backgroundColor: '#e11d48', color: '#ffffff' }),
+    ...(variant === 'primary' && { backgroundColor: '#245846', color: '#efeae0' }),
+    ...(variant === 'fnb-primary' && { backgroundColor: '#245846', color: '#ede7da' }),
+    ...(variant === 'secondary' && { backgroundColor: '#ded8cb', color: '#121815' }),
+    ...(variant === 'outline' && { backgroundColor: '#f0ece3', color: '#121815' }),
+    ...(variant === 'amber' && { backgroundColor: '#dfa035', color: '#080c0a' }),
+    ...(variant === 'danger' && { backgroundColor: '#c85a32', color: '#efeae0' }),
   };
 
   return (

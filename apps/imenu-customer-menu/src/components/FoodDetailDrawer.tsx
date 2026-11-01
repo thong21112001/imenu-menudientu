@@ -72,10 +72,10 @@ export const FoodDetailDrawer: React.FC<FoodDetailDrawerProps> = ({
       title={selectedItem.name}
       subtitle={`Giá gốc: ${formatCurrencyVND(selectedItem.price)}`}
     >
-      <div className="space-y-4">
+      <div className="space-y-4 text-[#111815]">
         {/* Dish Photo Banner */}
         {selectedItem.imageUrl && (
-          <div className="relative w-full h-36 rounded-2xl overflow-hidden bg-[#F4F1EA] border border-[#E8E4DA]">
+          <div className="relative w-full h-36 rounded-2xl overflow-hidden bg-[#ded8cb] border border-[#ded8cb]">
             <FoodImageFallback
               src={selectedItem.imageUrl}
               alt={selectedItem.name}
@@ -85,7 +85,7 @@ export const FoodDetailDrawer: React.FC<FoodDetailDrawerProps> = ({
         )}
 
         {selectedItem.description && (
-          <p className="text-xs text-[#5F6055] leading-relaxed bg-[#FAF7F0] p-2.5 rounded-xl border border-[#E8E4DA]">
+          <p className="text-xs text-[#718077] leading-relaxed bg-[#e5dfd3]/80 p-2.5 rounded-xl border border-[#ded8cb]">
             {selectedItem.description}
           </p>
         )}
@@ -96,12 +96,12 @@ export const FoodDetailDrawer: React.FC<FoodDetailDrawerProps> = ({
             {selectedItem.options.map((grp) => (
               <div key={grp.id} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#282923]">
+                  <span className="text-xs font-bold text-[#111815]">
                     {grp.name}{' '}
-                    {grp.required && <span className="text-[#C2542E] font-bold">*</span>}
+                    {grp.required && <span className="text-[#c85a32] font-bold">*</span>}
                   </span>
                   {grp.required && (
-                    <span className="text-[10px] text-[#17382D] bg-[#E9F0EC] px-2 py-0.5 rounded-full font-semibold border border-[#C5DACF]">
+                    <span className="text-[10px] text-[#245846] bg-[#245846]/15 px-2 py-0.5 rounded-full font-semibold border border-[#245846]/30">
                       Bắt buộc
                     </span>
                   )}
@@ -128,16 +128,16 @@ export const FoodDetailDrawer: React.FC<FoodDetailDrawerProps> = ({
                         }
                         className={`p-2.5 rounded-xl border text-xs flex items-center justify-between transition-all cursor-pointer ${
                           isSelected
-                            ? 'bg-[#E9F0EC] border-[#244B3C] text-[#244B3C] font-bold shadow-2xs'
-                            : 'bg-white border-[#E8E4DA] text-[#5F6055] hover:bg-[#FAF7F0] hover:border-[#D5D0C3]'
+                            ? 'bg-[#245846]/15 border-[#245846] text-[#245846] font-bold shadow-xs'
+                            : 'bg-[#f0ece3] border-[#ded8cb] text-[#2c3b34] hover:bg-[#e5dfd3] hover:border-[#c5cec7]'
                         }`}
                       >
                         <span className="flex items-center gap-1.5 truncate">
-                          {isSelected && <Check className="w-3.5 h-3.5 shrink-0 text-[#244B3C]" />}
+                          {isSelected && <Check className="w-3.5 h-3.5 shrink-0 text-[#245846]" />}
                           <span className="truncate">{val.name}</span>
                         </span>
                         {val.priceDelta > 0 && (
-                          <span className="text-[11px] text-[#77776C] shrink-0">
+                          <span className="text-[11px] text-[#718077] shrink-0 font-medium">
                             +{formatCurrencyVND(val.priceDelta)}
                           </span>
                         )}
@@ -151,36 +151,36 @@ export const FoodDetailDrawer: React.FC<FoodDetailDrawerProps> = ({
         )}
 
         {/* Note input */}
-        <div className="space-y-1.5 pt-2 border-t border-[#E8E4DA]">
-          <label className="text-xs font-bold text-[#282923]">Ghi chú cho bếp:</label>
+        <div className="space-y-1.5 pt-2 border-t border-[#ded8cb]">
+          <label className="text-xs font-bold text-[#111815]">Ghi chú cho bếp:</label>
           <input
             type="text"
             value={note}
             onChange={(e) => onNoteChange(e.target.value)}
             placeholder="Ví dụ: Ít đá, không hành, cay vừa..."
             maxLength={150}
-            className="w-full px-3 py-2 text-xs rounded-xl border border-[#E8E4DA] bg-white text-[#282923] placeholder:text-[#8C8D82] focus:outline-none focus:ring-2 focus:ring-[#244B3C]/30 focus:border-[#244B3C] transition-all"
+            className="w-full px-3 py-2 text-xs rounded-xl border border-[#ded8cb] bg-[#f0ece3] text-[#111815] placeholder:text-[#9aa89f] focus:outline-none focus:ring-2 focus:ring-[#245846]/30 focus:border-[#245846] transition-all"
           />
         </div>
 
         {/* Quantity Stepper & Add Button */}
-        <div className="flex items-center gap-3 pt-3 border-t border-[#E8E4DA]">
-          <div className="flex items-center border border-[#E8E4DA] rounded-xl overflow-hidden bg-[#FAF7F0] shadow-2xs">
+        <div className="flex items-center gap-3 pt-3 border-t border-[#ded8cb]">
+          <div className="flex items-center border border-[#ded8cb] rounded-xl overflow-hidden bg-[#e5dfd3] shadow-xs">
             <button
               type="button"
               onClick={() => onQuantityChange(Math.max(1, quantity - 1))}
-              className="p-2.5 hover:bg-[#EAE5DA] text-[#282923] active:scale-95 transition-colors cursor-pointer"
+              className="p-2.5 hover:bg-[#ded8cb] text-[#111815] active:scale-95 transition-colors cursor-pointer"
               aria-label="Giảm số lượng"
             >
               <Minus className="w-4 h-4" />
             </button>
-            <span className="w-9 text-center font-bold text-sm text-[#282923] tabular-nums">
+            <span className="w-9 text-center font-bold text-sm text-[#111815] tabular-nums">
               {quantity}
             </span>
             <button
               type="button"
               onClick={() => onQuantityChange(quantity + 1)}
-              className="p-2.5 hover:bg-[#EAE5DA] text-[#282923] active:scale-95 transition-colors cursor-pointer"
+              className="p-2.5 hover:bg-[#ded8cb] text-[#111815] active:scale-95 transition-colors cursor-pointer"
               aria-label="Tăng số lượng"
             >
               <Plus className="w-4 h-4" />
@@ -188,7 +188,7 @@ export const FoodDetailDrawer: React.FC<FoodDetailDrawerProps> = ({
           </div>
 
           <Button
-            variant="fnb-primary"
+            variant="amber"
             size="xl"
             onClick={onAddToCart}
             className="flex-1 font-bold shadow-md cursor-pointer"
@@ -200,4 +200,3 @@ export const FoodDetailDrawer: React.FC<FoodDetailDrawerProps> = ({
     </Modal>
   );
 };
-

@@ -42,21 +42,21 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`p-3.5 bg-[#FAF7F0] border border-[#E8E4DA] rounded-2xl space-y-3 text-left ${className}`}>
+    <div className={`p-3.5 bg-[#e5dfd3]/90 border border-[#ded8cb] rounded-2xl space-y-3 text-left text-[#111815] ${className}`}>
       <div className="flex items-center justify-between">
-        <span className="text-xs font-bold text-[#282923] flex items-center gap-1.5">
-          <Star className="w-4 h-4 text-[#E9B84C] fill-[#E9B84C]" />
+        <span className="text-xs font-bold text-[#111815] flex items-center gap-1.5">
+          <Star className="w-4 h-4 text-[#dfa035] fill-[#dfa035]" />
           {title}
         </span>
         {hasReviewed && (
-          <span className="text-[11px] font-semibold text-[#244B3C] bg-[#E9F0EC] px-2 py-0.5 rounded-full border border-[#C5DACF]">
+          <span className="text-[11px] font-semibold text-[#245846] bg-[#245846]/15 px-2 py-0.5 rounded-full border border-[#245846]/30">
             Đã gửi đánh giá
           </span>
         )}
       </div>
 
       {hasReviewed ? (
-        <p className="text-xs text-[#5F6055] italic">
+        <p className="text-xs text-[#718077] italic">
           Cảm ơn quý khách đã gửi nhận xét đánh giá chất lượng dịch vụ!
         </p>
       ) : (
@@ -74,8 +74,8 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
                 <Star
                   className={`w-6 h-6 ${
                     star <= reviewRating
-                      ? 'text-[#E9B84C] fill-[#E9B84C] drop-shadow-xs'
-                      : 'text-[#D5D0C3]'
+                      ? 'text-[#dfa035] fill-[#dfa035] drop-shadow-xs'
+                      : 'text-[#c5cec7]'
                   }`}
                 />
               </button>
@@ -93,8 +93,8 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
                   onClick={() => onToggleQuickTag(tag)}
                   className={`px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors cursor-pointer ${
                     isSelected
-                      ? 'bg-[#244B3C] text-white border-[#244B3C]'
-                      : 'bg-white text-[#5F6055] border-[#E8E4DA] hover:border-[#D5D0C3]'
+                      ? 'bg-[#245846] text-[#efeae0] border-[#245846]'
+                      : 'bg-[#f0ece3] text-[#2c3b34] border-[#ded8cb] hover:border-[#c5cec7]'
                   }`}
                 >
                   {tag}
@@ -110,18 +110,18 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
             onChange={(e) => onCommentChange(e.target.value)}
             placeholder="Thêm góp ý giúp nhà hàng nâng cao chất lượng phục vụ..."
             maxLength={500}
-            className="w-full px-3 py-1.5 text-xs border border-[#E8E4DA] rounded-xl bg-white text-[#282923] placeholder:text-[#8C8D82] focus:outline-none focus:border-[#244B3C] transition-colors resize-none"
+            className="w-full px-3 py-1.5 text-xs border border-[#ded8cb] rounded-xl bg-[#f0ece3] text-[#111815] placeholder:text-[#9aa89f] focus:outline-none focus:border-[#245846] transition-colors resize-none"
           />
 
           <Button
-            variant="fnb-primary"
+            variant="amber"
             onClick={onSubmitReview}
             disabled={isSubmittingReview}
             className="w-full py-2 text-xs font-bold cursor-pointer"
           >
             {isSubmittingReview ? (
               <div className="flex items-center justify-center gap-1.5">
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                <Loader2 className="w-3.5 h-3.5 animate-spin text-[#080c0a]" />
                 <span>Đang gửi đánh giá...</span>
               </div>
             ) : (
@@ -133,4 +133,3 @@ export const ReviewForm: React.FC<ReviewFormProps> = ({
     </div>
   );
 };
-

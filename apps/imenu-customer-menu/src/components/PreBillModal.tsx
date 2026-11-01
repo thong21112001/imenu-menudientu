@@ -67,12 +67,12 @@ export const PreBillModal: React.FC<PreBillModalProps> = ({
       title="Phiếu tạm tính hóa đơn"
       subtitle={`${restaurant.name} · ${table.name}`}
     >
-      <div className="space-y-4">
+      <div className="space-y-4 text-[#111815]">
         {/* Receipt Container */}
-        <div className="p-4 bg-[#FAF7F0] border border-[#E8E4DA] rounded-2xl space-y-3 font-mono text-xs shadow-2xs">
-          <div className="text-center pb-3 border-b border-dashed border-[#D5D0C3]">
-            <strong className="text-sm font-sans block text-[#282923]">{restaurant.name}</strong>
-            <span className="text-[11px] text-[#5F6055]">
+        <div className="p-4 bg-[#e5dfd3]/90 border border-[#ded8cb] rounded-2xl space-y-3 font-mono text-xs shadow-xs">
+          <div className="text-center pb-3 border-b border-dashed border-[#c5cec7]">
+            <strong className="text-sm font-sans block text-[#111815]">{restaurant.name}</strong>
+            <span className="text-[11px] text-[#718077]">
               {table.name} · #{activeOrder.orderCode}
             </span>
           </div>
@@ -80,54 +80,54 @@ export const PreBillModal: React.FC<PreBillModalProps> = ({
           <div className="space-y-2 py-1">
             {validItems.length > 0 ? (
               validItems.map((it) => (
-                <div key={it.id || (it as any)._id} className="border-b border-[#F0ECE3] pb-1.5 last:border-b-0">
+                <div key={it.id || (it as any)._id} className="border-b border-[#ded8cb] pb-1.5 last:border-b-0">
                   <div className="flex justify-between items-start text-[11px]">
-                    <span className="text-[#282923] font-semibold">
+                    <span className="text-[#111815] font-semibold">
                       {it.quantity}x {it.name}
                     </span>
-                    <span className="font-bold text-[#282923]">
+                    <span className="font-bold text-[#111815]">
                       {formatCurrencyVND(it.itemTotal)}
                     </span>
                   </div>
                   {it.selectedOptions && it.selectedOptions.length > 0 && (
-                    <div className="text-[10px] text-[#77776C] pl-4 mt-0.5">
+                    <div className="text-[10px] text-[#718077] pl-4 mt-0.5">
                       {it.selectedOptions.map((opt) => opt.valueName || opt.groupName).join(', ')}
                     </div>
                   )}
                   {it.note && (
-                    <div className="text-[10px] text-[#C2542E] italic pl-4 mt-0.5">
+                    <div className="text-[10px] text-[#c85a32] italic pl-4 mt-0.5">
                       Ghi chú: {it.note}
                     </div>
                   )}
                 </div>
               ))
             ) : (
-              <div className="text-center text-[#5F6055] text-xs py-2">
+              <div className="text-center text-[#718077] text-xs py-2">
                 Không có món hợp lệ nào
               </div>
             )}
           </div>
 
           {/* Breakdown */}
-          <div className="pt-2 border-t border-dashed border-[#D5D0C3] space-y-1 text-[11px]">
-            <div className="flex justify-between text-[#5F6055]">
+          <div className="pt-2 border-t border-dashed border-[#c5cec7] space-y-1 text-[11px]">
+            <div className="flex justify-between text-[#718077]">
               <span>Tạm tính món:</span>
               <span>{formatCurrencyVND(subTotal)}</span>
             </div>
             {discount > 0 && (
-              <div className="flex justify-between text-[#C2542E]">
+              <div className="flex justify-between text-[#c85a32]">
                 <span>Giảm giá / Ưu đãi:</span>
                 <span>-{formatCurrencyVND(discount)}</span>
               </div>
             )}
             {serviceFee > 0 && (
-              <div className="flex justify-between text-[#5F6055]">
+              <div className="flex justify-between text-[#718077]">
                 <span>Phí dịch vụ:</span>
                 <span>+{formatCurrencyVND(serviceFee)}</span>
               </div>
             )}
             {vat > 0 && (
-              <div className="flex justify-between text-[#5F6055]">
+              <div className="flex justify-between text-[#718077]">
                 <span>Thuế VAT:</span>
                 <span>+{formatCurrencyVND(vat)}</span>
               </div>
@@ -135,9 +135,9 @@ export const PreBillModal: React.FC<PreBillModalProps> = ({
           </div>
 
           {/* Grand Total */}
-          <div className="pt-2 border-t-2 border-[#282923] flex justify-between items-center text-sm font-bold font-sans">
+          <div className="pt-2 border-t-2 border-[#111815] flex justify-between items-center text-sm font-bold font-sans">
             <span>TỔNG CỘNG:</span>
-            <span className="text-base text-[#244B3C] font-black">
+            <span className="text-base text-[#245846] font-black">
               {formatCurrencyVND(total)}
             </span>
           </div>
@@ -154,7 +154,7 @@ export const PreBillModal: React.FC<PreBillModalProps> = ({
             {isRenderingPng ? (
               <Loader2 className="w-3.5 h-3.5 animate-spin" />
             ) : (
-              <Download className="w-3.5 h-3.5 text-[#244B3C]" />
+              <Download className="w-3.5 h-3.5 text-[#245846]" />
             )}
             <span>Lưu Ảnh Bill (PNG)</span>
           </Button>
@@ -163,7 +163,7 @@ export const PreBillModal: React.FC<PreBillModalProps> = ({
             onClick={onPrintBill}
             className="py-2.5 text-xs flex items-center justify-center gap-1.5 cursor-pointer"
           >
-            <Printer className="w-3.5 h-3.5 text-[#282923]" />
+            <Printer className="w-3.5 h-3.5 text-[#111815]" />
             <span>In / Lưu PDF</span>
           </Button>
         </div>
@@ -207,4 +207,3 @@ export const PreBillModal: React.FC<PreBillModalProps> = ({
     </Modal>
   );
 };
-

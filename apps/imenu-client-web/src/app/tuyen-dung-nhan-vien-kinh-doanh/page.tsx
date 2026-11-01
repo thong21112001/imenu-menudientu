@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Header } from '../../components/Header';
 import { Footer } from '../../components/Footer';
-import { Button } from '@imenu/ui';
+import { Button, CinematicScrollProgress, AmbientCinematicStage } from '@imenu/ui';
 import { apiClient } from '@imenu/utils';
 import {
   Briefcase,
@@ -125,7 +125,9 @@ function TuyenDungKinhDoanhContent() {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-amber-100 selection:text-amber-900">
+    <div className="relative min-h-screen bg-[#e4dfd4] text-[#18201c] selection:bg-[#dfa035]/25 selection:text-[#18201c]">
+      <CinematicScrollProgress />
+      <AmbientCinematicStage variant="muted" />
       <Header />
 
       {/* ================= HERO SECTION ================= */}
