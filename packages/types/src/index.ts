@@ -10,3 +10,4 @@ export * from './reports';
 export * from './review';
 export * from './sales';
 export * from './platform';
+export * from './ai-mcp';

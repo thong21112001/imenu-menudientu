@@ -41,6 +41,9 @@ import {
   PlatformCommissionItem,
   QueryPlatformCommissionsParams,
   PlatformCommissionsResponse,
+  AiMcpQueryRequest,
+  AiMcpQueryResponse,
+  McpToolMetadata,
 } from '@imenu/types';
 
 export interface ApiResponse<T = any> {
@@ -1578,6 +1581,30 @@ export const apiClient = {
       if (params?.limit) q.append('limit', String(params.limit));
       const qs = q.toString() ? `?${q.toString()}` : '';
       return request<PlatformCommissionsResponse>(`/platform/commissions${qs}`);
+    },
+
+    async queryAiMcp(payload: AiMcpQueryRequest) {
+      return request<AiMcpQueryResponse>('/platform/ai-mcp/query', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async getAiMcpTools() {
+      return request<{ success: boolean; total: number; data: McpToolMetadata[] }>('/platform/ai-mcp/tools');
+    },
+  },
+
+  aiMcp: {
+    async query(payload: AiMcpQueryRequest) {
+      return request<AiMcpQueryResponse>('/platform/ai-mcp/query', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+    },
+
+    async getTools() {
+      return request<{ success: boolean; total: number; data: McpToolMetadata[] }>('/platform/ai-mcp/tools');
     },
   },
 };

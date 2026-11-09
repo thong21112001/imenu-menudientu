@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { usePathname } from 'next/navigation';
 import {
   storageService,
   realtimeHub,
@@ -13,6 +14,7 @@ import {
 } from '@imenu/types';
 import { useSidebar } from './AdminLayoutShell';
 import { useToast } from '@imenu/ui';
+import { PlatformAiCopilotDrawer } from './PlatformAiCopilotDrawer';
 import {
   Bell,
   Menu,
@@ -38,6 +40,7 @@ import {
   Clock,
   Trash2,
   ExternalLink,
+  Cpu,
 } from 'lucide-react';
 
 export const AdminHeader: React.FC = () => {
@@ -87,6 +90,24 @@ export const AdminHeader: React.FC = () => {
   );
   const isMainBranchUser = isSuperAdmin || Boolean(user?.isMainBranch);
   const isDemo = Boolean(user?.isDemo || user?.email === 'owner@sample.vn');
+
+  // Phase 18: Platform AI Copilot state & route detection
+  const pathname = usePathname();
+  const isPlatformRoute = Boolean(pathname?.startsWith('/platform'));
+  const [showAiCopilot, setShowAiCopilot] = useState(false);
+
+  // Phase 18: Keyboard shortcut (⌘K / Ctrl+K) to toggle Platform AI Copilot Drawer
+  useEffect(() => {
+    if (!isSuperAdmin || !isPlatformRoute) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setShowAiCopilot((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSuperAdmin, isPlatformRoute]);
 
   // Load saved notifications from localStorage on mount
   useEffect(() => {
@@ -798,6 +819,23 @@ export const AdminHeader: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          {/* Phase 18: Platform AI Copilot Trigger (SuperAdmin on /platform/* only) */}
+          {isSuperAdmin && isPlatformRoute && (
+            <button
+              type="button"
+              onClick={() => setShowAiCopilot(true)}
+              className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-[#1f7050] bg-[#34a87a]/15 hover:bg-[#34a87a]/25 border border-[#34a87a]/30 rounded-lg transition-all cursor-pointer shadow-2xs"
+              title="Phân tích vận hành nền tảng (⌘K)"
+              data-testid="platform-ai-copilot-trigger"
+            >
+              <Cpu className="w-3.5 h-3.5 text-[#1f7050]" />
+              <span className="hidden sm:inline">Phân tích vận hành</span>
+              <kbd className="hidden md:inline-block px-1.5 py-0.5 text-[10px] font-mono font-normal text-[#4a5b52] bg-[#e7e2d6] rounded border border-[#ded8cb]">
+                ⌘K
+              </kbd>
+            </button>
+          )}
+
           {/* Realtime Connection Status Indicator */}
           {connectionStatus === 'CONNECTED' ? (
             <div
@@ -1142,6 +1180,12 @@ export const AdminHeader: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Phase 18: SuperAdmin AI Copilot Drawer */}
+      <PlatformAiCopilotDrawer
+        isOpen={showAiCopilot}
+        onClose={() => setShowAiCopilot(false)}
+      />
     </>
   );
 };
