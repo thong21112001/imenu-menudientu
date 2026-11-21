@@ -32,3 +32,12 @@ export function getDefaultSalesSecret() {
   );
 }
 
+export function getSuperAdminSecret() {
+  return (
+    process.env.SUPERADMIN_PASSWORD ||
+    process.env.DEMO_USER_PASSWORD ||
+    process.env.DEMO_PASSWORD ||
+    ''
+  );
+}
+

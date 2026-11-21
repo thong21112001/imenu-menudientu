@@ -27,6 +27,7 @@ imenu-menudientu/
 ├── scripts/
 │   ├── e2e-order-lifecycle.mjs # Kịch bản kiểm thử E2E trình duyệt POS Order Lifecycle (9 Checkpoints)
 │   ├── e2e-kds-lifecycle.mjs   # Kịch bản kiểm thử E2E KDS trình duyệt điều phối món ăn (6 Checkpoints)
+│   ├── e2e-platform-ai-mcp.mjs # Kịch bản kiểm thử E2E SuperAdmin AI Copilot & MCP Tools (6 Checkpoints)
 │   └── capture-guide-screenshots.mjs # Tiện ích chụp ảnh màn hình tài liệu
 │
 ├── test-artifacts/             # Thư mục lưu vết lỗi và bằng chứng kiểm thử E2E (ảnh chụp màn hình)
@@ -529,6 +530,33 @@ Nhằm đảm bảo tính minh bạch kỹ thuật và tránh giả định sai 
 ---
 
 ## 📄 10. Trạng Thái Dự Án & Nghiệm Thu (Project Status)
+
+### Phase 18: Nền Tảng AI SuperAdmin MCP & AI Copilot Drawer UI — ✅ ĐÃ HOÀN THIỆN TOÀN DIỆN & ĐỒNG BỘ 18/18 PHASES (PRODUCTION READY)
+- **Giao Diện Trợ Lý Vận Hành Tối Giản SuperAdmin AI Copilot (`apps/imenu-admin`)**:
+  - Tích hợp component `PlatformAiCopilotDrawer`: Drawer trượt mượt mà từ cạnh phải màn hình với nền Slate/Zinc trung tính, viền hairline tinh xảo chuẩn SaaS 2026–2027.
+  - Nút kích hoạt tinh giản "Phân tích vận hành (⌘K)" trên `AdminHeader` — tuân thủ 100% nguyên tắc cô lập không gian làm việc (Workspace Isolation): chỉ hiển thị với vai trò `SUPER_ADMIN` khi đang ở các route `/platform/*`.
+  - Phím tắt toàn cục `⌘K` / `Ctrl+K`: Mở nhanh trợ lý phân tích vận hành mọi lúc khi làm việc trong trung tâm điều hành nền tảng.
+  - 4 Thẻ Phân Tích Nhanh 1-Chạm (1-Click Insight Chips):
+    1. *"Tổng quan doanh thu & tăng trưởng toàn sàn"* (gọi tool `get_platform_revenue_overview`)
+    2. *"Cảnh báo nhà hàng sụt giảm đơn (Churn Risk)"* (gọi tool `detect_restaurant_churn_risk`)
+    3. *"Chẩn đoán nhà hàng hiệu suất thấp & đánh giá xấu"* (gọi tool `diagnose_underperforming_restaurants`)
+    4. *"Đối soát bất thường hoa hồng Sales Affiliate"* (gọi tool `audit_sales_commissions_anomalies`)
+  - Kết xuất báo cáo điều hành có cấu trúc (Structured Executive Brief):
+    - Thẻ KPI số liệu (`AiKpiCard`) trực quan: GMV, tăng trưởng, rủi ro rời bỏ, hoa hồng bất thường với định dạng `tabular-nums`.
+    - Huy hiệu MCP Tools đã thực thi (`AiToolExecutionRecord`): Hiển thị tên tool kỹ thuật, trạng thái thành công và độ trễ mili-giây (`ms`).
+    - Báo cáo phân tích chuyên sâu (`summaryMarkdown`) hiển thị mượt mà.
+    - Nút hành động nhanh (`AiActionLink`): Điều hướng trực tiếp tới `/platform/restaurants`, `/platform/revenues`, `/platform/sales`.
+  - Hộp nhập câu hỏi tùy chỉnh: Tự do truy vấn với giới hạn 1000 ký tự, bộ đếm ký tự thời gian thực, khử hoàn toàn các icon AI sáo rỗng.
+- **Thư Viện Dùng Chung (@imenu/types & @imenu/utils)**:
+  - `packages/types/src/ai-mcp.ts`: Định nghĩa các interface `McpToolMetadata`, `AiKpiCard`, `AiActionLink`, `AiToolExecutionRecord`, `AiMcpQueryRequest`, `AiMcpQueryResponse`.
+  - `packages/utils/src/api-client.ts`: Mở rộng SDK client với `platform.queryAiMcp`, `platform.getAiMcpTools`, `aiMcp.query`, `aiMcp.getTools`.
+  - `packages/utils/tests/sdk-contract.test.ts`: Bổ sung kiểm thử hợp đồng `SDK-56` (`platform.queryAiMcp`) và `SDK-57` (`platform.getAiMcpTools`), nâng tổng số test SDK lên **59 / 59 PASS (100%)**.
+- **Kịch Bản Kiểm Thử E2E Toàn Diện (`scripts/e2e-platform-ai-mcp.mjs`)**:
+  - Thiết kế 6 checkpoints kiểm tra: Cô lập Merchant không thấy nút Copilot (CP-01), SuperAdmin thấy nút và phím tắt ⌘K (CP-02), Mở Drawer và hiển thị 4 Insight Chips (CP-03), Kích hoạt chip phân tích doanh thu (CP-04), Hiển thị đầy đủ KPI Cards + MCP Tool Badges + Executive Summary (CP-05), Điều hướng chính xác theo Action Links (CP-06).
+  - Tích hợp lệnh `npm run test:e2e:phase18` trong `package.json`.
+- **Kiểm Thử Hồi Quy & Biên Dịch 100% Sạch Sẽ**:
+  - Turborepo build (`npm run build`) hoàn tất 100% không cảnh báo trên cả 3 ứng dụng Next.js 15.
+  - Bộ kiểm tra Secret-Zero (`secret-scanning-guard.test.ts`) và Documentation Parity (`readme-documentation-integrity.test.ts`) đạt kết quả tuyệt đối.
 
 ### Phase 17: Đại Tu Giao Diện UI/UX Pixel-Perfect Chuẩn SaaS 2026–2027 (Linear / Stripe / Vercel Aesthetic) — ✅ ĐÃ NGHIỆM THU & ĐÓNG CHÍNH THỨC
 - **Hệ Thống Thiết Kế Tối Giản & Thành Phần UI Gốc (`packages/ui`)**:

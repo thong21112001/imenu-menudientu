@@ -1524,6 +1524,46 @@ async function runSdkContractTests() {
       fail('SDK-55: branches.create sai route hoặc body', { reqCreateBranch, parsedCreateBranch });
       failed++;
     }
+
+    // -------------------------------------------------------------------------
+    // TEST 56: Phase 18 - platform.queryAiMcp map to POST /api/platform/ai-mcp/query
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.platform.queryAiMcp({
+      prompt: 'Tổng quan doanh thu sàn tháng này thế nào?',
+      promptChipId: 'REVENUE_OVERVIEW',
+    });
+    const reqAiQuery = capturedRequests[0];
+    const parsedAiQuery = reqAiQuery ? JSON.parse(reqAiQuery.body) : {};
+    if (
+      reqAiQuery?.method === 'POST' &&
+      reqAiQuery?.url === '/api/platform/ai-mcp/query' &&
+      parsedAiQuery.prompt === 'Tổng quan doanh thu sàn tháng này thế nào?' &&
+      parsedAiQuery.promptChipId === 'REVENUE_OVERVIEW'
+    ) {
+      pass('SDK-56: platform.queryAiMcp map chính xác POST /api/platform/ai-mcp/query');
+      passed++;
+    } else {
+      fail('SDK-56: platform.queryAiMcp sai route hoặc payload', { reqAiQuery, parsedAiQuery });
+      failed++;
+    }
+
+    // -------------------------------------------------------------------------
+    // TEST 57: Phase 18 - platform.getAiMcpTools map to GET /api/platform/ai-mcp/tools
+    // -------------------------------------------------------------------------
+    capturedRequests = [];
+    await apiClient.platform.getAiMcpTools();
+    const reqAiTools = capturedRequests[0];
+    if (
+      reqAiTools?.method === 'GET' &&
+      reqAiTools?.url === '/api/platform/ai-mcp/tools'
+    ) {
+      pass('SDK-57: platform.getAiMcpTools map chính xác GET /api/platform/ai-mcp/tools');
+      passed++;
+    } else {
+      fail('SDK-57: platform.getAiMcpTools sai route', reqAiTools);
+      failed++;
+    }
   } finally {
     await new Promise<void>((resolve) => mockServer.close(() => resolve()));
   }

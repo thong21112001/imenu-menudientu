@@ -27,6 +27,7 @@ imenu-menudientu/
 ├── scripts/
 │   ├── e2e-order-lifecycle.mjs # Cross-App Browser E2E Order Lifecycle Test Suite using Puppeteer (9 Checkpoints)
 │   ├── e2e-kds-lifecycle.mjs   # Real Browser E2E KDS Dish Dispatching Test Suite (6 Checkpoints)
+│   ├── e2e-platform-ai-mcp.mjs # Real Browser E2E SuperAdmin AI Copilot & MCP Tools (6 Checkpoints)
 │   └── capture-guide-screenshots.mjs # Documentation screenshot capture utility
 │
 ├── test-artifacts/             # Test artifact directory for E2E failure traces and screenshots
@@ -529,6 +530,33 @@ To preserve architectural precision and avoid assumptions regarding Phase 9:
 ---
 
 ## 📄 10. Project Status & Acceptance
+
+### Phase 18: SuperAdmin AI Copilot & Model Context Protocol (MCP) Foundation — ✅ FULLY COMPLETED & SYNCHRONIZED (18/18 PHASES - PRODUCTION READY)
+- **Minimalist SuperAdmin AI Copilot Drawer UI (`apps/imenu-admin`)**:
+  - Implemented `PlatformAiCopilotDrawer` component: Smooth slide-over drawer from the right edge with neutral Slate/Zinc palette and hairline borders meeting 2026–2027 SaaS standards.
+  - Minimalist Header Trigger "Phân tích vận hành (⌘K)" on `AdminHeader` — enforces 100% Workspace Isolation (only rendered for `SUPER_ADMIN` on `/platform/*` routes).
+  - Global Keyboard Shortcut `⌘K` / `Ctrl+K`: Instantly opens the Copilot drawer anytime within the platform governance workspace.
+  - 4 Fast 1-Click Insight Chips:
+    1. *"Platform Revenue & Growth Overview"* (triggers `get_platform_revenue_overview`)
+    2. *"Restaurant Churn Risk Detection"* (triggers `detect_restaurant_churn_risk`)
+    3. *"Underperforming Restaurant & Low CSAT Diagnosis"* (triggers `diagnose_underperforming_restaurants`)
+    4. *"Sales Affiliate Commission Anomaly Audit"* (triggers `audit_sales_commissions_anomalies`)
+  - Structured Executive Brief Presentation:
+    - High-density KPI cards (`AiKpiCard`) with `tabular-nums` formatting.
+    - Executed MCP Tools badges (`AiToolExecutionRecord`) with technical naming, status badges, and execution duration in milliseconds (`ms`).
+    - Structured Markdown analysis (`summaryMarkdown`) rendered cleanly.
+    - Actionable navigation links (`AiActionLink`) deep-linking to `/platform/restaurants`, `/platform/revenues`, and `/platform/sales`.
+  - Custom Query Textarea: Free-form prompt query with 1000-character limit counter, completely void of stereotypical AI gimmicks.
+- **Shared Types & Client SDK (@imenu/types & @imenu/utils)**:
+  - `packages/types/src/ai-mcp.ts`: Exports interfaces `McpToolMetadata`, `AiKpiCard`, `AiActionLink`, `AiToolExecutionRecord`, `AiMcpQueryRequest`, `AiMcpQueryResponse`.
+  - `packages/utils/src/api-client.ts`: Extended with `platform.queryAiMcp`, `platform.getAiMcpTools`, `aiMcp.query`, `aiMcp.getTools`.
+  - `packages/utils/tests/sdk-contract.test.ts`: Added contract tests `SDK-56` (`platform.queryAiMcp`) and `SDK-57` (`platform.getAiMcpTools`), raising SDK contract suite to **59 / 59 PASS (100%)**.
+- **End-to-End Verification Suite (`scripts/e2e-platform-ai-mcp.mjs`)**:
+  - 6 Verification Checkpoints: Merchant isolation hiding Copilot trigger (CP-01), SuperAdmin trigger button and ⌘K availability (CP-02), Drawer opening with 4 insight chips (CP-03), Revenue insight chip execution (CP-04), Complete rendering of KPI cards + tool badges + executive brief (CP-05), Accurate deep-link routing via action buttons (CP-06).
+  - Configured script `npm run test:e2e:phase18` in `package.json`.
+- **Zero-Regression & 100% Clean Production Builds**:
+  - Turborepo build (`npm run build`) succeeded across all 3 Next.js 15 apps with 0 errors and 0 type warnings.
+  - Passes all Secret-Zero scanning (`secret-scanning-guard.test.ts`) and Documentation Parity audits (`readme-documentation-integrity.test.ts`).
 
 ### Phase 17: SaaS 2026–2027 Pixel-Perfect UI/UX Overhaul (Linear / Stripe / Vercel Aesthetic) — ✅ ACCEPTED & OFFICIALLY CLOSED
 - **Minimalist Design Tokens & Core UI Components (`packages/ui`)**:
